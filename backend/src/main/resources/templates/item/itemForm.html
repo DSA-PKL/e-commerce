@@ -1,0 +1,85 @@
+<!DOCTYPE HTML>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      th:replace="~{layout/base :: layout(~{::section})}"
+      layout:decorate="~{layout/base}">
+<head>
+    <meta charset="utf-8">
+    <th:block layout:fragment="script">
+        <script th:inline="javascript">
+            var error = [[${errorMessage}]];
+            if(error != null){
+                alert(error);
+            }
+        </script>
+    </th:block>
+</head>
+<body>
+<section>
+<div layout:fragment="content" class="container">
+    <div class="py-5 text-center">
+        <h2>상품 등록</h2>
+    </div>
+    <!-- th:action 생략 => items/new 현재 URL-->
+    <form th:action th:object="${itemForm}" method="post" enctype="multipart/form-data">
+        <div th:if="${#fields.hasGlobalErrors()}">
+            <p class="field-error" th:each="err : ${#fields.globalErrors()}"
+               th:text="${err}">전체 오류 메시지</p>
+        </div>
+        <div>
+            <label for="name">상품명</label>
+            <input type="text" id="name" th:field="*{name}" class="form-control" placeholder="상품명을 입력해주세요"
+                   th:errorclass="field-error">
+            <div class="field-error" th:errors="*{name}" />
+        </div>
+        <br>
+        <div>
+            <label for="price">가격</label>
+            <input type="number" id="price" th:field="*{price}" class="form-control" placeholder="가격을 입력해주세요"
+                   th:errorclass="field-error">
+            <div class="field-error" th:errors="*{price}" />
+        </div>
+        <br>
+        <div>
+            <label for="stockQuantity">재고 수량</label>
+            <input type="number" id="stockQuantity" th:field="*{stockQuantity}" class="form-control" placeholder="재고 수량을 입력해주세요"
+                   th:errorclass="field-error">
+            <div class="field-error" th:errors="*{stockQuantity}" />
+        </div>
+        <br>
+        <div>
+            <label for="description">상품 상세 설명</label>
+            <textarea id="description" th:field="*{description}" class="form-control" aria-label="With textarea"></textarea>
+        </div>
+        <br>
+
+<!--        <div>-->
+<!--            <label for="itemImages">상품 이미지(중복 선택 가능)</label>-->
+<!--            <input id="itemImages" name="itemImages" type="file" multiple="multiple" >-->
+<!--        </div>-->
+
+
+        <div class="mb-3">
+            <label for="formFileMultiple" class="form-label">파일업로드</label>
+            <input class="form-control" type="file" id="formFileMultiple" name="itemImages" multiple>
+        </div>
+
+<!--        <div class="mb-3">-->
+<!--            <label for="itemImages" class="form-label">파일업로드</label>-->
+<!--            <input class="form-control" type="file" id="itemImages" name="itemImages" multiple>-->
+<!--        </div>-->
+
+        <br>
+        <br>
+        <div style="text-align:center">
+        <button class="w-50 btn btn-primary btn-lg" th:align="center" type="submit">
+            상품 등록</button>
+        </div>
+        <br>
+        <br>
+
+    </form>
+</div> <!-- /container -->
+</section>
+</body>
+</html>

@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+    <meta name="description" content="" />
+    <meta name="author" content="" />
+    <title>PKLshop</title>
+    <!-- Favicon-->
+    <link rel="icon" type="image/x-icon" href="assets/favicon.ico" />
+    <!-- Bootstrap icons-->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.5.0/font/bootstrap-icons.css" rel="stylesheet" />
+    <!-- Core theme CSS (includes Bootstrap)-->
+    <link href="/css/styles.css" rel="stylesheet" />
+
+    <link
+            rel="stylesheet"
+            href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.8.2/css/all.min.css"
+    />
+
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+
+</head>
+<script th:inline="javascript">
+
+    // <!-- 처음 웹페이지 로딩시 호출 -->
+    $(document).ready(function(){
+
+        // <!-- count 값이 변경될때마다 호출 -->
+        // $("#count").change(function(){
+        //     calculateTotalPrice();
+        // });
+
+        $("input[name=cartItemCheck]").change(function() {
+            calculateTotalPrice();
+        })
+    });
+
+    <!-- 장바구니 상품 금액 계산 -->
+    function calculateItemPrice(itemId){
+
+        var count = $("#count_" + itemId).val();
+        var price = $("#price_" + itemId).val();
+
+        var totalPrice = price*count;
+        $("#resultPrice_" + itemId).html(totalPrice + '원');
+    }
+
+    function changeCount(itemId) {
+        <!-- 체크박스 표시되어있으면 -->
+        if ($("#cartItemCheck_" + itemId).is(":checked")) {
+            calculateTotalPrice();
+        }
+        calculateItemPrice(itemId);
+    }
+
+    <!-- 장바구니 상품 삭제 -->
+    function deleteCartItem(itemId) {
+
+        var cartItemForm = {
+            cartItemId : itemId
+        };
+
+        $.ajax({
+            url: "/cart",
+            type: 'DELETE',
+            data: JSON.stringify(cartItemForm),
+            contentType: 'application/json',
+
+            <!-- 성공시 -->
+            success: function (result) {
+                alert("선택하신 상품이 삭제되었습니다.");
+                location.href="/cart"
+            },
+            <!-- 실패시 -->
+            error: function (jqXHR) {
+                alert(jqXHR.responseText);
+                location.href = "/cart";
+            }
+        })
+    }
+
+    <!-- 총 주문 금액 계산 -->
+    function calculateTotalPrice() {
+        var totalPrice = 0;
+        $("input[name=cartItemCheck]:checked").each(function() {
+            var id = $(this).val();
+            var price = $("#price_" + id).val()*1;
+            var count = $("#count_" + id).val();
+            totalPrice += price*count;
+        })
+        $("#orderPrice").html(totalPrice+ '원');
+    }
+
+    <!-- 전체 선택, 해제 -->
+    function checkAll() {
+        if ($("#allCheck").is(':checked')) {
+            $("input[name=cartItemCheck]").prop("checked", true);
+        }
+        else {
+            $("input[name=cartItemCheck]").prop("checked", false);
+        }
+        calculateTotalPrice();
+    }
+
+    <!-- 체크된 상품들 주문 -->
+    function order() {
+
+
+        var list = new Array();
+
+        $("input[name=cartItemCheck]:checked").each(function() {
+            var id = $(this).val();
+            var count = $("#count_" + id).val();
+
+            var obj = new Object();
+            obj.itemId = id;
+            obj.count = count;
+
+            list.push(obj);
+        })
+
+        var dataDto = new Object();
+        dataDto.cartOrderDtoList = list;
+
+        $.ajax({
+            url: "/orders",
+            type: 'POST',
+            data: JSON.stringify(dataDto),
+            contentType: 'application/json',
+
+            <!-- 성공시 -->
+            success: function (result) {
+                alert("선택하신 상품 주문이 완료되었습니다.");
+                location.href="/"
+            },
+            <!-- 실패시 -->
+            error: function (jqXHR) {
+                alert(jqXHR.responseText);
+                location.href = "/cart";
+            }
+        })
+    }
+
+</script>
+
+<body>
+<!-- Navigation-->
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark" style="background-color: #e3f2fd;">
+    <div class="container px-4 px-lg-5">
+        <a class="navbar-brand" th:href="@{/}">Home</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation"><span class="navbar-toggler-icon"></span></button>
+        <div class="collapse navbar-collapse" id="navbarSupportedContent">
+            <ul class="navbar-nav me-auto mb-2 mb-lg-0 ms-lg-4">
+
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<section class="h-100" style="background-color: #eee;">
+    <div class="container h-100 py-5">
+        <div class="row d-flex justify-content-center align-items-center h-100">
+            <div class="col-10">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h3 class="fw-normal mb-0 text-black">장바구니</h3>
+<!--                    <div>-->
+<!--                        <p class="mb-0"><span class="text-muted">Sort by:</span> <a href="#!" class="text-body">price <i-->
+<!--                                class="fas fa-angle-down mt-1"></i></a></p>-->
+<!--                    </div>-->
+                </div>
+                <hr>
+
+                <input type="checkbox" id="allCheck" name="allCheck" onclick="checkAll();">전체 선택
+
+                <div th:each="cartItem : ${cartItemListForm}" class="card rounded-3 mb-4">
+                    <div class="card-body p-4">
+                        <div class="row align-items-center">
+                            <div class="col-md-1 col-lg-1 col-xl-1">
+                                <input type="checkbox" th:id="'cartItemCheck_' + ${cartItem.cartItemId}" name="cartItemCheck" th:value="${cartItem.cartItemId}" class="form-check-input">
+                            </div>
+                            <div class="col-md-2 col-lg-2 col-xl-2">
+                                <img th:src="|/images/${cartItem.getImgUrl()}|" class="img-fluid rounded-3" alt="CartItem">
+                            </div>
+                            <div class="col-md-3 col-lg-3 col-xl-3">
+                                <p class="lead fw-normal mb-2" id="name" th:field="${cartItem.itemName}" th:text="${cartItem.itemName}">Basic T-shirt</p>
+                            </div>
+
+                            <div class="col-md-3 col-lg-2 col-xl-2">
+                                <p>
+                                    <span class="text-muted">&nbsp 구매 가능 수량</span><br>
+                                    <span style="color: red; display: flex; justify-content: center;" th:text="${cartItem.itemStockQuantity}"></span>
+                                </p>
+                                <input th:id="'count_' + ${cartItem.cartItemId}" name="count" th:value="${cartItem.count}" min="0" value="1" type="number" th:cartItemId="${cartItem.cartItemId}"
+                                       onchange="changeCount(this.getAttribute('cartItemId'))" class="form-control form-control-sm" />
+                            </div>
+                            &nbsp
+                            &nbsp
+                            <div class="col-md-3 col-lg-2 col-xl-2">
+                                <input type="hidden" th:value="${cartItem.price}" th:id="'price_' + ${cartItem.cartItemId}" name="price">
+                                <h5 class="mb-0" th:id="'resultPrice_' + ${cartItem.cartItemId}" th:text="${cartItem.price}*${cartItem.count}+'원'">$499.00</h5>
+                            </div>
+                            <div class="col-md-1 col-lg-1 col-xl-1 text-end">
+                                <button type="button" th:cartItemId="${cartItem.cartItemId}" th:onclick="deleteCartItem(this.getAttribute('cartItemId'))">
+                                    <i class="fas fa-trash fa-lg"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+
+                <div class="card">
+                    <div class="card-body d-flex flex-column justify-content-center align-items-center">
+                        <h5 class="mb-0" style="font-size: 18px;">총 주문 금액 : <span th:id="orderPrice" th:text='0원' style="font-size: 24px; font-weight: bold;">$499.00</span></h5>
+                        <br>
+                        <button type="button" th:onclick="order()" class="btn btn-warning btn-lg">주문 하기</button>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+    <div></div>
+    <br><br><br><br><br><br><br><br>
+</section>
+
+<!-- Footer-->
+<footer class="py-5 bg-dark">
+    <div class="container"><p class="m-0 text-center text-white">Copyright &copy; PKLshop</p></div>
+</footer>
+<!-- Bootstrap core JS-->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
+<!-- Core theme JS-->
+<!--<script src="js/scripts.js"></script>-->
+</body>
+</html>
+
+

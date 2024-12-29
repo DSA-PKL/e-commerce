@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+    <meta name="description" content="" />
+    <meta name="author" content="" />
+    <title>Roominis</title>
+    <!-- Favicon-->
+    <link rel="icon" type="image/x-icon" href="assets/favicon.ico" />
+    <!-- Bootstrap icons-->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.5.0/font/bootstrap-icons.css" rel="stylesheet" />
+    <!-- Core theme CSS (includes Bootstrap)-->
+    <link href="/css/styles.css" rel="stylesheet" />
+
+    <link
+            rel="stylesheet"
+            href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.8.2/css/all.min.css"
+    />
+
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+
+</head>
+
+<script th:inline="javascript">
+
+    <!-- 주문 취소 -->
+    function cancel(orderId) {
+        var url = "/order/" + orderId + "/cancel"
+
+        $.ajax({
+            url : url,
+            type: 'POST',
+
+            <!-- 성공시 -->
+            success: function (result) {
+                alert("주문이 취소되었습니다.");
+                location.href="/orders"
+            },
+            <!-- 실패시 -->
+            error: function (jqXHR) {
+                alert(jqXHR.responseText);
+                location.href = "/orders";
+            }
+
+        })
+
+    }
+
+</script>
+
+
+<body>
+<!-- Navigation-->
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark" style="background-color: #e3f2fd;">
+    <div class="container px-4 px-lg-5">
+        <a class="navbar-brand" th:href="@{/}">Home</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation"><span class="navbar-toggler-icon"></span></button>
+        <div class="collapse navbar-collapse" id="navbarSupportedContent">
+            <ul class="navbar-nav me-auto mb-2 mb-lg-0 ms-lg-4">
+
+            </ul>
+        </div>
+    </div>
+</nav>
+
+        <section class="h-100 gradient-custom">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+<!--                <h5 class="text-muted mb-0">주문 내역</h5>-->
+            </div>
+
+
+            <div th:each="order : ${orderDetails}"   class="container py-5 h-100">
+                <div class="row d-flex justify-content-center align-items-center h-100">
+                    <div class="col-lg-10 col-xl-8">
+                        <div class="card" style="border-radius: 10px;">
+
+                            <div class="card-body p-4">
+                                <div class="d-flex justify-content-between align-items-center mb-4">
+                                    <p class="lead fw-normal mb-0" id="date" th:field="${order.orderDate}" th:value="${order.orderDate}" th:text="${order.orderDate} + ' 결제'" style="color: #36808f;">Receipt</p>
+                                </div>
+
+                                <div th:each="orderItem : ${order.getOrderItemDtoList()}" class="card shadow-0 border mb-4">
+                                    <div class="card-body">
+                                        <div class="row">
+                                            <div class="col-md-2">
+                                                <img th:src="|/images/${orderItem.getImgUrl()}|"
+                                                     class="img-fluid" alt="Phone">
+                                            </div>
+                                            <div class="col-md-2 text-center d-flex justify-content-center align-items-center">
+                                                <p class="text-muted mb-0" th:id="itemName"  th:text="${orderItem.itemName}">iPad</p>
+                                            </div>
+                                            <div class="col-md-2 text-center d-flex justify-content-center align-items-center">
+                                                <p class="text-muted mb-0 small" th:field="${orderItem.count}" th:text="'주문 수량 : ' + ${orderItem.count}">주문 수량: 1</p>
+                                            </div>
+                                            <div class="col-md-2 text-center d-flex justify-content-center align-items-center">
+                                                <p class="text-muted mb-0 small" th:field="${orderItem.orderPrice}" th:text=|${orderItem.orderPrice}원|>$399</p>
+                                            </div>
+                                        </div>
+                                        <hr class="mb-4" style="background-color: #e0e0e0; opacity: 1;">
+                                        <div class="row d-flex align-items-center">
+                                            <div class="col-md-2">
+                                                <p class="text-muted mb-0 small">배송 정보</p>
+                                            </div>
+                                            <div class="col-md-10">
+                                                <div class="progress" style="height: 6px; border-radius: 16px;">
+                                                    <div class="progress-bar" role="progressbar"
+                                                         style="width: 20%; border-radius: 16px; background-color: #36808f;" aria-valuenow="20"
+                                                         aria-valuemin="0" aria-valuemax="100"></div>
+                                                </div>
+                                                <div class="d-flex justify-content-around mb-1">
+                                                    <p class="text-muted mt-1 mb-0 small ms-xl-5">발송 완료</p>
+                                                    <p class="text-muted mt-1 mb-0 small ms-xl-5">배송중</p>
+                                                    <p class="text-muted mt-1 mb-0 small ms-xl-5">배송 완료</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                            <div class="card-footer border-0 px-4 py-5"
+                                 style=" border-bottom-left-radius: 10px; border-bottom-right-radius: 10px;">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <h6 class="text-uppercase mb-0">총 주문
+                                        가격: <span th:text=|${order.totalPrice}원| class="h2 mb-0 ms-2">$1040</span>
+                                    </h6>
+
+                                    <th:block th:if="${order.orderStatus.name() == 'ORDER'}">
+                                        <button class="btn btn-outline-dark" th:orderId="${order.orderId}" th:value="${order.orderId}"
+                                        onclick="cancel(this.getAttribute('orderId'))">주문 취소</button>
+                                    </th:block>
+
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    <div></div>
+    <br><br><br><br><br><br><br><br>
+
+<!-- Footer-->
+<footer class="py-5 bg-dark">
+    <div class="container"><p class="m-0 text-center text-white">Copyright &copy; PKLshop</p></div>
+</footer>
+<!-- Bootstrap core JS-->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
+<!-- Core theme JS-->
+<!--<script src="js/scripts.js"></script>-->
+</body>
+</html>
+
+

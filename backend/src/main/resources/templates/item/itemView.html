@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no"/>
+    <meta name="description" content=""/>
+    <meta name="author" content=""/>
+    <title>PKLshop</title>
+    <!-- Favicon-->
+    <link rel="icon" type="image/x-icon" href="assets/favicon.ico"/>
+    <!-- Bootstrap icons-->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.5.0/font/bootstrap-icons.css" rel="stylesheet"/>
+    <!-- Core theme CSS (includes Bootstrap)-->
+    <link href="/css/styles.css" rel="stylesheet"/>
+
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+</head>
+
+
+<script th:inline="javascript">
+
+    // <!-- 처음 웹페이지 로딩시 호출 -->
+
+    $(document).ready(function () {
+
+        $("#description").val().replace()
+
+        calculateTotalPrice();
+
+        <!-- count 값이 변경될때마다 호출 -->
+        $("#count").change(function () {
+            calculateTotalPrice();
+        });
+    });
+
+    <!-- 총 상품 금액 계산 -->
+    function calculateTotalPrice() {
+
+        var quantity = $("#stockQuantity").val() * 1;
+        var count = $("#count").val();
+        var price = $("#price").val();
+
+
+        <!-- 재고 부족 -->
+        if (quantity < count) {
+            alert("샹품 재고가 부족합니다. 재고:" + quantity + "개")
+            return;
+        }
+
+        var totalPrice = price * count;
+        $("#totalPrice").html(totalPrice + '원');
+    }
+
+    <!-- 장바구니 담기 -->
+    function addCart() {
+
+        var count = $("#count").val();
+        var itemId = $("#id").val();
+        var cartForm = {
+            itemId: itemId,
+            count: count
+        };
+
+        $.ajax({
+            url: "/cart",
+            data: cartForm,
+            type: 'POST',
+            success: function (result) {
+                alert("상품을 담았습니다.");
+                location.href = "/";
+            },
+
+            error: function (jqXHR, textStatus, errorThrown) {
+                alert(jqXHR.responseText);
+                location.href = "/members"
+            }
+        })
+    }
+
+    <!-- 비로그인 cart 버튼 눌렀을 때  -->
+
+
+    <!-- 단일 상품 바로 주문 -->
+    function order() {
+
+
+        var itemId = $("#id").val();
+        var count = $("#count").val();
+        var cartForm = {
+            itemId: itemId,
+            count: count
+        };
+
+        $.ajax({
+            url: "/order",
+            data: cartForm,
+            type: 'POST',
+            success: function (result) {
+                alert("상품 주문이 완료되었습니다.");
+                location.href = "/";
+            },
+
+            error: function (jqXHR, textStatus, errorThrown) {
+                if (jqXHR.status === 401) {
+                    alert(jqXHR.responseText);
+                    location.href = "/members"
+                } else {
+                    alert(jqXHR.responseText);
+                }
+
+            }
+
+        })
+    }
+
+
+</script>
+
+<body>
+<!-- Navigation-->
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark" style="background-color: #e3f2fd;">
+    <div class="container px-4 px-lg-5">
+        <a class="navbar-brand" th:href="@{/}">Home</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent"
+                aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation"><span
+                class="navbar-toggler-icon"></span></button>
+        <div class="collapse navbar-collapse" id="navbarSupportedContent">
+            <ul class="navbar-nav me-auto mb-2 mb-lg-0 ms-lg-4">
+
+            </ul>
+            <form class="d-flex" method="get" th:action="@{/cart}">
+                <button class="btn btn-light btn-outline-secondary" type="submit">
+
+                    <i class="bi-cart-fill me-1"></i>
+                    Cart
+                    <span class="badge bg-dark text-white ms-1 rounded-pill" th:text="${cartItemCount}">0</span>
+                </button>
+            </form>
+        </div>
+    </div>
+</nav>
+<!-- Product section-->
+<section class="py-5">
+    <div class="container px-4 px-lg-5 my-5" th:object="${item}">
+        <div class="row gx-4 gx-lg-5 align-items-center">
+            <div class="col-md-6">
+                <img class="card-img-top mb-5 mb-md-0"
+                     th:src="|/images/${item.getItemImageListDto().get(0).getStoreName()}|" alt="..."
+                     style="max-width: 100%; height: auto;"/>
+            </div>
+
+            <div class="col-md-6">
+                <h1 class="display-5 fw-bolder" th:text="${item.getName()}">Shop item template</h1>
+                <input type="hidden" th:value="${item.itemId}" id="id" name="id">
+                <div class="fs-5 mb-5">
+                    <input type="hidden" th:value="${item.price}" id="price" name="price">
+                    <span class="text-decoration-none" th:text="${item.getPrice()}"></span>원
+                </div>
+                <hr class="my-4">
+
+                <!--                <div class="input-group fs-5 mb-5">-->
+                <!--                    <div class="input-group-prepend">-->
+                <!--                        <input type="hidden" th:value="${item.stockQuantity}" id="stockQuantity" name="stockQuantity">-->
+                <!--                        <span class="input-group-text">주문 수량</span>-->
+                <!--                    </div>-->
+                <!--                    <input class="form-control text-center me-3" id="count" name="count" type="number" value="1" style="max-width: 5rem" />-->
+
+                <!--                    <span class="input-group-text">구매가능 수량: <span th:text="${item.stockQuantity}"></span></span>-->
+                <!--                </div>-->
+
+                <div class="input-group fs-5 mb-5">
+                    <div class="input-group-prepend">
+                        <input type="hidden" th:value="${item.stockQuantity}" id="stockQuantity" name="stockQuantity">
+                        <span class="input-group-text">주문 수량</span>
+                    </div>
+                    <input class="form-control text-center me-3" id="count" name="count" type="number" value="1"
+                           style="max-width: 5rem"/>
+                    <span class="input-group-text">
+                        <span style="color: black;">구매 가능 수량: </span>
+                        <span style="color: red;" th:text=" ' ' + ${item.stockQuantity}"></span>
+                    </span>
+                </div>
+
+                <div class="container bg-light">
+                    <h6>총 상품 금액</h6>
+                    <h4 name="totalPrice" id="totalPrice" class="font-weight-bold"></h4>
+                </div>
+                <br>
+
+                <div class="d-flex">
+
+                    <button class="btn btn-outline-dark"
+                            type="button" th:onclick="order()">
+                        바로 구매하기
+                    </button>
+
+                    &nbsp
+                    <button class="btn btn-outline-dark flex-shrink-0" type="button" th:onclick="addCart()">
+                        <i class="bi-cart-fill me-1"></i>
+                        장바구니 담기
+                    </button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</section>
+<!-- Related items section-->
+<section class="py-5 bg-light">
+    <div class="container">
+        <p class="lead" id="description" style="text-align: center" th:text="${item.getDescription()}">Lorem ipsum dolor
+            sit amet consectetur adipisicing?</p>
+    </div>
+    <hr class="my-4">
+    <div class="container px-4 px-lg-5 mt-5">
+        <div th:each="itemImage : ${item.getItemImageListDto()}" class="text-center">
+            <img class="card-img-top rounded mb-5 mb-md-0" style="padding-bottom: 50px; width: 550px; height:700px"
+                 th:src="|/images/${itemImage.getStoreName()}|">
+            <!--            class="rounded mgb-15" width="800"-->
+        </div>
+    </div>
+</section>
+<!-- Footer-->
+<footer class="py-5 bg-dark">
+    <div class="container"><p class="m-0 text-center text-white">Copyright &copy; PKLshop</p></div>
+</footer>
+<!-- Bootstrap core JS-->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
+<!-- Core theme JS-->
+<!--<script src="js/scripts.js"></script>-->
+</body>
+</html>
+
+
