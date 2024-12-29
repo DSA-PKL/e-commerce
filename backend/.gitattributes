@@ -1,3 +1,16 @@
+# gradlew 스크립트
 /gradlew text eol=lf
+
+# Windows 배치 파일
 *.bat text eol=crlf
+
+# JAR 파일은 바이너리
 *.jar binary
+
+# 기본 줄바꿈 처리
+* text=auto
+
+# IntelliJ IDEA 설정 파일 강제 LF
+.idea/compiler.xml text eol=lf
+.idea/misc.xml text eol=lf
+.idea/modules.xml text eol=lf
