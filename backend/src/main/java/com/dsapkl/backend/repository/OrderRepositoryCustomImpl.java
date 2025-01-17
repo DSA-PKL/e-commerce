@@ -43,7 +43,8 @@ public class OrderRepositoryCustomImpl implements OrderRepositoryCustom{
                         order.id,
                         order.totalPrice,
                         order.orderDate,
-                        order.status
+                        order.status,
+                        order.paymentIntentId
                 ))
                 .from(order)
                 .join(order.member, member)
@@ -55,11 +56,6 @@ public class OrderRepositoryCustomImpl implements OrderRepositoryCustom{
     private BooleanExpression orderStatusEq(OrderStatus orderStatus) {
 
         return orderStatus != null ? order.status.eq(orderStatus) : null;
-
-//        if (orderStatus == null) {
-//            return null;
-//        }
-//        return order.status.eq(orderStatus);
     }
 
     private List<OrderItemDto> findOrderItemDtos(Long orderId) {

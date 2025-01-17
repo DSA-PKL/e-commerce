@@ -32,12 +32,16 @@ public class Order {
     @JoinColumn(name = "member_id")
     private Member member;
 
-    @OneToMany(mappedBy = "order")
+    @Column
+    private String paymentIntentId;
+
+    @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<OrderItem> orderItems = new ArrayList<>();
 
-    private Order(OrderStatus status, Member member) {
+    private Order(OrderStatus status, Member member, String paymentIntentId) {
         this.status = status;
         this.member = member;
+        this.paymentIntentId = paymentIntentId;
         this.orderDate = LocalDateTime.now();
     }
 
@@ -47,8 +51,8 @@ public class Order {
         orderItem.changeOrder(this);
     }
 
-    public static Order createOrder(OrderStatus status, Member member, List<OrderItem> orderItems) {  //List<OrderItem> list?? OrderItem... orderItems
-        Order order = new Order(status, member);
+    public static Order createOrder(OrderStatus status, Member member, String paymentIntentId, List<OrderItem> orderItems) {  //List<OrderItem> list?? OrderItem... orderItems
+        Order order = new Order(status, member, paymentIntentId);
         for (OrderItem orderItem : orderItems) {
             order.addOrderItem(orderItem);
         }
@@ -58,7 +62,6 @@ public class Order {
 
         return order;
     }
-
 
     //== 전체 주문 가격 조회 ==/
     public int getTotalPrice() {

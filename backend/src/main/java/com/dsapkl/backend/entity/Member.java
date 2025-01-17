@@ -16,8 +16,12 @@ public class Member {
     @Column(name = "member_id")
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
     private String name;
+
+    @Column(unique = true)
     private String email;
+
     private String password;
 
     @Embedded
@@ -26,13 +30,22 @@ public class Member {
     @Enumerated(value = EnumType.STRING)
     private Role role;
 
+    @Column(name = "birth_date", length = 8, nullable = false)
+    private String birthDate;
+
+    @Column(name = "phone_number", length = 20, nullable = false)
+    private String phoneNumber;
+
     @Builder
-    private Member(String name, Address address, String email, String password, Role role) {
+    private Member(String name, String email, String password, Address address, Role role,
+                   String birthDate, String phoneNumber) {
         this.name = name;
-        this.address = address;
         this.email = email;
         this.password = password;
+        this.address = address;
         this.role = role;
+        this.birthDate = birthDate;
+        this.phoneNumber = phoneNumber;
     }
 
     public void changeRole(String role) {
@@ -43,5 +56,8 @@ public class Member {
         }
     }
 
+    public void updatePassword(String password) {
+        this.password = password;
+    }
 
 }

@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
     <meta name="description" content="" />
     <meta name="author" content="" />
-    <title>Roominis</title>
+    <title>PKLshop</title>
     <!-- Favicon-->
     <link rel="icon" type="image/x-icon" href="assets/favicon.ico" />
     <!-- Bootstrap icons-->
@@ -26,25 +26,61 @@
 
     <!-- 주문 취소 -->
     function cancel(orderId) {
+        if (!confirm('주문을 취소하시겠습니까?')) {
+            return;
+        }
+        
         var url = "/order/" + orderId + "/cancel"
-
         $.ajax({
             url : url,
             type: 'POST',
-
-            <!-- 성공시 -->
+            contentType: 'application/json',
             success: function (result) {
                 alert("주문이 취소되었습니다.");
                 location.href="/orders"
             },
-            <!-- 실패시 -->
             error: function (jqXHR) {
                 alert(jqXHR.responseText);
                 location.href = "/orders";
             }
-
         })
+    }
 
+    function cancelOrder(orderId, paymentIntentId) {
+        if (!confirm('주문을 취소하시겠습니까?')) {
+            return;
+        }
+
+        //1. 먼저 Stripe 환불 처리
+        fetch(`/api/refund?paymentIntentId=${paymentIntentId}`, {
+            method: 'POST'
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    fetch(`/order/${orderId}/cancel`, {
+                        method: 'POST'
+                    })
+                        .then(response => {
+                            if (response.ok) {
+                                alert('주문이 취소되었습니다.');
+                                window.location.reload();
+                            } else {
+                                alert('주문 취소에 실패하였습니다.');
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error', error);
+                            alert('주문 취소 중 오류가 발생했습니다.');
+                        });
+                } else {
+                    alert('환불 처리에 실패하였습니다: ' + data.error);
+                }
+            })
+            .catch(error => {
+                console.error('Error: ', error);
+                alert('환불 처리 중 오류가 발생했습니다.');
+            });
     }
 
 </script>
@@ -66,7 +102,6 @@
 
         <section class="h-100 gradient-custom">
             <div class="d-flex justify-content-between align-items-center mb-4">
-<!--                <h5 class="text-muted mb-0">주문 내역</h5>-->
             </div>
 
 
@@ -94,7 +129,8 @@
                                                 <p class="text-muted mb-0 small" th:field="${orderItem.count}" th:text="'주문 수량 : ' + ${orderItem.count}">주문 수량: 1</p>
                                             </div>
                                             <div class="col-md-2 text-center d-flex justify-content-center align-items-center">
-                                                <p class="text-muted mb-0 small" th:field="${orderItem.orderPrice}" th:text=|${orderItem.orderPrice}원|>$399</p>
+                                                <p class="text-muted mb-0 small" th:field="${orderItem.orderPrice}" 
+                                                   th:text="|${#numbers.formatInteger(orderItem.orderPrice, 0, 'COMMA')}원|">$399</p>
                                             </div>
                                         </div>
                                         <hr class="mb-4" style="background-color: #e0e0e0; opacity: 1;">
@@ -121,13 +157,13 @@
                             <div class="card-footer border-0 px-4 py-5"
                                  style=" border-bottom-left-radius: 10px; border-bottom-right-radius: 10px;">
                                 <div class="d-flex justify-content-between align-items-center">
-                                    <h6 class="text-uppercase mb-0">총 주문
-                                        가격: <span th:text=|${order.totalPrice}원| class="h2 mb-0 ms-2">$1040</span>
+                                    <h6 class="text-uppercase mb-0">총 주문 가격: 
+                                        <span th:text="|${#numbers.formatInteger(order.totalPrice, 0, 'COMMA')}원|" class="h2 mb-0 ms-2">$1040</span>
                                     </h6>
 
                                     <th:block th:if="${order.orderStatus.name() == 'ORDER'}">
-                                        <button class="btn btn-outline-dark" th:orderId="${order.orderId}" th:value="${order.orderId}"
-                                        onclick="cancel(this.getAttribute('orderId'))">주문 취소</button>
+                                        <button class="btn btn-outline-dark"
+                                                th:attr="onclick=|cancelOrder(${order.orderId}, '${order.paymentIntentId}')|">주문 취소</button>
                                     </th:block>
 
                                 </div>

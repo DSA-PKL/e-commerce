@@ -14,7 +14,7 @@ public class CartQueryRepository {
 
     public List<CartQueryDto> findCartQueryDtos(Long cartId) {
         List<CartQueryDto> cartQueryDtoList = em.createQuery(
-                        "select new com.dsapkl.backend.repository.query.CartQueryDto(ci.id, i.name, i.stockQuantity, ci.count, i.price, im.storeName)" +
+                        "select new com.dsapkl.backend.repository.query.CartQueryDto(ci.id, i.id, i.name, i.stockQuantity, ci.count, i.price, im.storeName)" +
                                 " from CartItem ci" +
                                 " join ci.item i" +
                                 " join i.itemImageList im" +

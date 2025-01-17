@@ -29,15 +29,15 @@ public class CartService {
     private final ItemRepository itemRepository;
     private final CartItemRepository cartItemRepository;
 
-//    private final CartRepository cartRepository;
-//    private final CartQueryRepository cartQueryRepository;
-//    private final CartItemRepository cartItemRepository;
-//    private final MemberRepository memberRepository;
-//    private final ItemRepository itemRepository;
-//
-//    public Cart findCart(Long memberId) {
-//        return cartRepository.findByMemberId(memberId).orElse(null);
-//    }
+    @Transactional(readOnly = true)
+    public Cart findCart(Long memberId) {
+        return cartRepository.findByMemberId(memberId).orElse(null);
+    }
+
+    @Transactional(readOnly = true)
+    public CartItem findCartItem(Long cartItemId) {
+        return cartItemRepository.findById(cartItemId).orElse(null);
+    }
 
     /**
      * 장바구니 조회
@@ -49,6 +49,7 @@ public class CartService {
         return cartQueryDtos;
     }
 
+
     /**
      * 장바구니 담기(추가)
      */
@@ -59,24 +60,14 @@ public class CartService {
         Cart cart = cartRepository.findByMemberId(memberId).orElseGet(() -> null);
         Item item = itemRepository.findById(itemId).get();
 
-        //장바구니 없으면 생성  --> 회원가입 할 때 장바구니 생성되어야 함 장바구니 눌렀을 때 생기는게 아니라
-//        if (cart == null) {
-//            log.info("장바구니 신규 생성 - memberId={}", memberId);
-//            cart = Cart.createCart(member);
-//            cartRepository.save(cart);
-//        }
-
         //장바구니안에 장바구니 상품 조회
         CartItem cartItem = cartItemRepository.findByCartIdAndItemId(cart.getId(), item.getId()).orElse(null);
-//        CartItem cartItem = cartItemRepository.findByCartIdAndItemId(cart.getId(), item.getId())
-//                .orElseThrow(() -> new EntityNotFoundException(
-//                        "CartItem not found for cartId: " + cart.getId() + " and itemId: " + item.getId()));
 
         //장바구니 상품이 없으면 생성
         if (cartItem == null) {
             cartItem = CartItem.createCartItem(count, cart, item);
             CartItem savedCartItem = cartItemRepository.save(cartItem);
-            log.info("cartItemId={}", cartItem.getId());
+//            log.info("cartItemId={}", cartItem.getId());
             return savedCartItem.getId();
         }
 
@@ -93,6 +84,5 @@ public class CartService {
         CartItem findCartItem = cartItemRepository.findById(itemId).orElse(null);
         cartItemRepository.delete(findCartItem);
     }
-
 
 }

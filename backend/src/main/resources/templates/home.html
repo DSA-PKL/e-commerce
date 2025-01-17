@@ -82,7 +82,9 @@
                             <!-- Product name-->
                             <h5 class="fw-bolder" th:text="${item.getName()}">Product</h5>
                             <!-- Product price-->
-                            <p th:text="|${item.price}₩|">price</p>
+                            <p>
+                                <span th:text="${#numbers.formatInteger(item.price, 0, 'COMMA')}">price</span>원
+                            </p>
                         </div>
                     </div>
                     <!-- Product actions-->

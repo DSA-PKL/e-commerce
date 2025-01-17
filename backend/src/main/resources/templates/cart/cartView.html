@@ -6,6 +6,7 @@
     <meta name="description" content="" />
     <meta name="author" content="" />
     <title>PKLshop</title>
+    <script src="https://js.stripe.com/v3/"></script>
     <!-- Favicon-->
     <link rel="icon" type="image/x-icon" href="assets/favicon.ico" />
     <!-- Bootstrap icons-->
@@ -22,14 +23,8 @@
 
 </head>
 <script th:inline="javascript">
-
     // <!-- 처음 웹페이지 로딩시 호출 -->
     $(document).ready(function(){
-
-        // <!-- count 값이 변경될때마다 호출 -->
-        // $("#count").change(function(){
-        //     calculateTotalPrice();
-        // });
 
         $("input[name=cartItemCheck]").change(function() {
             calculateTotalPrice();
@@ -103,45 +98,57 @@
         calculateTotalPrice();
     }
 
-    <!-- 체크된 상품들 주문 -->
-    function order() {
+    // 주문 버튼 클릭 시 Stripe Checkout 시작
+    function initiateCheckout() {
 
+        const stripe = Stripe('pk_test_51QclmbPPwZvRdRPft9sFx9zsufQlSONBFumadXCRUH00AnFSd05QYS1jcjUczdO5u0IR10pgjM36COA7DvmI6iSR00KsLTQ9s2');
 
         var list = new Array();
 
         $("input[name=cartItemCheck]:checked").each(function() {
-            var id = $(this).val();
+            var id = $(this).val();          //cart_item_id
+            var itemId = $(this).data("item-id");
             var count = $("#count_" + id).val();
+            var price = $(this).data("item-price");
+            var itemName = $(this).data("item-name");
 
             var obj = new Object();
-            obj.itemId = id;
+            obj.cartItemId = id;
+            obj.itemId = itemId;
             obj.count = count;
-
+            obj.price = price;
+            obj.itemName = itemName;
             list.push(obj);
         })
+            var dataDto = new Object();
+            dataDto.cartQueryDto = list;
+            console.log("JSON.stringify(dataDto):", JSON.stringify(dataDto));
 
-        var dataDto = new Object();
-        dataDto.cartOrderDtoList = list;
-
-        $.ajax({
-            url: "/orders",
-            type: 'POST',
-            data: JSON.stringify(dataDto),
-            contentType: 'application/json',
-
-            <!-- 성공시 -->
-            success: function (result) {
-                alert("선택하신 상품 주문이 완료되었습니다.");
-                location.href="/"
+        fetch('http://localhost:8888/api/checkout/create-checkout-session-multi', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
             },
-            <!-- 실패시 -->
-            error: function (jqXHR) {
-                alert(jqXHR.responseText);
-                location.href = "/cart";
-            }
+            body: JSON.stringify(dataDto)
         })
+            .then(function (response) {
+                return response.json();
+            })
+            .then(function (session) {
+                // Stripe Checkout 페이지로 리디렉트
+                return stripe.redirectToCheckout({ sessionId: session.sessionId });
+            })
+            .then(function (result) {
+                if (result.error) {
+                    alert(result.error.message);
+                } else {
+                    // 결제가 성공했을 때 주문 함수 호출
+                }
+            })
+            .catch(function (error) {
+                console.error('Error:', error);
+            });
     }
-
 </script>
 
 <body>
@@ -164,10 +171,6 @@
             <div class="col-10">
                 <div class="d-flex justify-content-between align-items-center mb-4">
                     <h3 class="fw-normal mb-0 text-black">장바구니</h3>
-<!--                    <div>-->
-<!--                        <p class="mb-0"><span class="text-muted">Sort by:</span> <a href="#!" class="text-body">price <i-->
-<!--                                class="fas fa-angle-down mt-1"></i></a></p>-->
-<!--                    </div>-->
                 </div>
                 <hr>
 
@@ -177,7 +180,10 @@
                     <div class="card-body p-4">
                         <div class="row align-items-center">
                             <div class="col-md-1 col-lg-1 col-xl-1">
-                                <input type="checkbox" th:id="'cartItemCheck_' + ${cartItem.cartItemId}" name="cartItemCheck" th:value="${cartItem.cartItemId}" class="form-check-input">
+                                <input type="checkbox" th:id="'cartItemCheck_' + ${cartItem.cartItemId}" name="cartItemCheck"
+                                       th:value="${cartItem.cartItemId}" th:data-item-id="${cartItem.itemId}"
+                                       th:data-item-price="${cartItem.price}" th:data-item-name="${cartItem.itemName}"
+                                       class="form-check-input">
                             </div>
                             <div class="col-md-2 col-lg-2 col-xl-2">
                                 <img th:src="|/images/${cartItem.getImgUrl()}|" class="img-fluid rounded-3" alt="CartItem">
@@ -189,7 +195,7 @@
                             <div class="col-md-3 col-lg-2 col-xl-2">
                                 <p>
                                     <span class="text-muted">&nbsp 구매 가능 수량</span><br>
-                                    <span style="color: red; display: flex; justify-content: center;" th:text="${cartItem.itemStockQuantity}"></span>
+                                    <span style="color: rgba(255,0,0,0); display: flex; justify-content: center;" th:text="${cartItem.itemStockQuantity}"></span>
                                 </p>
                                 <input th:id="'count_' + ${cartItem.cartItemId}" name="count" th:value="${cartItem.count}" min="0" value="1" type="number" th:cartItemId="${cartItem.cartItemId}"
                                        onchange="changeCount(this.getAttribute('cartItemId'))" class="form-control form-control-sm" />
@@ -214,7 +220,7 @@
                     <div class="card-body d-flex flex-column justify-content-center align-items-center">
                         <h5 class="mb-0" style="font-size: 18px;">총 주문 금액 : <span th:id="orderPrice" th:text='0원' style="font-size: 24px; font-weight: bold;">$499.00</span></h5>
                         <br>
-                        <button type="button" th:onclick="order()" class="btn btn-warning btn-lg">주문 하기</button>
+                        <button type="button" th:onclick="initiateCheckout()" class="btn btn-warning btn-lg">주문 하기</button>
                     </div>
                 </div>
 

@@ -1,5 +1,7 @@
 package com.dsapkl.backend.controller;
 
+import com.dsapkl.backend.controller.dto.FindEmailRequestDto;
+import com.dsapkl.backend.controller.dto.FindPasswordRequestDto;
 import com.dsapkl.backend.controller.dto.LoginForm;
 import com.dsapkl.backend.controller.dto.MemberForm;
 import com.dsapkl.backend.entity.Address;
@@ -13,16 +15,16 @@ import jakarta.validation.Valid;
 
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.ModelAttribute;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Controller
 @Slf4j
@@ -77,6 +79,8 @@ public class MemberController {
                     .name(memberForm.getName())
                     .email(memberForm.getEmail())
                     .password(memberForm.getPassword())
+                    .birthDate(memberForm.getBirthDate())
+                    .phoneNumber(memberForm.getPhoneNumber())
                     .address(address)
                     .build();
 
@@ -102,9 +106,6 @@ public class MemberController {
     public String login(@Valid @ModelAttribute LoginForm form
             , BindingResult bindingResult
             , HttpServletRequest request){
-        //로그인 할 때 세션 다 가져오제?
-
-
 
         //이메일 또는 비밀번호를 누락시
         if (bindingResult.hasErrors()) {
@@ -125,15 +126,12 @@ public class MemberController {
         HttpSession session = request.getSession();  //만약 세션이 있으면 기존 세션을 반환하고, 없으면 신규 세션 생성
         session.setAttribute(SessionConst.LOGIN_MEMBER, loginMember);  //세션에 회원 정보 보관
 
-
-
         return "redirect:/";
     }
 
     /*
     로그아웃
     */
-
     @PostMapping("/logout")
     public String logout(HttpServletRequest request) {
         HttpSession session = request.getSession(false);
@@ -143,6 +141,61 @@ public class MemberController {
         return "redirect:/";
     }
 
+    @GetMapping("/members/find-email")
+    public String findEmailForm(Model model) {
+        return "members/findEmail";
+    }
+    @GetMapping("/members/find-password")
+    public String findPasswordForm(Model model) {
+        return "members/findPassword";
+    }
+
+    @GetMapping("/api/members/check-email")
+    @ResponseBody
+    public Map<String, Boolean> checkEmailDuplicate(@RequestParam("email") String email) {
+        boolean isAvailable = memberService.isEmailAvailable(email);
+        Map<String, Boolean> response = new HashMap<>();
+        response.put("isAvailable", isAvailable);
+        return response;
+    }
+
+    @GetMapping("/api/members/check-phone")
+    @ResponseBody
+    public Map<String, Boolean> checkPhoneDuplicate(@RequestParam("phoneNumber") String phoneNumber) {
+        boolean isAvailable = memberService.isPhoneAvailable(phoneNumber);
+        Map<String, Boolean> response = new HashMap<>();
+        response.put("isAvailable", isAvailable);
+        return response;
+    }
+
+    @PostMapping("/members/find-email")
+    public String findEmail(@Valid @ModelAttribute FindEmailRequestDto requestDto, BindingResult bindingResult, Model model) {
+        if (bindingResult.hasErrors()) {
+            return "members/findEmail";
+        }
+        try {
+            String email = memberService.findEmailByBirthDateAndPhone(requestDto.getBirthDate(),requestDto.getPhoneNumber());
+            model.addAttribute("foundEmail", email);
+            return "members/findEmailResult";
+        } catch (IllegalStateException e) {
+            model.addAttribute("errorMessage", "일치하는 회원정보가 없습니다.");
+            return "members/findEmail";
+        }
+    }
+
+    @PostMapping("/members/find-password")
+    public String findPassword(@Valid @ModelAttribute FindPasswordRequestDto requestDto, BindingResult bindingResult, Model model) {
+        if (bindingResult.hasErrors()) {
+            return "members/findPassword";
+        }
+        try {
+            memberService.sendTemporaryPassword(requestDto.getEmail(),requestDto.getPhoneNumber());
+            return "members/findPasswordResult";
+        } catch (IllegalStateException e) {
+            model.addAttribute("errorMessage","일치하는 회원정보가 없습니다.");
+            return "members/findPassword";
+        }
+    }
 }
 
 

@@ -1,0 +1,96 @@
+<!DOCTYPE HTML>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/base}">
+<head>
+    <th:block layout:fragment="script">
+        <script th:inline="javascript">
+            var error = [[${errorMessage}]];
+            if(error != null){
+                alert(error);
+            }
+        </script>
+    </th:block>
+</head>
+
+<div layout:fragment="content">
+    <form th:action="@{/api/member-info/update/{memberId}(memberId=${memberInfo.memberId})}" 
+          th:object="${memberInfoCreateDto}" 
+          method="post">
+        <div th:if="${#fields.hasGlobalErrors()}">
+            <p class="field-error" th:each="err : ${#fields.globalErrors()}"
+               th:text="${err}">전체 오류 메시지</p>
+        </div>
+        
+        <div>
+            <label for="age">&nbsp&nbsp&nbsp 나이 &nbsp&nbsp&nbsp&nbsp</label>
+            <input type="number" id="age" th:field="*{age}" class="form-control" 
+                   th:value="${memberInfo.age}" placeholder="나이를 입력해주세요">
+            <div class="field-error" th:errors="*{age}" />
+        </div>
+        <br>
+        
+        <div>
+            <label for="gender">&nbsp&nbsp 성별 &nbsp&nbsp</label>
+            <select id="gender" th:field="*{gender}" class="form-control">
+                <option value="">성별 선택</option>
+                <option value="MALE" th:selected="${memberInfo.gender == 'MALE'}">남성</option>
+                <option value="FEMALE" th:selected="${memberInfo.gender == 'FEMALE'}">여성</option>
+            </select>
+            <div class="field-error" th:errors="*{gender}" />
+        </div>
+        <br>
+        
+        <div>
+            <label for="interests">&nbsp&nbsp 관심사 &nbsp&nbsp</label>
+            <select id="interests" th:field="*{interests}" class="form-control">
+                <option value="">관심사 선택</option>
+                <option th:each="interest : ${T(com.dsapkl.backend.entity.Interest).values()}"
+                        th:value="${interest}"
+                        th:text="${interest}"
+                        th:selected="${memberInfo.interests == interest}">
+                </option>
+            </select>
+            <div class="field-error" th:errors="*{interests}" />
+        </div>
+        <br>
+
+        <!-- 읽기 전용 정보 표시 -->
+        <div class="readonly-info">
+            <h4>회원 통계 정보</h4>
+            <h5>기본 정보</h5>
+            <p>나이: <span th:text="${memberInfo.age != null ? memberInfo.age : '미입력'}"></span></p>
+            <p>성별: <span th:text="${memberInfo.gender != null ? memberInfo.gender : '미입력'}"></span></p>
+            <p>관심사: <span th:text="${memberInfo.interests != null ? memberInfo.interests : '미입력'}"></span></p>
+            <hr>
+            <h5>활동 정보</h5>
+            <p>마지막 로그인: <span th:text="${#temporals.format(memberInfo.lastLoginDay, 'yyyy-MM-dd')}"></span></p>
+            <p>구매 횟수: <span th:text="${memberInfo.purchaseFrequency}"></span></p>
+            <p>평균 주문 금액: <span th:text="${memberInfo.averageOrderValue}"></span></p>
+            <p>총 구매 금액: <span th:text="${memberInfo.totalSpending}"></span></p>
+            <p>선호 카테고리: <span th:text="${memberInfo.productCategoryPreference}"></span></p>
+            <hr>
+            <h5>기타 정보</h5>
+            <p>거주지역: <span th:text="${memberInfo.location}"></span></p>
+            <p>소득수준: <span th:text="${memberInfo.income}"></span></p>
+            <p>평균 체류시간(분): <span th:text="${memberInfo.timeSpentOnSiteMinutes}"></span></p>
+            <p>페이지 조회수: <span th:text="${memberInfo.pagesViewed}"></span></p>
+        </div>
+
+        <hr class="my-4">
+        
+        <div class="row">
+            <div class="col" style="text-align: center">
+                <button class="w-100 btn btn-primary btn-lg" type="submit">
+                    정보 수정</button>
+            </div>
+            <div class="col" style="text-align: center">
+                <button class="w-100 btn btn-secondary btn-lg"
+                        onclick="location.href='home.html'"
+                        th:onclick="|location.href='@{/members}'|"
+                        type="button">취소</button>
+            </div>
+        </div>
+    </form>
+</div>
+</html> 

@@ -1,5 +1,6 @@
 package com.dsapkl.backend.service;
 
+import com.dsapkl.backend.entity.Category;
 import com.dsapkl.backend.entity.Item;
 import com.dsapkl.backend.entity.ItemImage;
 import com.dsapkl.backend.repository.ItemImageRepository;
@@ -33,7 +34,8 @@ public class ItemService {
                 itemServiceDTO.getName(),
                 itemServiceDTO.getPrice(),
                 itemServiceDTO.getStockQuantity(),
-                itemServiceDTO.getDescription());
+                itemServiceDTO.getDescription(),
+                itemServiceDTO.getCategory());
 
         List<ItemImage> itemImages = filehandler.storeImages(multipartFileList);
 
@@ -53,11 +55,18 @@ public class ItemService {
     }
 
     //상품 정보 업데이트 (Dirty Checking, 변경감지)
-    public void updateItem(ItemServiceDTO itemServiceDTO,  List<MultipartFile> multipartFileList) throws IOException {
+    @Transactional
+    public void updateItem(ItemServiceDTO itemServiceDTO, List<MultipartFile> multipartFileList) throws IOException {
+        Item findItem = itemRepository.findById(itemServiceDTO.getId())
+                .orElseThrow(() -> new IllegalArgumentException("상품이 존재하지 않습니다."));
 
-        Item findItem = itemRepository.findById(itemServiceDTO.getId()).orElse(null);  //DB에서 찾아옴 -> 영속 상태
-
-        findItem.updateItem(itemServiceDTO.getName(), itemServiceDTO.getDescription(), itemServiceDTO.getPrice(), itemServiceDTO.getStockQuantity());
+        findItem.updateItem(
+                itemServiceDTO.getName(),
+                itemServiceDTO.getPrice(),
+                itemServiceDTO.getStockQuantity(),
+                itemServiceDTO.getDescription(),
+                itemServiceDTO.getCategory()
+        );
 
         //상품 이미지를 수정(삭제, 추가) 하지 않으면 실행 x
         if(!multipartFileList.get(0).isEmpty()) {
@@ -69,11 +78,41 @@ public class ItemService {
         itemImageList.get(0).isFirstImage("Y");
     }
 
-    @Transactional(readOnly=true)
-    public List<Item> findItems() {
-        return itemRepository.findAll();
+    @Transactional
+    public void updateItem(Long itemId, String name, int price, int stockQuantity, String description) {
+        Item item = itemRepository.findById(itemId)
+                .orElseThrow(() -> new IllegalArgumentException("해당 상품이 존재하지 않습니다."));
 
+        item.updateItem(name, price, stockQuantity, description, item.getCategory());
     }
+
+    // 통합 검색 기능
+    @Transactional(readOnly = true)
+    public List<Item> searchItems(String name, String categoryStr) {
+        Category category = null;
+        if (categoryStr != null && !categoryStr.isEmpty()) {
+            try {
+                category = Category.valueOf(categoryStr);
+            } catch (IllegalArgumentException e) {
+                // 잘못된 카테고리 문자열이 들어온 경우 전체 상품 반환
+                return itemRepository.findAll();
+            }
+        }
+
+        if (name != null && !name.isEmpty()) {
+            if (category != null) {
+                return itemRepository.findByCategoryAndNameContainingIgnoreCase(category, name);
+            }
+            return itemRepository.findByNameContainingIgnoreCase(name);
+        }
+
+        if (category != null) {
+            return itemRepository.findByCategory(category);
+        }
+
+        return itemRepository.findAll();
+    }
+
     @Transactional(readOnly=true)
     public List<Item> findItemsPaging() {
         Page<Item> result = itemRepository.findAll(PageRequest.of(0, 3));

@@ -19,7 +19,7 @@ public class OrderItem {
     private int orderPrice;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "order_id")
+    @JoinColumn(name = "order_id", nullable = false)
     private Order order;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -35,10 +35,6 @@ public class OrderItem {
     public void changeOrder(Order order) {
         this.order = order;
     }
-
-//    public static OrderItem createOrderItem(int count, int orderPrice, Item item) {
-//        return new OrderItem(count, orderPrice, item);
-//    }
 
     public static OrderItem createOrderItem(int count, int orderPrice, Item item) {
         item.minStock(count);

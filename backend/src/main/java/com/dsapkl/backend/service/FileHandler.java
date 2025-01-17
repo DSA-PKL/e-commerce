@@ -35,10 +35,6 @@ public class FileHandler {
     public List<ItemImage> storeImages(List<MultipartFile> multipartFiles) throws IOException {
         List<ItemImage> storeResult = new ArrayList<>();
 
-//        if (multipartFiles == null || multipartFiles.isEmpty()) {
-//            throw new IllegalArgumentException("업로드된 파일이 없습니다.");
-//        }
-
         for (MultipartFile multipartfile : multipartFiles) {
             storeResult.add(storeImage(multipartfile));
         }

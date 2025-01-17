@@ -12,9 +12,6 @@
                 alert(error);
             }
         </script>
-<!--        <script th:if="${param.status}">-->
-<!--                alert("회원가입에 성공하였습니다.")-->
-<!--        </script>-->
     </th:block>
 
 </head>
@@ -43,6 +40,12 @@
                    th:errorclass="field-error">
             <div class="field-error" th:errors="*{password}" />
         </div>
+
+        <div class="text-end mt-2">
+            <a th:href="@{/members/find-email}" class="text-decoration-none me-2">이메일 찾기</a> |
+            <a th:href="@{/members/find-password}" class="text-decoration-none ms-2">비밀번호 찾기</a>
+        </div>
+
         <hr class="my-4">
         <div class="row">
             <div class="col" style="text-align: center">

@@ -1,10 +1,11 @@
 package com.dsapkl.backend.service;
 
-
 import com.dsapkl.backend.entity.Item;
 import com.dsapkl.backend.entity.ItemImage;
 import com.dsapkl.backend.repository.ItemImageRepository;
+import com.dsapkl.backend.repository.ItemRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -19,6 +20,7 @@ public class ItemImageService {
 
     private final ItemImageRepository itemImageRepository;
     private final FileHandler fileHandler;
+    private final ItemRepository itemRepository;
 
     //삭제 여부를 판단하여 상품 이미지 정보를 조회한다
     @Transactional(readOnly = true)
@@ -47,5 +49,30 @@ public class ItemImageService {
         for (ItemImage itemImage : itemImages) {
             item.addItemImage(itemImageRepository.save(itemImage));
         }
+    }
+
+    @Transactional
+    public void updateItemImages(Long itemId, List<MultipartFile> itemImageFiles) throws IOException {
+        // 기존 이미지 삭제
+        List<ItemImage> existingImages = itemImageRepository.findByItemIdOrderByIdAsc(itemId);
+        for (ItemImage image : existingImages) {
+            fileHandler.deleteImage(image.getStoreName());
+            itemImageRepository.delete(image);
+        }
+
+        // 새 이미지 저장
+        List<ItemImage> newImages = fileHandler.storeImages(itemImageFiles);
+        Item item = itemRepository.findById(itemId).orElseThrow();
+        for (int i = 0; i < newImages.size(); i++) {
+            ItemImage image = newImages.get(i);
+            image.changeItem(item);
+            image.setRepImgYn(i == 0 ? "Y" : "N");
+            itemImageRepository.save(image);
+        }
+    }
+
+    @Transactional(readOnly = true)
+    public List<ItemImage> findByItemIdAndRepImgYn(Long itemId, String repImgYn) {
+        return itemImageRepository.findByItemIdAndRepImgYn(itemId, repImgYn);
     }
 }

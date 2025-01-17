@@ -19,6 +19,7 @@ public class ItemImage {
     private String storeName; //서버에 저장될 경로명
     private String deleteYN; //이미지 파일 삭제 여부
     private String firstImage; //썸네일 이미지 설정
+    private String repImgYn;
 
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -32,8 +33,6 @@ public class ItemImage {
         this.deleteYN = "N";
     }
 
-
-
     public void changeItem(Item item) {
         this.item = item;
     }
@@ -44,6 +43,10 @@ public class ItemImage {
 
     public void deleteSet(String deleteYN) {
         this.deleteYN = deleteYN;
+    }
+
+    public void setRepImgYn(String repImgYn) {
+        this.repImgYn = repImgYn;
     }
 
     // storeName Getter (추가)

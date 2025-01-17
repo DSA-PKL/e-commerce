@@ -9,6 +9,45 @@
             if(error != null){
                 alert(error);
             }
+
+            function checkEmailDuplicate() {
+                        const email = document.querySelector('#email').value;
+                        if (!email) {
+                            alert('이메일을 입력해주세요.');
+                            return;
+                        }
+                        
+                        fetch('/api/members/check-email?email=' + encodeURIComponent(email))
+                            .then(response => response.json())
+                            .then(data => {
+                                const resultDiv = document.querySelector('#emailResult');
+                                //if response true -> email exist so can't use
+                                if (!data.isAvailable) {
+                                    resultDiv.innerHTML = '<span class="text-success">사용 가능한 이메일입니다.</span>';
+                                } else {
+                                    resultDiv.innerHTML = '<span class="text-danger">이미 사용중인 이메일입니다.</span>';
+                                }
+                            });
+                    }
+
+            function checkPhoneDuplicate() {
+                const phone = document.querySelector('#phoneNumber').value;
+                if (!phone) {
+                    alert('휴대폰 번호를 입력해주세요.');
+                    return;
+                }
+
+                fetch('/api/members/check-phone?phoneNumber=' + encodeURIComponent(phone))
+                    .then(response => response.json())
+                    .then(data => {
+                        const resultDiv = document.querySelector('#phoneResult');
+                        if (!data.isAvailable) {
+                            resultDiv.innerHTML = '<span class="text-success">사용 가능한 번호입니다.</span>';
+                        } else {
+                            resultDiv.innerHTML = '<span class="text-danger">이미 사용중인 번호입니다.</span>';
+                        }
+                    });
+            }
         </script>
     </th:block>
 </head>
@@ -29,8 +68,14 @@
         <br>
         <div>
             <label for="email">&nbsp&nbsp 이메일 &nbsp&nbsp</label>
-            <input type="text" id="email" th:field="*{email}" class="form-control" placeholder="이메일 형식으로 입력해주세요">
+            <div class="input-group">
+                <input type="text" id="email" th:field="*{email}" class="form-control" placeholder="이메일 형식으로 입력해주세요">
+                <button type="button" class="btn btn-outline-secondary" onclick="checkEmailDuplicate()">
+                    중복확인
+                </button>
+            </div>
             <div class="field-error" th:errors="*{email}" />
+            <div id="emailResult"></div>
         </div>
         <br>
         <div>
@@ -40,10 +85,29 @@
         </div>
         <br>
         <div>
+            <label th:for="birthDate">&nbsp 생년월일</label>
+            <input type="text" th:field="*{birthDate}" class="form-control"
+                   placeholder="YYYYMMDD (예: 19990101)" maxlength="8" id="birthDate">
+            <div class="field-error" th:errors="*{birthDate}" />
+        </div>
+        <br>
+        <div>
+            <label th:for="phoneNumber">&nbsp 휴대폰 번호</label>
+            <div class="input-group">
+                <input type="text" th:field="*{phoneNumber}" class="form-control"
+                   placeholder="예) 010-1234-5678" id="phoneNumber">
+                <button type="button" class="btn btn-outline-secondary" onclick="checkPhoneDuplicate()">
+                    중복확인
+                </button>
+            </div>
+            <div class="field-error" th:errors="*{phoneNumber}" />
+            <div id="phoneResult"></div>
+        </div>
+        <br>
+        <div>
             <label for="city">&nbsp&nbsp  지역명 &nbsp&nbsp</label>
             <input type="text" id="city" th:field="*{city}"
-                   class="formcontrol"
-            >
+                   class="formcontrol">
         </div>
         <div>
             <label for="street">&nbsp&nbsp  도로명 &nbsp&nbsp</label>

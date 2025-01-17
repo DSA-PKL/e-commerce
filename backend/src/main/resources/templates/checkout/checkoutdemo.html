@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stripe Checkout</title>
+    <script src="https://js.stripe.com/v3/"></script>
+</head>
+<body>
+    <h1>Stripe Checkout Demo</h1>
+    <button id="checkout-button">Checkout</button>
+
+    <script>
+      // Stripe Publishable Key 설정
+      const stripe = Stripe('pk_test_51QclmbPPwZvRdRPft9sFx9zsufQlSONBFumadXCRUH00AnFSd05QYS1jcjUczdO5u0IR10pgjM36COA7DvmI6iSR00KsLTQ9s2');
+
+      document.getElementById('checkout-button').addEventListener('click', function () {
+        // Checkout 세션 생성 요청
+        fetch('http://localhost:8888/api/checkout/create-checkout-session', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            productName: 'Sample Product',
+            amount: 1000 // 금액 (단위: cents, $10.00)
+          }),
+        })
+                .then(function (response) {
+                  return response.json();
+                })
+                .then(function (session) {
+                  // Stripe Checkout 페이지로 리다이렉트
+                  return stripe.redirectToCheckout({ sessionId: session.sessionId });
+                })
+                .then(function (result) {
+                  if (result.error) {
+                    alert(result.error.message);
+                  }
+                })
+                .catch(function (error) {
+                  console.error('Error:', error);
+                });
+      });
+    </script>
+</body>
+</html>

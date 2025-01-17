@@ -1,5 +1,6 @@
 package com.dsapkl.backend.service.dto;
 
+import com.dsapkl.backend.entity.Category;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
@@ -17,5 +18,6 @@ public class ItemServiceDTO {
     private int price;
     private int stockQuantity;
     private String description;
+    private Category category;
     private List<MultipartFile> itemImages;
 }
