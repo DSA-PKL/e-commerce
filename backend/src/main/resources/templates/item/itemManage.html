@@ -106,24 +106,41 @@
         }
 
         /* 페이지네이션 스타일 수정 */
+        .pagination {
+            flex-wrap: wrap;
+            gap: 0.25rem;
+        }
+        
+        .page-item {
+            margin: 2px;
+        }
+        
         .page-link {
+            min-width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0 0.5rem;
             color: var(--primary-color);
             border-color: var(--border-color);
         }
 
-        .page-link:hover {
-            color: var(--white);
-            background-color: var(--primary-color);
-            border-color: var(--primary-color);
+        /* 페이지네이션 컨테이너 수정 */
+        .pagination-container {
+            overflow-x: auto;
+            padding: 1rem 0;
         }
-
-        .page-item.active .page-link {
-            background-color: var(--primary-color);
-            border-color: var(--primary-color);
-        }
-
-        .page-item.disabled .page-link {
-            color: var(--secondary-color);
+        
+        /* 많은 페이지 번호를 처리하기 위한 스타일 */
+        @media (max-width: 768px) {
+            .pagination .page-item:not(.active):not(:first-child):not(:last-child) {
+                display: none;
+            }
+            
+            .pagination .page-item.active {
+                display: block;
+            }
         }
 
         /* 상품명 링크 스타일 수정 */
@@ -193,7 +210,7 @@
 
                             <h6 class="card-subtitle mb-1 text-muted">Total Products</h6>
 
-                            <h3 class="card-title mb-0" th:text="${totalItems}">0</h3>
+                            <h3 class="card-title mb-0" th:text="${itemStats.totalCount}">0</h3>
 
                         </div>
 
@@ -219,7 +236,7 @@
 
                             <h6 class="card-subtitle mb-1 text-muted">Low Stock</h6>
 
-                            <h3 class="card-title mb-0" th:text="${lowStockItems}">0</h3>
+                            <h3 class="card-title mb-0" th:text="${itemStats.lowStockCount}">0</h3>
 
                         </div>
 
@@ -245,7 +262,7 @@
 
                             <h6 class="card-subtitle mb-1 text-muted">On Sale</h6>
 
-                            <h3 class="card-title mb-0" th:text="${sellingItems}">0</h3>
+                            <h3 class="card-title mb-0" th:text="${itemStats.onSaleCount}">0</h3>
 
                         </div>
 
@@ -271,7 +288,7 @@
 
                             <h6 class="card-subtitle mb-1 text-muted">Discontinued</h6>
 
-                            <h3 class="card-title mb-0" th:text="${soldOutItems}">0</h3>
+                            <h3 class="card-title mb-0" th:text="${itemStats.soldOutCount}">0</h3>
 
                         </div>
 
@@ -524,83 +541,145 @@
 
         </div>
 
-        <nav th:if="${totalPages > 0}">
+        <div class="pagination-container">
 
-            <ul class="pagination mb-0">
+            <nav th:if="${totalPages > 0}">
 
-                <li class="page-item" th:classappend="${currentPage == 0 ? 'disabled' : ''}">
+                <ul class="pagination mb-0">
 
-                    <a class="page-link" th:href="@{/items/manage(
+                    <!-- 이전 그룹으로 이동 -->
 
-                        page=${currentPage - 1},
+                    <li class="page-item" th:classappend="${currentPage < 10 ? 'disabled' : ''}">
 
-                        size=${param.size},
+                        <a class="page-link" th:href="@{/items/manage(
 
-                        query=${param.query},
+                            page=${((currentPage/10)*10) - 1},
 
-                        category=${param.category},
+                            size=${param.size},
 
-                        status=${param.status}
+                            query=${param.query},
 
-                    )}">
+                            category=${param.category},
 
-                        <i class="bi bi-chevron-left"></i>
+                            status=${param.status}
 
-                    </a>
+                        )}">
 
-                </li>
+                            <i class="bi bi-chevron-double-left"></i>
 
-                <li class="page-item" 
+                        </a>
 
-                    th:each="pageNum : ${#numbers.sequence(0, totalPages - 1)}"
+                    </li>
 
-                    th:classappend="${pageNum == currentPage ? 'active' : ''}">
+                    <!-- 이전 페이지 -->
 
-                    <a class="page-link" 
+                    <li class="page-item" th:classappend="${currentPage == 0 ? 'disabled' : ''}">
 
-                       th:href="@{/items/manage(
+                        <a class="page-link" th:href="@{/items/manage(
 
-                           page=${pageNum},
+                            page=${currentPage - 1},
 
-                           size=${param.size},
+                            size=${param.size},
 
-                           query=${param.query},
+                            query=${param.query},
 
-                           category=${param.category},
+                            category=${param.category},
 
-                           status=${param.status}
+                            status=${param.status}
 
-                       )}"
+                        )}">
 
-                       th:text="${pageNum + 1}">1</a>
+                            <i class="bi bi-chevron-left"></i>
 
-                </li>
+                        </a>
 
-                <li class="page-item" th:classappend="${currentPage == totalPages - 1 ? 'disabled' : ''}">
+                    </li>
 
-                    <a class="page-link" th:href="@{/items/manage(
+                    <!-- 페이지 번호 -->
 
-                        page=${currentPage + 1},
+                    <li class="page-item" 
 
-                        size=${param.size},
+                        th:each="pageNum : ${#numbers.sequence(((currentPage/10)*10), ((currentPage/10)*10) + 9)}"
 
-                        query=${param.query},
+                        th:if="${pageNum < totalPages}"
 
-                        category=${param.category},
+                        th:classappend="${pageNum == currentPage ? 'active' : ''}">
 
-                        status=${param.status}
+                        <a class="page-link" 
 
-                    )}">
+                           th:href="@{/items/manage(
 
-                        <i class="bi bi-chevron-right"></i>
+                               page=${pageNum},
 
-                    </a>
+                               size=${param.size},
 
-                </li>
+                               query=${param.query},
 
-            </ul>
+                               category=${param.category},
 
-        </nav>
+                               status=${param.status}
+
+                           )}"
+
+                           th:text="${pageNum + 1}">1</a>
+
+                    </li>
+
+                    <!-- 다음 페이지 -->
+
+                    <li class="page-item" th:classappend="${currentPage == totalPages - 1 ? 'disabled' : ''}">
+
+                        <a class="page-link" th:href="@{/items/manage(
+
+                            page=${currentPage + 1},
+
+                            size=${param.size},
+
+                            query=${param.query},
+
+                            category=${param.category},
+
+                            status=${param.status}
+
+                        )}">
+
+                            <i class="bi bi-chevron-right"></i>
+
+                        </a>
+
+                    </li>
+
+                    <!-- 다음 그룹으로 이동 -->
+
+                    <li class="page-item" 
+
+                        th:classappend="${((currentPage/10)*10) + 10 >= totalPages ? 'disabled' : ''}">
+
+                        <a class="page-link" th:href="@{/items/manage(
+
+                            page=${((currentPage/10)*10) + 10},
+
+                            size=${param.size},
+
+                            query=${param.query},
+
+                            category=${param.category},
+
+                            status=${param.status}
+
+                        )}">
+
+                            <i class="bi bi-chevron-double-right"></i>
+
+                        </a>
+
+                    </li>
+
+                </ul>
+
+            </nav>
+
+        </div>
 
     </div>
 

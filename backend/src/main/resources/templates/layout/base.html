@@ -67,7 +67,6 @@
             opacity: 1 !important;
         }
     </style>
-    <th:block layout:fragment="script"></th:block>
 </head>
 
 <body>
@@ -77,5 +76,10 @@
 <!--<div th:replace="${content}" class="content"></div>-->
 <div th:replace="~{fragments/footer::footer}"></div>
 </div>
+
+<!-- 기본 스크립트 -->
+<th:block layout:fragment="script">
+    <!-- 페이지별 스크립트가 여기에 들어갑니다 -->
+</th:block>
 </body>
 </html>

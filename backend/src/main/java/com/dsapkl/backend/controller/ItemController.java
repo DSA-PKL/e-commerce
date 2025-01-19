@@ -2,6 +2,7 @@ package com.dsapkl.backend.controller;
 
 import com.dsapkl.backend.dto.ItemForm;
 import com.dsapkl.backend.dto.ItemImageDto;
+import com.dsapkl.backend.dto.ItemStats;
 import com.dsapkl.backend.entity.Category;
 import com.dsapkl.backend.entity.Item;
 import com.dsapkl.backend.entity.ItemImage;
@@ -195,6 +196,24 @@ public class ItemController {
                              @RequestParam(required = false) String status,
                              HttpServletRequest request) {
         
+        // 전체 아이템 조회 (페이지네이션 없이)
+        List<Item> allItems = itemService.findAll();
+        
+        // ItemStats 생성 (전체 데이터 기준)
+        ItemStats itemStats = ItemStats.builder()
+                .totalCount(itemService.count())
+                .lowStockCount(allItems.stream()
+                        .filter(item -> item.getStockQuantity() <= 10 && item.getStockQuantity() > 0)
+                        .count())
+                .onSaleCount(allItems.stream()
+                        .filter(item -> item.getStockQuantity() > 0)
+                        .count())
+                .soldOutCount(allItems.stream()
+                        .filter(item -> item.getStockQuantity() == 0)
+                        .count())
+                .build();
+        
+        // 페이지네이션된 데이터 조회
         Page<Item> itemPage;
         if (query != null || category != null || status != null) {
             itemPage = itemService.searchItems(query, category, status, PageRequest.of(page, size));
@@ -214,24 +233,9 @@ public class ItemController {
             })
             .collect(Collectors.toList());
             
-        // 통계 계산 - 전체 상품 수를 실제 DB의 전체 데이터로 수정
-        long totalItems = itemService.count();  // 변경된 부분
-        long lowStockItems = itemForms.stream()
-                .filter(item -> item.getStockQuantity() <= 10 && item.getStockQuantity() > 0)
-                .count();
-        long sellingItems = itemForms.stream()
-                .filter(item -> item.getStockQuantity() > 0)
-                .count();
-        long soldOutItems = itemForms.stream()
-                .filter(item -> item.getStockQuantity() == 0)
-                .count();
-
         // 모델에 데이터 추가
         model.addAttribute("items", itemForms);
-        model.addAttribute("totalItems", totalItems);
-        model.addAttribute("lowStockItems", lowStockItems);
-        model.addAttribute("sellingItems", sellingItems);
-        model.addAttribute("soldOutItems", soldOutItems);
+        model.addAttribute("itemStats", itemStats);
         model.addAttribute("currentPage", itemPage.getNumber());
         model.addAttribute("totalPages", itemPage.getTotalPages());
 

@@ -217,4 +217,9 @@ public class ItemService {
     public long count() {
         return itemRepository.count();  // JPA Repository의 기본 count() 메서드 사용
     }
+
+    @Transactional(readOnly = true)
+    public List<Item> findAll() {
+        return itemRepository.findAll();
+    }
 }

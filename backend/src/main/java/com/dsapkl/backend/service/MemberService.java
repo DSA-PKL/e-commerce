@@ -68,12 +68,14 @@ public class MemberService {
     }
 
     //이메일 체크
+    @Transactional(readOnly = true)
     public boolean isEmailAvailable(String email) {
-       return memberRepository.existsByEmail(email);
+        return !memberRepository.existsByEmail(email);
     }
 
+    @Transactional(readOnly = true)
     public boolean isPhoneAvailable(String phoneNumber) {
-        return memberRepository.existsByPhoneNumber(phoneNumber);
+        return !memberRepository.existsByPhoneNumber(phoneNumber);
     }
 
     public String findEmailByBirthDateAndPhone (String birthDate, String phoneNumber) {

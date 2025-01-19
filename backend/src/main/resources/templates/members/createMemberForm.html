@@ -4,15 +4,39 @@
       layout:decorate="~{layout/base}">
 <head>
     <th:block th:replace="members/common-styles :: memberStyles"></th:block>
-    <script th:inline="javascript">
-        var error = [[${errorMessage}]];
-        if(error != null) {
-            alert(error);
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.5.0/font/bootstrap-icons.css" rel="stylesheet"/>
+    
+    <style>
+        .check-result {
+            margin-top: 0.5rem;
+            font-size: 0.9rem;
         }
-    </script>
+        
+        .check-result.valid {
+            color: #198754;  /* 초록색 */
+        }
+        
+        .check-result.invalid {
+            color: #dc3545;  /* 빨간색 */
+        }
+
+        .check-btn {
+            background-color: #212529;
+            color: white;
+            border: none;
+        }
+
+        .check-btn:hover {
+            background-color: #424649;
+        }
+    </style>
 </head>
 
+<body>
 <div layout:fragment="content" class="container py-5">
+    <!-- 에러 메시지를 위한 hidden input -->
+    <input type="hidden" id="errorMessage" th:value="${errorMessage}">
+    
     <div class="row justify-content-center">
         <div class="col-md-8">
             <div class="card shadow-sm">
@@ -34,11 +58,11 @@
                             <div class="input-group">
                                 <input type="text" id="email" th:field="*{email}" 
                                        class="form-control" placeholder="Please enter it in e-mail format">
-                                <button type="button" class="btn check-btn" onclick="checkEmailDuplicate()">
+                                <button type="button" id="checkEmailBtn" class="btn check-btn">
                                     Check Email
                                 </button>
                             </div>
-                            <div class="field-error" th:errors="*{email}" />
+                            <div class="field-error" th:errors="*{email}"></div>
                             <div id="emailResult"></div>
                         </div>
                         <br>
@@ -60,11 +84,11 @@
                             <div class="input-group">
                                 <input type="text" th:field="*{phoneNumber}" 
                                        class="form-control" placeholder="ex) 010-1234-5678" id="phoneNumber">
-                                <button type="button" class="btn check-btn" onclick="checkPhoneDuplicate()">
+                                <button type="button" id="checkPhoneBtn" class="btn check-btn">
                                     Check Phone
                                 </button>
                             </div>
-                            <div class="field-error" th:errors="*{phoneNumber}" />
+                            <div class="field-error" th:errors="*{phoneNumber}"></div>
                             <div id="phoneResult"></div>
                         </div>
                         <br>
@@ -140,4 +164,9 @@
         </div>
     </div>
 </div>
+
+<th:block layout:fragment="script">
+    <script type="text/javascript" th:src="@{/js/memberCheck.js}"></script>
+</th:block>
+</body>
 </html>
