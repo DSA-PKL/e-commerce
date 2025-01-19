@@ -20,4 +20,5 @@ public interface MemberInfoRepository extends JpaRepository<MemberInfo, Long> {
 //    Optional<MemberInfo> findByMemberIdWithMember(@Param("memberId") Long memberId);
     @Query("SELECT mi FROM MemberInfo mi WHERE mi.member.id = :memberId")
     Optional<MemberInfo> findByMemberId(@Param("memberId") Long memberId);
+
 } 

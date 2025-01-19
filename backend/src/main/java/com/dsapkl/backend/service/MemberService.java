@@ -10,6 +10,7 @@ import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.Pattern;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -24,11 +25,13 @@ public class MemberService {
     private final CartRepository cartRepository;
     private final EmailService emailService;
     private final MemberInfoRepository memberInfoRepository;
+    private final BCryptPasswordEncoder passwordEncoder;
 
     //회원가입
     @Transactional(readOnly = false)
     public Long join(Member member) {
         validateDuplicateMember(member);
+        member.setPassword(passwordEncoder.encode(member.getPassword()));
         Member savedMember = memberRepository.save(member);
 
         Cart cart = Cart.createCart(savedMember);
@@ -54,9 +57,14 @@ public class MemberService {
 
     //로그인 체크
     public Member login(String email, String password) {
-        return memberRepository.findByEmail(email)
-                .filter(m -> m.getPassword().equals(password))
-                .orElse(null);
+
+        Member member = memberRepository.findByEmail(email).orElse(null);
+
+        if (member != null && passwordEncoder.matches(password, member.getPassword())) {
+            return member;
+        }
+
+            return null;
     }
 
     public Member findMember(Long id) {
@@ -86,9 +94,10 @@ public class MemberService {
         Member member = memberRepository.findByEmailAndPhoneNumber(email, phoneNumber).orElseThrow(()-> new IllegalStateException("No matching member information found."));
 
         String temporaryPassword = generateTemporaryPassword();
-        member.updatePassword(temporaryPassword);
 
         emailService.sendTemporaryPassword(email, temporaryPassword);
+
+        member.updatePassword(passwordEncoder.encode(temporaryPassword));
     }
 
     private String generateTemporaryPassword() {

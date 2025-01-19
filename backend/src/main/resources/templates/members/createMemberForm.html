@@ -3,13 +3,68 @@
       xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
       layout:decorate="~{layout/base}">
 <head>
-    <th:block th:replace="members/common-styles :: memberStyles"></th:block>
-    <script th:inline="javascript">
-        var error = [[${errorMessage}]];
-        if(error != null) {
-            alert(error);
-        }
-    </script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <th:block layout:fragment="script">
+        <script th:inline="javascript">
+            // 화살표 클릭 시 select 박스 클릭 이벤트 처리
+            document.addEventListener('DOMContentLoaded', function() {
+                const genderArrow = document.querySelector('label[for="gender"]');
+                const interestsArrow = document.querySelector('label[for="interests"]');
+
+                genderArrow.addEventListener('click', function() {
+                    document.getElementById('gender').click();
+                });
+
+                interestsArrow.addEventListener('click', function() {
+                    document.getElementById('interests').click();
+                });
+            });
+
+            var error =[[${errorMessage}]];
+            if(error != null){
+                alert(error);
+            }
+
+            function checkEmailDuplicate() {
+                        const email = document.querySelector('#email').value;
+                        if (!email) {
+                            alert('Enter your email');
+                            return;
+                        }
+
+                        fetch('/members/api/members/check-email?email=' + encodeURIComponent(email))
+                            .then(response => response.json())
+                            .then(data => {
+                                const resultDiv = document.querySelector('#emailResult');
+                                //if response true -> email exist so can't use
+                                if (!data.isAvailable) {
+                                    resultDiv.innerHTML = '<span class="text-success">Email is available</span>';
+                                } else {
+                                    resultDiv.innerHTML = '<span class="text-danger">Email is already in use</span>';
+                                }
+                            });
+                    }
+
+            function checkPhoneDuplicate() {
+                const phone = document.querySelector('#phoneNumber').value;
+                if (!phone) {
+                    alert('Enter your phone number');
+                    return;
+                }
+
+                fetch('/members/api/members/check-phone?phoneNumber=' + encodeURIComponent(phone))
+                    .then(response => response.json())
+                    .then(data => {
+                        const resultDiv = document.querySelector('#phoneResult');
+                        if (!data.isAvailable) {
+                            resultDiv.innerHTML = '<span class="text-success">Phone number is available</span>';
+                        } else {
+                            resultDiv.innerHTML = '<span class="text-danger">Phone number is already in use</span>';
+                        }
+                    });
+            }
+        </script>
+    </th:block>
 </head>
 
 <div layout:fragment="content" class="container py-5">
@@ -32,7 +87,7 @@
                         <div class="mb-3">
                             <label for="email" class="form-label">Email</label>
                             <div class="input-group">
-                                <input type="text" id="email" th:field="*{email}" 
+                                <input type="text" id="email" th:field="*{email}"
                                        class="form-control" placeholder="Please enter it in e-mail format">
                                 <button type="button" class="btn check-btn" onclick="checkEmailDuplicate()">
                                     Check Email
@@ -58,7 +113,7 @@
                         <div class="mb-3">
                             <label for="phoneNumber" class="form-label">Phone Number</label>
                             <div class="input-group">
-                                <input type="text" th:field="*{phoneNumber}" 
+                                <input type="text" th:field="*{phoneNumber}"
                                        class="form-control" placeholder="ex) 010-1234-5678" id="phoneNumber">
                                 <button type="button" class="btn check-btn" onclick="checkPhoneDuplicate()">
                                     Check Phone
@@ -118,26 +173,27 @@
 
 
 
-                        <select name="role" id="role" class="formcontrol">
-                            <option value="">Seller/Buyer Registration</option>
-                            <option th:each="roleCode : ${roleCodes}"
-                                    th:value="${roleCode.code}"
-                                    th:text="${roleCode.displayName}" />
-                        </select>
-                        <hr class="my-4">
-                        <div class="row mt-4">
-                            <div class="col">
-                                <button type="submit" class="btn btn-dark w-100 nav-btn">Sign Up</button>
-                            </div>
-                            <div class="col">
-                                <button type="button" class="btn btn-outline-dark w-100 nav-btn"
-                                        th:onclick="|location.href='@{/members}'|">Cancel</button>
-                            </div>
-                        </div>
-                    </form>
-                </div>
+        <select name="role" id="role" class="formcontrol">
+            <option value="">Buyer Registration</option>
+            <option th:each="roleCode : ${roleCodes}"
+                    th:value="${roleCode.code}"
+                    th:text="${roleCode.displayName}" />
+        </select>
+        <hr class="my-4">
+        <div class="row">
+            <div class="col" style="text-align: center">
+                <button class="w-100 btn btn-primary btn-lg" type="submit">
+                    Sign Up</button>
+            </div>
+            <div class="col" style="text-align: center">
+                <button class="w-100 btn btn-secondary btn-lg"
+                        onclick="location.href='home.html'"
+                        th:onclick="|location.href='@{/members}'|"
+                        type="button">Cancel</button>
             </div>
         </div>
-    </div>
-</div>
+    </form>
+<!--    <div th:replace="fragments/footer :: footer" />-->
+</div> <!-- /container -->
+<!--</body>-->
 </html>

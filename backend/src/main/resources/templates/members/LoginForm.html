@@ -14,34 +14,30 @@
     </th:block>
 </head>
 
-<div layout:fragment="content" class="container py-5">
-    <div class="row justify-content-center">
-        <div class="col-md-6">
-            <div class="card shadow-sm">
-                <div class="card-body p-5">
-                    <h2 class="text-center mb-4">Login</h2>
-                    <form th:action th:object="${loginForm}" method="post">
-                        <div th:if="${#fields.hasGlobalErrors()}">
-                            <p class="field-error" th:each="err : ${#fields.globalErrors()}"
-                               th:text="${err}">Global Error Message</p>
-                        </div>
-                        <div class="mb-3">
-                            <label for="email" class="form-label">Email</label>
-                            <input type="text" id="email" th:field="*{email}" 
-                                   class="form-control" 
-                                   placeholder="Please enter it in e-mail format"
-                                   th:errorclass="field-error">
-                            <div class="field-error" th:errors="*{email}" />
-                        </div>
-
-                        <div class="mb-3">
-                            <label for="password" class="form-label">Password</label>
-                            <input type="password" id="password" th:field="*{password}" 
-                                   class="form-control"
-                                   placeholder="Enter password"
-                                   th:errorclass="field-error">
-                            <div class="field-error" th:errors="*{password}" />
-                        </div>
+<!--<body>-->
+<!--<section>-->
+<div layout:fragment="content">
+<!--    <div class="py-5 text-center">-->
+<!--    </div>-->
+    <form th:action th:object="${loginForm}" method="post">
+        <div th:if="${#fields.hasGlobalErrors()}">
+            <p class="field-error" th:each="err : ${#fields.globalErrors()}"
+               th:text="${err}">Global Error Message</p>
+        </div>
+        <div>
+            <label for="email">&nbsp Email</label>
+            <input type="text" id="email" th:field="*{email}" class="form-control" placeholder="Please enter it in e-mail format"
+                   th:errorclass="field-error">
+            <div class="field-error" th:errors="*{email}" />
+        </div>
+        <br>
+        <div>
+            <label for="password">&nbsp Password &nbsp&nbsp</label>
+            <input type="password" id="password" th:field="*{password}" placeholder="Enter password"
+                   class="form-control"
+                   th:errorclass="field-error">
+            <div class="field-error" th:errors="*{password}" />
+        </div>
 
                         <div class="text-end mb-3">
                             <a th:href="@{/members/find-email}" class="text-decoration-none me-2">Find Email</a> |
@@ -59,4 +55,9 @@
         </div>
     </div>
 </div>
+    </form>
+    <br><br><br>
+</div> <!-- /container -->
+</section>
+</body>
 </html>

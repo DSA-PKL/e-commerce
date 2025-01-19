@@ -90,8 +90,8 @@
 <!-- Navigation-->
 <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm">
     <div class="container px-4 px-lg-5">
-        <a class="navbar-brand fw-bold" th:href="@{/}">PKLshop</a>
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" 
+        <a class="navbar-brand fw-bold" th:href="@{/user}">PKLshop</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent"
                 aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
             <span class="navbar-toggler-icon"></span>
         </button>
@@ -123,7 +123,7 @@
                 <div class="card-header bg-white py-3">
                     <div class="d-flex justify-content-between align-items-center">
                         <h5 class="mb-0" th:text="${order.orderDate} + ' Order'"></h5>
-                        <span class="badge bg-primary" 
+                        <span class="badge bg-primary"
                               th:text="${order.orderStatus.name() == 'ORDER' ? 'Processing' : 'Cancelled'}">
                         </span>
                     </div>
@@ -143,7 +143,7 @@
                                 <p class="text-muted small mb-0" th:text="'Quantity: ' + ${orderItem.count}"></p>
                             </div>
                             <div class="col-md-3">
-                                <p class="mb-0 fw-bold" 
+                                <p class="mb-0 fw-bold"
                                    th:text="${#numbers.formatInteger(orderItem.orderPrice, 0, 'COMMA')} + ' KRW'">
                                 </p>
                             </div>
@@ -165,12 +165,12 @@
                         <div class="d-flex justify-content-between align-items-center">
                             <div>
                                 <h6 class="mb-0">Total Amount</h6>
-                                <h5 class="mb-0" 
+                                <h5 class="mb-0"
                                     th:text="${#numbers.formatInteger(order.totalPrice, 0, 'COMMA')} + ' KRW'">
                                 </h5>
                             </div>
                             <div th:if="${order.orderStatus.name() == 'ORDER'}">
-                                <button class="btn btn-outline-dark" 
+                                <button class="btn btn-outline-dark"
                                         th:onclick="|cancelOrder(${order.orderId}, '${order.paymentIntentId}')|">
                                     Cancel Order
                                 </button>

@@ -5,6 +5,7 @@ import com.dsapkl.backend.dto.ReviewResponseDto;
 import com.dsapkl.backend.entity.Member;
 import com.dsapkl.backend.entity.Review;
 import com.dsapkl.backend.service.ReviewService;
+import com.dsapkl.backend.util.SessionUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -17,7 +18,6 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.util.List;
 
-import static com.dsapkl.backend.controller.CartController.getMember;
 
 @Controller
 @RequiredArgsConstructor
@@ -31,7 +31,7 @@ public class ReviewController {
                                         @RequestParam(required = false) List<MultipartFile> images,
                                         HttpServletRequest request) {
         try {
-            Member member = getMember(request);
+            Member member = SessionUtil.getMember(request);
             if (member == null) {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                         .body("Login required.");
@@ -50,7 +50,7 @@ public class ReviewController {
                                         @RequestParam(required = false) List<MultipartFile> images,
                                         HttpServletRequest request) {
         try {
-            Member member = getMember(request);
+            Member member = SessionUtil.getMember(request);
             if (member == null) {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                         .body("Login required.");
@@ -66,7 +66,7 @@ public class ReviewController {
     @ResponseBody
     public ResponseEntity<Void> deleteReview(@PathVariable Long reviewId,
                                            HttpServletRequest request) {
-        Member member = getMember(request);
+        Member member = SessionUtil.getMember(request);
         reviewService.deleteReview(reviewId, member.getId());
         return ResponseEntity.ok().build();
     }

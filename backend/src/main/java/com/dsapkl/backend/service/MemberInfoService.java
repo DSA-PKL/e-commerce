@@ -25,7 +25,7 @@ public class MemberInfoService {
 
     @Transactional
     public void updateMemberLoginInfo(Long memberId) {
-        MemberInfo memberInfo = memberInfoRepository.findById(memberId)
+        MemberInfo memberInfo = memberInfoRepository.findByMemberId(memberId)
                 .orElseThrow(() -> new IllegalArgumentException("Member does not exist."));
         
         memberInfo.updateLoginDays(LocalDate.now());
@@ -33,7 +33,7 @@ public class MemberInfoService {
 
     @Transactional
     public void updatePurchaseStatistics(Long memberId) {
-        MemberInfo memberInfo = memberInfoRepository.findById(memberId)
+        MemberInfo memberInfo = memberInfoRepository.findByMemberId(memberId)
                 .orElseThrow(() -> new IllegalArgumentException("Member does not exist."));
 
         Integer purchaseFrequency = orderRepository.findPurchaseFrequencyByMemberId(memberId);
@@ -45,7 +45,7 @@ public class MemberInfoService {
 
     @Transactional
     public void updateProductPreference(Long memberId) {
-        MemberInfo memberInfo = memberInfoRepository.findById(memberId)
+        MemberInfo memberInfo = memberInfoRepository.findByMemberId(memberId)
                 .orElseThrow(() -> new IllegalArgumentException("Member does not exist."));
 
         Category preferredCategory = orderItemRepository.findMostFrequentCategoryByMemberId(memberId);

@@ -1,15 +1,13 @@
 package com.dsapkl.backend.entity;
 
 import jakarta.persistence.*;
-import lombok.AccessLevel;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import org.springframework.boot.autoconfigure.amqp.RabbitConnectionDetails;
 
 @Entity
 @Getter
-@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@Setter
+@NoArgsConstructor(access = AccessLevel.PUBLIC)
 public class Member {
 
     @Id

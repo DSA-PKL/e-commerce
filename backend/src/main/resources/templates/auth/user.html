@@ -37,7 +37,7 @@
         .rounded-pill {
             border-radius: 50rem !important;
         }
-        
+
         /* 상품 카드 스타일 */
         .product-card {
             border: 1px solid rgba(0, 0, 0, 0.15);
@@ -101,46 +101,46 @@
 <!-- Navigation-->
 <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm">
     <div class="container px-4 px-lg-5">
-        <a class="navbar-brand fw-bold" th:href="@{/}">PKLshop</a>
+        <a class="navbar-brand fw-bold" th:href="@{/user}">PKLshop</a>
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation"><span class="navbar-toggler-icon"></span></button>
         <div class="collapse navbar-collapse" id="navbarSupportedContent">
 
-            <ul class="navbar-nav me-auto mb-2 mb-lg-0 ms-lg-4">
-                <!--                <li class="nav-item"><a class="nav-link" href="#!">About</a></li>-->
-                <li class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle fw-semibold" id="navbarDropdown" href="#" role="button" 
-                       data-bs-toggle="dropdown" aria-expanded="false">Product Menu</a>
-                    <ul class="dropdown-menu border-0 shadow-sm">
-                        <li><a class="dropdown-item" th:href="@{/items/new}">Add Product</a></li>
-                        <li><hr class="dropdown-divider" /></li>
-                        <li><a class="dropdown-item" th:href="@{/items/manage}">Manage Products</a></li>
-                    </ul>
-                </li>
-            </ul>
-            &nbsp
+<!--            <ul class="navbar-nav me-auto mb-2 mb-lg-0 ms-lg-4">-->
+<!--                &lt;!&ndash;                <li class="nav-item"><a class="nav-link" href="#!">About</a></li>&ndash;&gt;-->
+<!--                <li class="nav-item dropdown">-->
+<!--                    <a class="nav-link dropdown-toggle fw-semibold" id="navbarDropdown" href="#" role="button" -->
+<!--                       data-bs-toggle="dropdown" aria-expanded="false">Product Menu</a>-->
+<!--                    <ul class="dropdown-menu border-0 shadow-sm">-->
+<!--                        <li><a class="dropdown-item" th:href="@{/items/new}">Add Product</a></li>-->
+<!--                        <li><hr class="dropdown-divider" /></li>-->
+<!--                        <li><a class="dropdown-item" th:href="@{/items/manage}">Manage Products</a></li>-->
+<!--                    </ul>-->
+<!--                </li>-->
+<!--            </ul>-->
+<!--            &nbsp-->
 
             <!-- 사용자 환영 메시지 추가 -->
 
             <div class="d-flex align-items-center gap-3">
-                <span class="text-dark">Welcome <span class="fw-bold" th:text="${session.loginMember.name}">User</span>!</span>
-                
-                <form th:action="@{/cart}" method="get">
+                <span class="text-dark">Welcome <span class="fw-bold" th:text="${#authentication.principal.name}">User</span>!</span>
+
+                <form th:action="@{/user/cart}" method="get">
                     <button class="btn btn-outline-dark rounded-pill nav-btn">
                         <i class="bi-cart-fill me-1"></i>Cart
-                        <span class="badge bg-dark text-white ms-1 rounded-pill" 
+                        <span class="badge bg-dark text-white ms-1 rounded-pill"
                               th:text="${{cartItemCount != null ? cartItemCount : 0}}">0</span>
                     </button>
                 </form>
 
-                <form th:action="@{/orders/success}" method="get">
+                <form th:action="@{/user/orders/success}" method="get">
                     <button class="btn btn-outline-dark rounded-pill nav-btn">
                         <i class="bi-clock-history me-1"></i>Orders
-                        <span class="badge bg-dark text-white ms-1 rounded-pill" 
+                        <span class="badge bg-dark text-white ms-1 rounded-pill"
                               th:text="${orderCount}">0</span>
                     </button>
                 </form>
 
-                <form th:action="@{/api/member-info/update/{memberId}(memberId=${session.loginMember.id})}" method="get">
+                <form th:action="@{/user/api/member-info/update/{memberId}(memberId=${#authentication.principal.id})}" method="get">
                     <button class="btn btn-outline-dark rounded-pill nav-btn">
                         <i class="bi-person-fill me-1"></i>My Account
                     </button>
@@ -167,7 +167,7 @@
 <!-- 검색 -->
 <div class="container px-4 px-lg-5 mt-4">
     <div class="d-flex justify-content-end">
-        <form th:action="@{/}" method="get" class="d-flex gap-2" style="width: 600px;">
+        <form th:action="@{/user}" method="get" class="d-flex gap-2" style="width: 600px;">
             <select class="form-select rounded-pill" name="category" style="width: 200px;">
                 <option value="">All Categories</option>
                 <option value="APPAREL">Apparel</option>
@@ -176,10 +176,10 @@
                 <option value="HOME_AND_KITCHEN">Home & Kitchen</option>
                 <option value="HEALTH_AND_BEAUTY">Health & Beauty</option>
             </select>
-            <input 
-                class="form-control rounded-pill" 
-                type="search" 
-                placeholder="Search products" 
+            <input
+                class="form-control rounded-pill"
+                type="search"
+                placeholder="Search products"
                 name="query" />
             <button class="btn btn-dark rounded-pill px-4 search-btn" type="submit">
                 Search
@@ -215,8 +215,8 @@
                     <!-- 상품 이미지 -->
                     <div class="product-image">
                         <img th:if="${item.getItemImageList() != null and !item.getItemImageList().isEmpty()}"
-                             th:src="${#strings.startsWith(item.getItemImageList().get(0).getStoreName(), 'http')} ? 
-                                     ${item.getItemImageList().get(0).getStoreName()} : 
+                             th:src="${#strings.startsWith(item.getItemImageList().get(0).getStoreName(), 'http')} ?
+                                     ${item.getItemImageList().get(0).getStoreName()} :
                                      |/images/${item.getItemImageList().get(0).getStoreName()}|"
                              alt="Product Image"/>
                         <div th:if="${item.getItemImageList() == null or item.getItemImageList().isEmpty()}"
@@ -237,7 +237,7 @@
                     <!-- 버튼 -->
                     <div class="card-footer bg-transparent border-0 p-4 text-center">
                         <a class="btn btn-outline-dark w-100 rounded-pill hover-shadow"
-                           th:href="@{/items/{id}(id=${item.id})}">
+                           th:href="@{/user/items/{id}(id=${item.id})}">
                             View Details
                         </a>
                     </div>

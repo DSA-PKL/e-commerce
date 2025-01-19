@@ -13,7 +13,7 @@ import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 
 @Controller
-@RequestMapping("api/member-info")
+@RequestMapping("user/api/member-info")
 @RequiredArgsConstructor
 public class MemberInfoController {
 

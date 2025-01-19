@@ -102,9 +102,12 @@ public class OrderService {
 
         List<OrderItem> orderItemList = new ArrayList<>();
 
+
         Member findMember = memberRepository.findById(memberId)
             .orElseThrow(() -> new
                     NoSuchElementException("Member with ID " + memberId + " not found"));
+
+
 
         List<CartForm> cartOrderDtoList = cartOrderDto.getCartOrderDtoList();
 
@@ -186,7 +189,7 @@ public class OrderService {
     private void updateClusterItemPreference(Long memberId, Item item) {
         try {
             // MemberInfo에서 cluster_id 가져오기
-            MemberInfo memberInfo = memberInfoRepository.findById(memberId)
+            MemberInfo memberInfo = memberInfoRepository.findByMemberId(memberId)
                     .orElseThrow(() -> new IllegalArgumentException("Member information not found."));
 
             Cluster cluster = memberInfo.getCluster_id();

@@ -7,6 +7,7 @@ import com.dsapkl.backend.entity.Member;
 import com.dsapkl.backend.service.CartService;
 import com.dsapkl.backend.service.MemberInfoService;
 import com.dsapkl.backend.service.MemberService;
+import com.dsapkl.backend.util.SessionConst;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
@@ -40,19 +41,12 @@ public class MemberController {
     @GetMapping("/members/new")
     public String createMemberForm(@ModelAttribute("memberForm") MemberForm memberForm, Model model) {
         List<RoleCode> roleCodes = new ArrayList<>();
-        roleCodes.add(new RoleCode("admin","Seller"));
         roleCodes.add(new RoleCode("user","Buyer"));
         model.addAttribute("roleCodes", roleCodes);
 
         return "members/createMemberForm";
     }
 
-    @Data
-    @AllArgsConstructor
-    static class RoleCode {
-        private String code;
-        private String displayName;
-    }
 
     //회원가입
     @PostMapping("/members/new")
@@ -65,7 +59,6 @@ public class MemberController {
         //memberForm 객체에 binding 했을 때 에러
         if(bindingResult.hasErrors()) {
             List<RoleCode> roleCodes = new ArrayList<>();
-            roleCodes.add(new RoleCode("admin", "Seller"));
             roleCodes.add(new RoleCode("user", "Buyer"));
             model.addAttribute("roleCodes", roleCodes);
             return "members/createMemberForm";
@@ -90,21 +83,21 @@ public class MemberController {
             memberService.join(member);
 
             Long savedMember = member.getId();
-            
+
             // 생년월일로 나이 계산
             String birthDateStr = memberForm.getBirthDate();
             int birthYear = Integer.parseInt(birthDateStr.substring(0, 4));
             int currentYear = LocalDate.now().getYear();
             int age = currentYear - birthYear;
-            
+
             // MemberInfo 생성 및 저장
             MemberInfoCreateDto memberInfoDto = new MemberInfoCreateDto();
             memberInfoDto.setAge(age);
             memberInfoDto.setGender(gender);
             memberInfoDto.setInterests(Interest.valueOf(interests));
-            
+
             memberInfoService.updateMemberInfo(savedMember, memberInfoDto);
-            
+
         } catch (IllegalStateException e){
             model.addAttribute("errorMessage", e.getMessage());
             return "members/createMemberForm";
@@ -124,7 +117,8 @@ public class MemberController {
     @PostMapping("/members")
     public String login(@Valid @ModelAttribute LoginForm form
             , BindingResult bindingResult
-            , HttpServletRequest request){
+            , HttpServletRequest request) {
+        log.info("RECEIVED: {}", form);
 
         //이메일 또는 비밀번호를 누락시
         if (bindingResult.hasErrors()) {
@@ -169,23 +163,7 @@ public class MemberController {
         return "members/findPassword";
     }
 
-    @GetMapping("/api/members/check-email")
-    @ResponseBody
-    public Map<String, Boolean> checkEmailDuplicate(@RequestParam("email") String email) {
-        boolean isAvailable = memberService.isEmailAvailable(email);
-        Map<String, Boolean> response = new HashMap<>();
-        response.put("isAvailable", isAvailable);
-        return response;
-    }
 
-    @GetMapping("/api/members/check-phone")
-    @ResponseBody
-    public Map<String, Boolean> checkPhoneDuplicate(@RequestParam("phoneNumber") String phoneNumber) {
-        boolean isAvailable = memberService.isPhoneAvailable(phoneNumber);
-        Map<String, Boolean> response = new HashMap<>();
-        response.put("isAvailable", isAvailable);
-        return response;
-    }
 
     @PostMapping("/members/find-email")
     public String findEmail(@Valid @ModelAttribute FindEmailRequestDto requestDto, BindingResult bindingResult, Model model) {

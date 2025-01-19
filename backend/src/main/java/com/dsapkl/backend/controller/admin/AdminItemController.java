@@ -1,5 +1,6 @@
-package com.dsapkl.backend.controller;
+package com.dsapkl.backend.controller.admin;
 
+import com.dsapkl.backend.dto.CategoryCode;
 import com.dsapkl.backend.dto.ItemForm;
 import com.dsapkl.backend.dto.ItemImageDto;
 import com.dsapkl.backend.entity.Category;
@@ -10,15 +11,13 @@ import com.dsapkl.backend.repository.query.CartQueryDto;
 import com.dsapkl.backend.service.CartService;
 import com.dsapkl.backend.service.ItemImageService;
 import com.dsapkl.backend.service.ItemService;
+import com.dsapkl.backend.util.SessionUtil;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
-import lombok.AllArgsConstructor;
-import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -32,19 +31,16 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import static com.dsapkl.backend.controller.CartController.getMember;
-
 @Controller
-//@Slf4j
+@RequestMapping("/admin/items")
 @RequiredArgsConstructor
-public class ItemController {
+public class AdminItemController {
+
     private final ItemService itemService;
     private final ItemImageService itemImageService;
     private final CartService cartService;
 
-//    APPAREL, ELECTRONICS, BOOKS, HOME_AND_KITCHEN, HEALTH_AND_BEAUTY
-
-    @GetMapping("/items/new")
+    @GetMapping("/new")
     public String createItemForm(Model model) {
         List<CategoryCode> categoryCode = new ArrayList<>();
         categoryCode.add(new CategoryCode("APPAREL", "Apparel"));
@@ -57,14 +53,7 @@ public class ItemController {
         return "item/itemForm";
     }
 
-    @Data
-    @AllArgsConstructor
-    static class CategoryCode {
-        private String code;
-        private String displayName;
-    }
-
-    @PostMapping("/items/new")
+    @PostMapping("/new")
     public String createItem(@Valid @ModelAttribute ItemForm itemForm, BindingResult bindingResult, Model model,
                              @RequestParam("category") String category,
                              @RequestPart(name = "itemImages") List<MultipartFile> multipartFiles
@@ -91,13 +80,13 @@ public class ItemController {
 
         itemService.saveItem(itemForm.toServiceDTO(), multipartFiles);
 
-        return "redirect:/";
+        return "redirect:/admin";
     }
 
     /**
      * 상품 상세 조회
      */
-    @GetMapping("items/{itemId}")
+    @GetMapping("/{itemId}")
     public String itemView(@PathVariable(name = "itemId") Long itemId, Model model, HttpServletRequest request) {
         Item item = itemService.findItem(itemId);
         if (item == null) {
@@ -116,7 +105,7 @@ public class ItemController {
         // 카트 숫자 // th:text="${cartItemCount}" 쓰기 위함
 
 
-        Member member = getMember(request);
+        Member member = SessionUtil.getMember(request);
         if (member != null) {
             List<CartQueryDto> cartItemListForm = cartService.findCartItems(member.getId());
             int cartItemCount = cartItemListForm.size();
@@ -129,10 +118,12 @@ public class ItemController {
         return "item/itemView";
     }
 
+
+
     /**
      * 상품 삭제
      */
-    @PostMapping("/items/{itemId}/delete")
+    @PostMapping("/{itemId}/delete")
     public String deleteItem(@PathVariable Long itemId) {
         itemService.deleteItem(itemId);
         return "redirect:/"; // 삭제 후 메인 페이지로 이동
@@ -140,7 +131,8 @@ public class ItemController {
 
     }
 
-    @PostMapping("/items/{itemId}/edit")
+
+    @PostMapping("/{itemId}/edit")
     public String updateItem(@PathVariable("itemId") Long itemId,
                              @RequestParam("name") String name,
                              @RequestParam("price") int price,
@@ -176,44 +168,34 @@ public class ItemController {
         }
     }
 
-    @GetMapping("/api/items/{itemId}/rating")
-    @ResponseBody
-    public ResponseEntity<Map<String, Object>> getItemRating(@PathVariable Long itemId) {
-        Item item = itemService.findItem(itemId);
-        Map<String, Object> response = new HashMap<>();
-        response.put("averageRating", item.getAverageRating());
-        response.put("reviewCount", item.getReviewCount());
-        return ResponseEntity.ok(response);
-    }
+    @GetMapping("/manage")
+    public String manageItems(Model model,
+                              @RequestParam(defaultValue = "0") int page,
+                              @RequestParam(defaultValue = "10") int size,
+                              @RequestParam(required = false) String query,
+                              @RequestParam(required = false) String category,
+                              @RequestParam(required = false) String status,
+                              HttpServletRequest request) {
 
-    @GetMapping("/items/manage")
-    public String manageItems(Model model, 
-                             @RequestParam(defaultValue = "0") int page,
-                             @RequestParam(defaultValue = "10") int size,
-                             @RequestParam(required = false) String query,
-                             @RequestParam(required = false) String category,
-                             @RequestParam(required = false) String status,
-                             HttpServletRequest request) {
-        
         Page<Item> itemPage;
         if (query != null || category != null || status != null) {
             itemPage = itemService.searchItems(query, category, status, PageRequest.of(page, size));
         } else {
             itemPage = itemService.findItemsPage(PageRequest.of(page, size));
         }
-        
+
         // ItemForm으로 변환
         List<ItemForm> itemForms = itemPage.getContent().stream()
-            .map(item -> {
-                ItemForm form = ItemForm.from(item);
-                List<ItemImage> images = itemImageService.findItemImageDetail(item.getId(), "N");
-                form.setItemImageListDto(images.stream()
-                    .map(ItemImageDto::new)
-                    .collect(Collectors.toList()));
-                return form;
-            })
-            .collect(Collectors.toList());
-            
+                .map(item -> {
+                    ItemForm form = ItemForm.from(item);
+                    List<ItemImage> images = itemImageService.findItemImageDetail(item.getId(), "N");
+                    form.setItemImageListDto(images.stream()
+                            .map(ItemImageDto::new)
+                            .collect(Collectors.toList()));
+                    return form;
+                })
+                .collect(Collectors.toList());
+
         // 통계 계산
         long totalItems = itemForms.size();
         long lowStockItems = itemForms.stream()
@@ -236,7 +218,7 @@ public class ItemController {
         model.addAttribute("totalPages", itemPage.getTotalPages());
 
         // 카트 아이템 카운트
-        Member member = getMember(request);
+        Member member = SessionUtil.getMember(request);
         if (member != null) {
             List<CartQueryDto> cartItemListForm = cartService.findCartItems(member.getId());
             model.addAttribute("cartItemCount", cartItemListForm.size());
@@ -245,7 +227,7 @@ public class ItemController {
         return "item/itemManage";
     }
 
-    @GetMapping("/items/{itemId}/edit")
+    @GetMapping("/{itemId}/edit")
     public String itemEditForm(@PathVariable("itemId") Long itemId, Model model) {
         try {
             ItemForm itemForm = itemService.getItemDtl(itemId);

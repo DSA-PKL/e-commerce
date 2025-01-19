@@ -14,7 +14,7 @@
 <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm">
     <div class="container px-4 px-lg-5">
         <a class="navbar-brand fw-bold" th:href="@{/}">PKLshop</a>
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" 
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent"
                 aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
             <span class="navbar-toggler-icon"></span>
         </button>
@@ -22,72 +22,55 @@
             <ul class="navbar-nav me-auto mb-2 mb-lg-0 ms-lg-4"></ul>
         </div>
     </div>
-</nav>
-
-<section class="py-5">
-    <div class="container">
-        <div class="row justify-content-center">
-            <div class="col-lg-8">
-                <div class="card shadow-sm border-0">
-                    <div class="card-body p-5">
-                        <div class="text-center mb-4">
-                            <h2 class="fw-bold" th:text="${itemForm.itemId == null ? 'Add Product' : 'Edit Product'}">Add Product</h2>
-                        </div>
-
-                        <form th:action="${itemForm.itemId != null ? '/items/' + itemForm.itemId + '/edit' : '/items/new'}"
-                              th:object="${itemForm}" method="post" enctype="multipart/form-data">
-                            
-                            <!-- Error Messages -->
-                            <div th:if="${#fields.hasGlobalErrors()}" class="alert alert-danger">
-                                <p class="mb-0" th:each="err : ${#fields.globalErrors()}" th:text="${err}">Global Error Message</p>
-                            </div>
-
-                            <!-- Product Name -->
-                            <div class="mb-3">
-                                <label for="name" class="form-label">Product Name</label>
-                                <input type="text" id="name" th:field="*{name}" 
-                                       class="form-control" placeholder="Enter product name"
-                                       th:errorclass="is-invalid">
-                                <div class="invalid-feedback" th:errors="*{name}"></div>
-                            </div>
-
-                            <!-- Category -->
-                            <div class="mb-3">
-                                <label for="category" class="form-label">Category</label>
-                                <select name="category" id="category" class="form-select">
-                                    <option value="">Select Category</option>
-                                    <option th:each="categoryCode : ${categoryCode}"
-                                            th:value="${categoryCode.code}"
-                                            th:text="${categoryCode.displayName}"
-                                            th:selected="${itemForm.category != null && itemForm.category.name() == categoryCode.code}">
-                                    </option>
-                                </select>
-                            </div>
-
-                            <!-- Price -->
-                            <div class="mb-3">
-                                <label for="price" class="form-label">Price</label>
-                                <div class="input-group">
-                                    <input type="number" th:field="*{price}" class="form-control"
-                                           placeholder="Enter price" min="0" step="1">
-                                    <span class="input-group-text">KRW</span>
-                                </div>
-                            </div>
-
-                            <!-- Stock Quantity -->
-                            <div class="mb-3">
-                                <label for="stockQuantity" class="form-label">Stock Quantity</label>
-                                <input type="number" th:field="*{stockQuantity}" class="form-control"
-                                       placeholder="Enter stock quantity">
-                                <div class="invalid-feedback" th:if="${#fields.hasErrors('stockQuantity')}" 
-                                     th:errors="*{stockQuantity}">
-                                </div>
-                            </div>
+    <!-- th:action 생략 => items/new 현재 URL-->
+    <form th:action="${itemForm.itemId != null ? '/admin/items/' + itemForm.itemId + '/edit' : '/admin/items/new'}"
+          th:object="${itemForm}" method="post" enctype="multipart/form-data">
+        <div th:if="${#fields.hasGlobalErrors()}">
+            <p class="field-error" th:each="err : ${#fields.globalErrors()}"
+               th:text="${err}">Global Error Message</p>
+        </div>
+        <div>
+            <label for="name">Product Name</label>
+            <input type="text" id="name" th:field="*{name}" class="form-control" placeholder="Enter product name"
+                   th:errorclass="field-error">
+            <div class="field-error" th:errors="*{name}" />
+        </div>
+        <br>
+        <div>
+            <label for="category">Category</label>
+            <select name="category" id="category" class="form-control">
+                <option value="">Select Category</option>
+                <option th:each="categoryCode : ${categoryCode}"
+                        th:value="${categoryCode.code}"
+                        th:text="${categoryCode.displayName}"
+                        th:selected="${itemForm.category != null && itemForm.category.name() == categoryCode.code}">
+                </option>
+            </select>
+        </div>
+        <br>
+        <div class="form-group">
+            <label th:for="price">Price</label>
+            <input type="number" th:field="*{price}" class="form-control"
+                  placeholder="Enter price" min="0" step="1">
+        </div>
+        <br>
+        <div class="form-group">
+            <label th:for="stockQuantity">Stock Quantity</label>
+            <input type="number" th:field="*{stockQuantity}" class="form-control"
+                   placeholder="Enter stock quantity">
+            <p th:if="${#fields.hasErrors('stockQuantity')}" th:errors="*{stockQuantity}">Incorrect date</p>
+        </div>
+        <br>
+        <div>
+            <label for="description">Product Description</label>
+            <textarea id="description" th:field="*{description}" class="form-control" aria-label="With textarea"></textarea>
+        </div>
+        <br>
 
                             <!-- Description -->
                             <div class="mb-3">
                                 <label for="description" class="form-label">Product Description</label>
-                                <textarea id="description" th:field="*{description}" 
+                                <textarea id="description" th:field="*{description}"
                                         class="form-control" rows="4"></textarea>
                             </div>
 
@@ -237,5 +220,54 @@
     }
 </script>
 
+        <style>
+            .current-images {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 10px;
+                margin-bottom: 20px;
+                margin-top: 10px;
+            }
+
+            .current-images .position-relative {
+                display: inline-block;
+                margin-bottom: 10px;
+            }
+
+            .form-label {
+                display: block;
+                margin-bottom: 5px;
+            }
+
+            .preview-images {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 10px;
+                margin-top: 20px;
+                border-top: 1px solid #dee2e6;
+                padding-top: 20px;
+            }
+        </style>
+
+        <div class="preview-images"></div>
+
+<!--        <div class="mb-3">-->
+<!--            <label for="itemImages" class="form-label">파일업로드</label>-->
+<!--            <input class="form-control" type="file" id="itemImages" name="itemImages" multiple>-->
+<!--        </div>-->
+
+        <br>
+        <br>
+        <div style="text-align:center">
+        <button class="w-50 btn btn-primary btn-lg" type="submit"
+                th:text="${itemForm.itemId == null ? 'Add Product' : 'Edit Product'}">
+        </button>
+        </div>
+        <br>
+        <br>
+
+    </form>
+</div> <!-- /container -->
+</section>
 </body>
 </html>

@@ -1,7 +1,9 @@
-package com.dsapkl.backend.controller;
+package com.dsapkl.backend.restcontroller.user;
 
+import com.dsapkl.backend.config.AuthenticatedUser;
 import com.dsapkl.backend.dto.DataDto;
 import com.dsapkl.backend.dto.CheckoutRequest;
+import com.dsapkl.backend.exception.UnauthorizedException;
 import com.dsapkl.backend.repository.query.CartQueryDto;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -12,6 +14,8 @@ import com.stripe.model.checkout.Session;
 import com.stripe.param.RefundCreateParams;
 import com.stripe.param.checkout.SessionCreateParams;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
@@ -20,7 +24,7 @@ import java.util.List;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/api")
+@RequestMapping("/user/api")
 public class CheckoutController {
 
     @Value("${stripe.secret.key}")
@@ -79,7 +83,12 @@ public class CheckoutController {
     }
 
     @PostMapping("/checkout/create-checkout-session-single")
-    public Map<String, String> createCheckoutSession(@RequestBody CheckoutRequest request) throws StripeException, JsonProcessingException {
+    public Map<String, String> createCheckoutSession(@RequestBody CheckoutRequest request,
+                                                     @AuthenticationPrincipal AuthenticatedUser user) throws StripeException, JsonProcessingException {
+
+        if (user == null) {
+            throw new UnauthorizedException("로그인이 필요합니다.");
+        }
 
         // Stripe 비밀키 설정
         Stripe.apiKey = secretKey;
@@ -106,7 +115,7 @@ public class CheckoutController {
                         .addLineItem(lineItem)
                         .setMode(SessionCreateParams.Mode.PAYMENT) // 결제 모드
                         .putMetadata("orderInfo", new ObjectMapper().writeValueAsString(request))
-                        .setSuccessUrl("http://localhost:8888/orders/success?sessionId={CHECKOUT_SESSION_ID}") // 성공 시 리다이렉트 URL
+                        .setSuccessUrl("http://localhost:8888/user/orders/success?sessionId={CHECKOUT_SESSION_ID}") // 성공 시 리다이렉트 URL
                         .setCancelUrl("http://localhost:8888/members") // 취소 시 리다이렉트 URL
                         .build();
 

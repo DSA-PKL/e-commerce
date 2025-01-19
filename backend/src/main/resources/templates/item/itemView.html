@@ -89,7 +89,7 @@
             const previewContainer = $(this).siblings('.edit-image-preview');
             const currentImages = $(this).siblings('.current-images');
             previewContainer.empty();
-            
+
             // 새 이미지가 선택되면 기존 이미지 숨기기
             if (e.target.files.length > 0) {
                 currentImages.hide();
@@ -463,7 +463,7 @@
         reviewItem.find('.edit-content').val(content);
         reviewItem.find(`input[name="edit-rating-${reviewId}"][value="${rating}"]`).prop('checked', true);
         reviewItem.find('.review-content, .edit-btn, .btn-outline-danger').hide();
-        
+
         // 이미지 수정 시 기존 이미지 미리보기 숨기기
         reviewItem.find('.edit-images').on('change', function() {
             reviewItem.find('.current-images').hide();
@@ -485,8 +485,8 @@
 <!-- Navigation-->
 <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
     <div class="container px-4 px-lg-5">
-        <a class="navbar-brand" th:href="@{/}">PKLshop</a>
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" 
+        <a class="navbar-brand" th:href="@{/user}">PKLshop</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent"
                 aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
             <span class="navbar-toggler-icon"></span>
         </button>
@@ -530,7 +530,7 @@
                             </button>
                         </th:block>
                     </div>
-                    
+
                     <!-- 썸네일 미리보기를 슬라이더 아래로 이동 -->
                     <div class="thumbnail-preview" th:if="${!item.getItemImageListDto().isEmpty()}">
                         <div class="d-flex flex-wrap gap-2 justify-content-center">
@@ -555,7 +555,7 @@
                         <span class="star-rating" th:text="${'★'.repeat(item.getAverageRating().intValue()) + '☆'.repeat(5 - item.getAverageRating().intValue())}"></span>
                         <span class="text-muted" th:text="'(' + ${#numbers.formatDecimal(item.getAverageRating(), 1, 1)} + ') (' + ${item.getReviewCount()} + ' reviews)'"></span>
                     </div>
-                    
+
                     <div class="fs-4 fw-bold mb-3">
                         <input type="hidden" th:value="${item.itemId}" id="orderItemId" name="orderItemId">
                         <input type="hidden" th:value="${item.price}" id="orderPrice" name="orderPrice">
@@ -572,12 +572,12 @@
                         </div>
                         <div class="input-group" style="width: 200px;">
                             <span class="input-group-text">Stock</span>
-                            <input class="form-control text-center" type="text" 
-                                   th:value="${#numbers.formatInteger(item.stockQuantity, 0, 'COMMA')}" 
+                            <input class="form-control text-center" type="text"
+                                   th:value="${#numbers.formatInteger(item.stockQuantity, 0, 'COMMA')}"
                                    readonly style="background-color: #f8f9fa;"/>
                         </div>
                     </div>
-                    
+
                     <div class="bg-light p-3 rounded mb-3">
                         <div class="fw-bold mb-1">Total Price</div>
                         <div class="fs-4 fw-bold" id="totalPrice"></div>

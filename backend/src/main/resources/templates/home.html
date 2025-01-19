@@ -45,7 +45,7 @@
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
             transition: all 0.4s ease;
         }
-        
+
         .product-card:hover {
             transform: translateY(-8px);
             box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15);
@@ -93,7 +93,7 @@
         .nav-btn:hover {
             transform: translateY(-2px);
         }
-        
+
         .search-btn {
             transition: all 0.3s ease;
         }
@@ -117,12 +117,12 @@
 
             <div class="d-flex gap-2">
                 <form th:action="@{/members}">
-                    <button class="btn btn-outline-dark px-4 rounded-pill nav-btn">
+                    <button class="btn btn-outline-dark px-4 rounded-pill nav-btn" type="submit" th:method="get">
                         Login
                     </button>
                 </form>
                 <form th:action="@{/members/new}">
-                    <button class="btn btn-dark px-4 rounded-pill nav-btn">
+                    <button class="btn btn-dark px-4 rounded-pill nav-btn" type="submit" th:method="get">
                         Sign Up
                     </button>
                 </form>
@@ -140,28 +140,6 @@
         </div>
     </div>
 </header>
-
-<!-- 검색 -->
-<div class="container px-4 px-lg-5 mt-4">
-    <div class="d-flex justify-content-end">
-        <form th:action="@{/}" method="get" class="d-flex gap-2" style="width: 600px;">
-            <select class="form-select rounded-pill" name="category" style="width: 200px;">
-                <option value="">All Categories</option>
-                <option value="APPAREL">Apparel</option>
-                <option value="ELECTRONICS">Electronics</option>
-                <option value="BOOKS">Books</option>
-                <option value="HOME_AND_KITCHEN">Home & Kitchen</option>
-                <option value="HEALTH_AND_BEAUTY">Health & Beauty</option>
-            </select>
-            <input class="form-control rounded-pill" type="search" placeholder="Search products" name="query" />
-            <button class="btn btn-dark rounded-pill px-4 search-btn" type="submit">
-                Search
-            </button>
-        </form>
-    </div>
-</div>
-&nbsp
-
 <!-- Section-->
 <section class="py-5">
     <div class="container px-4 px-lg-5 mt-4">
@@ -182,8 +160,8 @@
                     <!-- 상품 이미지 -->
                     <div class="product-image">
                         <img th:if="${item.getItemImageList() != null and !item.getItemImageList().isEmpty()}"
-                             th:src="${#strings.startsWith(item.getItemImageList().get(0).getStoreName(), 'http')} ? 
-                                     ${item.getItemImageList().get(0).getStoreName()} : 
+                             th:src="${#strings.startsWith(item.getItemImageList().get(0).getStoreName(), 'http')} ?
+                                     ${item.getItemImageList().get(0).getStoreName()} :
                                      |/images/${item.getItemImageList().get(0).getStoreName()}|"
                              alt="Product Image"/>
                         <div th:if="${item.getItemImageList() == null or item.getItemImageList().isEmpty()}"

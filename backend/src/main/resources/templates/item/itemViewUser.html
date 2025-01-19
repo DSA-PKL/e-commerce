@@ -1,0 +1,865 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no"/>
+    <meta name="description" content=""/>
+    <meta name="author" content=""/>
+    <title>PKLshop</title>
+    <script src="https://js.stripe.com/v3/"></script>
+    <!-- Favicon-->
+    <link rel="icon" type="image/x-icon" href="assets/favicon.ico"/>
+    <!-- Bootstrap icons-->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.5.0/font/bootstrap-icons.css" rel="stylesheet"/>
+    <!-- Core theme CSS (includes Bootstrap)-->
+    <link href="/css/styles.css" rel="stylesheet"/>
+
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+</head>
+
+
+<script th:inline="javascript">
+    /*<![CDATA[*/
+    var currentMemberId = /*[[${currentMemberId}]]*/ null;
+    var itemId = /*[[${item.itemId}]]*/ null;
+
+    $(document).ready(function() {
+        loadReviews();
+
+        $("#reviewForm").on("submit", function(e) {
+            e.preventDefault();
+            submitReview();
+        });
+
+        calculateTotalPrice();
+
+        $("#orderCount").on('input change', function() {
+            calculateTotalPrice();
+        });
+
+        // 캐네일 ��릭 이벤트 처리
+        $('.thumbnail-item').click(function() {
+            const slideIndex = $(this).data('slide-index');
+            $('#productImageSlider').carousel(slideIndex);
+
+            // 활성 썸네일 표시 업데이트
+            $('.thumbnail-item img').removeClass('active');
+            $(this).find('img').addClass('active');
+        });
+
+        // 캐러셀 슬라이드 이벤트 처리
+        $('#productImageSlider').on('slide.bs.carousel', function (e) {
+            // 활성 썸네일 업데이트
+            $('.thumbnail-item img').removeClass('active');
+            $('.thumbnail-item').eq(e.to).find('img').addClass('active');
+        });
+
+        // 캐러셀 초기화 (자동 슬라이드 비활성화)
+        var carousel = new bootstrap.Carousel(document.getElementById('productImageSlider'), {
+            interval: false
+        });
+    });
+
+    function submitReview() {
+        if ($("#reviewForm").data("submitting")) {
+            return;
+        }
+        $("#reviewForm").data("submitting", true);
+
+        const rating = $("input[name='rating']:checked").val();
+        const content = $("#reviewContent").val().trim();
+        const formData = new FormData();
+        const files = $("#reviewImages")[0].files;
+
+        if (!rating) {
+            alert("평점을 선택해주세요.");
+            return;
+        }
+
+        if (!content) {
+            alert("리뷰 내용을 입력해주세요.");
+            return;
+        }
+
+        formData.append("itemId", itemId);
+        formData.append("content", content);
+        formData.append("rating", rating);
+
+        if (files.length > 0) {
+            for (let i = 0; i < files.length; i++) {
+                formData.append("images", files[i]);
+            }
+        }
+
+        $.ajax({
+            url: "/api/reviews",
+            method: "POST",
+            data: formData,
+            processData: false,
+            contentType: false,
+            success: function(response) {
+                alert("리뷰가 등록되었습니다.");
+                $("#reviewContent").val("");
+                $("input[name='rating']").prop("checked", false);
+                $("#reviewImages").val("");
+                $("#imagePreview").empty();
+                loadReviews();
+                updateItemRating();
+            },
+            error: function(xhr) {
+                alert(xhr.responseText);
+            }
+        });
+    }
+
+    function loadReviews() {
+        console.log("Loading reviews for item:", itemId);
+        $.ajax({
+            url: `/api/items/${itemId}/reviews`,
+            method: "GET",
+            success: function(reviews) {
+                console.log("Received reviews:", reviews);
+                displayReviews(reviews);
+            },
+            error: function(xhr) {
+                console.error("Failed to load reviews:", xhr);
+            }
+        });
+    }
+
+    function calculateTotalPrice() {
+        var quantity = $("#orderStockQuantity").val() * 1;
+        var count = parseInt($("#orderCount").val()) || 1;
+        var price = parseInt($("#orderPrice").val()) || 0;
+
+        if (count < 1) {
+            $("#orderCount").val(1);
+            count = 1;
+        }
+
+        if (quantity < count) {
+            alert("상품 재고가 부족합니다. 재고:" + quantity + "개");
+            $("#orderCount").val(1);
+            count = 1;
+        }
+
+        var totalPrice = price * count;
+        $("#totalPrice").html(totalPrice.toLocaleString() + '원');
+    }
+
+    function addCart() {
+        const count = parseInt($("#orderCount").val());
+        const itemId = parseInt($("#orderItemId").val());
+
+        var cartForm = {
+            itemId: itemId,
+            count: count
+        };
+
+        $.ajax({
+            url: "/user/cart",
+            data: cartForm,
+            type: 'POST',
+            dataType: 'json',
+            success: function (response) {
+                alert("상품을 담았습니다.");
+                $(".badge.bg-dark.text-white.ms-1.rounded-pill").text(response.count);
+            },
+            error: function (jqXHR) {
+                if (jqXHR.status === 401) {
+                    alert("로그인이 필요합니다.");
+                    location.href = "/members";
+                } else {
+                    alert(jqXHR.responseText);
+                }
+            }
+        });
+    }
+
+    function initiateCheckout() {
+        const stripe = Stripe('pk_test_51QclmbPPwZvRdRPft9sFx9zsufQlSONBFumadXCRUH00AnFSd05QYS1jcjUczdO5u0IR10pgjM36COA7DvmI6iSR00KsLTQ9s2');
+
+        const count = $("#orderCount").val();
+        const itemId = $("#orderItemId").val();
+        const itemName = $(".display-5.fw-bolder").text();
+        const price = $("#orderPrice").val();
+
+        console.log({
+            itemId: itemId,
+            count: count,
+            price: price,
+            itemName: itemName
+        })
+
+        const checkoutData = {
+            itemId: itemId,
+            count: count,
+            price: price,
+            itemName: itemName
+        };
+
+        fetch('/user/api/checkout/create-checkout-session-single', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(checkoutData)
+        })
+            .then(response => response.json())
+            .then(data => {
+                return stripe.redirectToCheckout({ sessionId: data.sessionId})
+                    .then(result => {if (result.error) {alert(result.error.message);}})
+                    .catch(error => {console.error('Error:', error);
+                        alert('결제 처리 중 오류가 발생했습니다.');})
+            });
+    }
+
+    function toggleEditMode() {
+        const viewElements = document.querySelectorAll('.view-mode');
+        const editElements = document.querySelectorAll('.edit-mode');
+
+        viewElements.forEach(el => {
+            el.style.display = el.style.display === 'none' ? '' : 'none';
+        });
+
+        editElements.forEach(el => {
+            el.style.display = el.style.display === 'none' ? '' : 'none';
+        });
+    }
+
+    function updateAverageRating(averageRating, reviewCount) {
+        const stars = '★'.repeat(Math.floor(averageRating)) + '☆'.repeat(5 - Math.floor(averageRating));
+        $('.star-rating').first().text(stars);
+        $('.text-muted').first().text(`(${averageRating.toFixed(1)}) (${reviewCount}개의 리뷰)`);
+    }
+
+    function saveReview(reviewId) {
+        const reviewItem = $(`.review-item[data-review-id="${reviewId}"]`);
+        const content = reviewItem.find('.edit-content').val();
+        const rating = reviewItem.find(`input[name="edit-rating-${reviewId}"]:checked`).val();
+        const formData = new FormData();
+        const files = reviewItem.find('.edit-images')[0].files;
+
+        if (!rating) {
+            alert("평점을 선택해주세요.");
+            return;
+        }
+
+        if (!content || content.trim() === '') {
+            alert("리뷰 내용을 입력해주세요.");
+            return;
+        }
+
+        formData.append("itemId", itemId);
+        formData.append("content", content.trim());
+        formData.append("rating", rating);
+
+        if (files.length > 0) {
+            for (let i = 0; i < files.length; i++) {
+                formData.append("images", files[i]);
+            }
+        }
+
+        $.ajax({
+            url: `/api/reviews/${reviewId}`,
+            method: "PUT",
+            processData: false,
+            contentType: false,
+            data: formData,
+            success: function() {
+                alert("리뷰가 수정되었습니다.");
+                loadReviews();
+                updateItemRating();
+            },
+            error: function(xhr) {
+                alert(xhr.responseText);
+            }
+        });
+    }
+
+    function deleteReview(reviewId) {
+        if (!confirm("리뷰를 삭제하시겠습니까?")) return;
+
+        $.ajax({
+            url: `/api/reviews/${reviewId}`,
+            method: "DELETE",
+            success: function() {
+                alert("리뷰가 삭제되었습니다.");
+                loadReviews();
+                updateItemRating();
+                $("#reviewContent").val("");
+                $("input[name='rating']").prop("checked", false);
+            },
+            error: function(xhr) {
+                alert(xhr.responseText);
+            }
+        });
+    }
+
+    function updateItemRating() {
+        $.ajax({
+            url: `/api/items/${itemId}/rating`,
+            method: "GET",
+            success: function(response) {
+                updateAverageRating(response.averageRating, response.reviewCount);
+            },
+            error: function(xhr) {
+                console.error("Failed to update rating:", xhr);
+            }
+        });
+    }
+    /*]]>*/
+</script>
+
+<body>
+<!-- Navigation-->
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark" style="background-color: #e3f2fd;">
+    <div class="container px-4 px-lg-5">
+        <a class="navbar-brand" th:href="@{/user}">Home</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent"
+                aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation"><span
+                class="navbar-toggler-icon"></span></button>
+        <div class="collapse navbar-collapse" id="navbarSupportedContent">
+            <ul class="navbar-nav me-auto mb-2 mb-lg-0 ms-lg-4">
+
+            </ul>
+            <form class="d-flex" method="get" th:action="@{/user/cart}">
+                <button class="btn btn-light btn-outline-secondary" type="submit">
+
+                    <i class="bi-cart-fill me-1"></i>
+                    Cart
+                    <span class="badge bg-dark text-white ms-1 rounded-pill" th:text="${cartItemCount}">0</span>
+                </button>
+            </form>
+        </div>
+    </div>
+</nav>
+<!-- Product section-->
+<section class="py-5">
+    <div class="container px-4 px-lg-5 my-5" th:object="${item}">
+        <div class="row gx-4 gx-lg-5 align-items-center">
+            <div class="col-md-6">
+                <!-- 메인 이미지 슬라이더 -->
+                <div id="productImageSlider" class="carousel slide mb-5 mb-md-0 view-mode">
+                    <div class="carousel-inner">
+                        <!-- 이미지가 없을 경우 기본 이미지 표시 -->
+                        <div th:if="${item.getItemImageListDto().isEmpty()}" class="carousel-item active">
+                            <img src="/images/default-image.jpg" class="d-block w-100"
+                                 style="width: 100%; height: 500px; object-fit: contain; background-color: #f8f9fa;" alt="기본 이미지">
+                        </div>
+                        <!-- 이미지 리스트 순회 -->
+                        <div th:each="image, iterStat : ${item.getItemImageListDto()}"
+                             th:class="${iterStat.first} ? 'carousel-item active' : 'carousel-item'">
+                            <img th:src="|/images/${image.getStoreName()}|" class="d-block w-100"
+                                 style="width: 100%; height: 500px; object-fit: contain; background-color: #f8f9fa;"
+                                 th:alt="${item.getName()}">
+                        </div>
+                    </div>
+                    <!-- 이미지가 2개 이상일 때만 컨트롤 버튼 표시 -->
+                    <th:block th:if="${item.getItemImageListDto().size() > 1}">
+                        <button class="carousel-control-prev" type="button" data-bs-target="#productImageSlider" data-bs-slide="prev">
+                            <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                            <span class="visually-hidden">Previous</span>
+                        </button>
+                        <button class="carousel-control-next" type="button" data-bs-target="#productImageSlider" data-bs-slide="next">
+                            <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                            <span class="visually-hidden">Next</span>
+                        </button>
+                    </th:block>
+                </div>
+
+                <!-- 썸네일 미미리보기 추가 -->
+                <div class="thumbnail-preview mt-3" th:if="${!item.getItemImageListDto().isEmpty()}">
+                    <div class="d-flex justify-content-center flex-wrap gap-2">
+                        <div th:each="image, iterStat : ${item.getItemImageListDto()}"
+                             class="thumbnail-item"
+                             th:data-slide-index="${iterStat.index}">
+                            <img th:src="|/images/${image.getStoreName()}|"
+                                 th:class="${iterStat.first} ? 'active' : ''"
+                                 style="width: 60px; height: 60px; object-fit: contain; cursor: pointer;"
+                                 th:alt="${item.getName()}">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 수정 모드의 이미지 표시 부분은 그대로 유지 -->
+                <div class="edit-mode" style="display: none;">
+                    <div class="current-images mb-3">
+                        <label class="form-label">현재 이미지</label>
+                        <div class="d-flex flex-wrap gap-3">
+                            <div th:each="image : ${item.itemImageListDto}" class="position-relative">
+                                <img th:src="|/images/${image.storeName}|"
+                                     style="width: 200px; height: 200px; object-fit: contain; background-color: #f8f9fa;"
+                                     class="img-thumbnail">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <div class="view-mode">
+                    <h1 class="display-5 fw-bolder" th:text="${item.getName()}">Shop item template</h1>
+                    <div class="mb-2">
+                        <span class="star-rating" th:text="${'★'.repeat(item.getAverageRating().intValue()) + '☆'.repeat(5 - item.getAverageRating().intValue())}"></span>
+                        <span class="text-muted" th:text="'(' + ${#numbers.formatDecimal(item.getAverageRating(), 1, 1)} + ') (' + ${item.getReviewCount()} + '개의 리뷰)'"></span>
+                    </div>
+                    <input type="hidden" th:value="${item.itemId}" id="orderItemId" name="orderItemId">
+                    <div class="fs-5 mb-5">
+                        <input type="hidden" th:value="${item.price}" id="orderPrice" name="orderPrice">
+                        <input type="hidden" th:value="${item.stockQuantity}" id="orderStockQuantity" name="orderStockQuantity">
+                        <span class="text-decoration-none" th:text="${#numbers.formatInteger(item.price, 0, 'COMMA')}"></span>원
+                    </div>
+                    <div class="input-group fs-5 mb-5">
+                        <div class="input-group-prepend">
+                            <span class="input-group-text">주문 수량</span>
+                        </div>
+                        <input class="form-control text-center me-3" id="orderCount" name="orderCount" type="number"
+                               value="1" min="1" th:max="${item.stockQuantity}" style="max-width: 5rem"/>
+                        <span class="input-group-text">
+                        <span style="color: black;">구매 가능 수량: </span>
+                            <span style="color: red;" th:text=" ' ' + ${#numbers.formatInteger(item.stockQuantity, 0, 'COMMA')}"></span>
+                    </span>
+                    </div>
+                    <div class="container bg-light">
+                        <h6>총 상품 금액</h6>
+                        <h4 name="totalPrice" id="totalPrice" class="font-weight-bold"></h4>
+                    </div>
+                </div>
+
+                <form th:action="@{/admin/items/{itemId}/edit(itemId=${item.itemId})}"
+                      method="post" enctype="multipart/form-data"
+                      class="edit-mode" style="display: none;">
+                    <input type="hidden" th:value="${item.itemId}" name="itemId">
+                    <div class="mb-3">
+                        <label for="name" class="form-label">상품명</label>
+                        <input type="text" class="form-control" id="name" name="name"
+                               th:value="${item.getName()}" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="price" class="form-label">가격</label>
+                        <input type="number" class="form-control" id="price" name="price"
+                               th:value="${item.getPrice()}" min="0" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="stockQuantity" class="form-label">재고 수량</label>
+                        <input type="number" class="form-control" id="stockQuantity" name="stockQuantity"
+                               th:value="${item.getStockQuantity()}" min="0" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="description" class="form-label">상품 설명</label>
+                        <textarea class="form-control" id="description" name="description"
+                                  rows="3" required th:text="${item.getDescription()}"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label for="formFileMultiple" class="form-label">이미지 수정</label>
+                        <input class="form-control" type="file" id="formFileMultiple" name="itemImages" multiple accept="image/*">
+                        <div class="preview-images mt-2 d-flex flex-wrap gap-2"></div>
+                    </div>
+                    <button type="submit" class="btn btn-primary">저장</button>
+                    <button type="button" class="btn btn-secondary" onclick="toggleEditMode()">취소</button>
+                </form>
+
+                <div class="d-flex mt-4">
+                    <button class="btn btn-outline-dark view-mode"
+                            type="button" th:onclick="initiateCheckout()">
+                        바로 구매하기
+                    </button>
+
+                    &nbsp;
+                    <button class="btn btn-outline-dark flex-shrink-0 view-mode" type="button" th:onclick="addCart()">
+                        <i class="bi-cart-fill me-1"></i>
+                        장바구니 담기
+                    </button>
+
+                    &nbsp;
+<!--                    <button class="btn btn-primary flex-shrink-0 view-mode"-->
+<!--                            onclick="toggleEditMode()">-->
+<!--                        수정하기-->
+<!--                    </button>-->
+                    &nbsp;
+<!--                    <form th:action="@{/admin/items/{itemId}/delete(itemId=${item.itemId})}" method="post" class="view-mode">-->
+<!--                        <button class="btn btn-danger flex-shrink-0" type="submit">-->
+<!--                            삭제하기-->
+<!--                        </button>-->
+<!--                    </form>-->
+                </div>
+            </div>
+        </div>
+
+    </div>
+</section>
+<!-- Product Description and Original Image Section -->
+<section class="py-5 bg-light view-mode">
+    <div class="container">
+        <div class="row">
+            <div class="col-md-6">
+                <!-- Original Size Image -->
+                <div class="mb-4">
+                    <h4 class="mb-3">상품 상세 이미지</h4>
+                    <div th:each="image : ${item.itemImageListDto}" class="mb-3">
+                        <img th:src="|/images/${image.storeName}|"
+                             class="img-fluid"
+                             style="width: 100%; height: 500px; object-fit: contain; background-color: #f8f9fa;"
+                             th:alt="${item.name}">
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <!-- Product Description -->
+                <div class="mb-4">
+                    <h4 class="mb-3">상품 설명</h4>
+                    <p class="lead" style="white-space: pre-line;" th:text="${item.description}"></p>
+                </div>
+            </div>
+        </div>
+    </div>
+    <hr class="my-4">
+</section>
+
+<!-- Reviews Section -->
+<div class="container view-mode">
+    <h3 class="mb-4">상품 리뷰</h3>
+
+    <!-- Review Form -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <h5 class="card-title">리뷰 작성</h5>
+            <div th:if="${currentMemberId == null}" class="alert alert-warning">
+                리뷰를 작성하려면 <a href="/members">로그인</a>이 필요합니다.
+            </div>
+            <form id="reviewForm" th:if="${currentMemberId != null}">
+                <input type="hidden" id="itemId" th:value="${item.itemId}">
+                <div class="mb-3">
+                    <label class="form-label">평점</label>
+                    <div class="rating">
+                        <input type="radio" name="rating" value="5" id="5"><label for="5">☆</label>
+                        <input type="radio" name="rating" value="4" id="4"><label for="4">☆</label>
+                        <input type="radio" name="rating" value="3" id="3"><label for="3">☆</label>
+                        <input type="radio" name="rating" value="2" id="2"><label for="2">☆</label>
+                        <input type="radio" name="rating" value="1" id="1"><label for="1">☆</label>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label for="reviewContent" class="form-label">리뷰 내용</label>
+                    <textarea class="form-control" id="reviewContent" rows="3" required></textarea>
+                </div>
+                <div class="mb-3">
+                    <label for="reviewImages" class="form-label">이미지 첨부</label>
+                    <input class="form-control" type="file" id="reviewImages" name="images" multiple accept="image/*">
+                    <div id="imagePreview" class="mt-2 d-flex flex-wrap gap-2"></div>
+                </div>
+                <button type="submit" class="btn btn-primary">리뷰 등록</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Reviews List -->
+    <div id="reviewsList">
+        <!-- Reviews will be loaded here -->
+    </div>
+</div>
+<!-- Footer-->
+<footer class="py-5 bg-dark">
+    <div class="container"><p class="m-0 text-center text-white">Copyright &copy; PKLshop</p></div>
+</footer>
+<!-- Bootstrap core JS-->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
+<!-- Core theme JS-->
+<!--<script src="js/scripts.js"></script>-->
+
+<style>
+    .preview-images {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: 20px;
+    }
+
+    .preview-images img {
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        padding: 5px;
+        width: 200px;
+        height: 200px;
+        object-fit: contain;
+    }
+
+    .rating {
+        display: flex;
+        flex-direction: row-reverse;
+        justify-content: flex-end;
+    }
+
+    .rating > input {
+        display: none;
+    }
+
+    .rating > label {
+        position: relative;
+        width: 1.1em;
+        font-size: 2em;
+        color: #FFD700;
+        cursor: pointer;
+    }
+
+    .rating > label::before {
+        content: "★";
+        position: absolute;
+        opacity: 0;
+    }
+
+    .rating > label:hover:before,
+    .rating > label:hover ~ label:before {
+        opacity: 1 !important;
+    }
+
+    .rating > input:checked ~ label:before {
+        opacity: 1;
+    }
+
+    .review-item {
+        border-bottom: 1px solid #dee2e6;
+        padding: 1rem 0;
+    }
+
+    .review-item:last-child {
+        border-bottom: none;
+    }
+
+    .star-rating {
+        color: #FFD700;
+    }
+
+    .carousel-control-prev,
+    .carousel-control-next {
+        background-color: rgba(0, 0, 0, 0.3);
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        top: 50%;
+        transform: translateY(-50%);
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+
+    .carousel-control-prev {
+        left: 10px;
+    }
+
+    .carousel-control-next {
+        right: 10px;
+    }
+
+    #productImageSlider:hover .carousel-control-prev,
+    #productImageSlider:hover .carousel-control-next {
+        opacity: 0.8;
+    }
+
+    .carousel-control-prev:hover,
+    .carousel-control-next:hover {
+        opacity: 1 !important;
+    }
+
+    .thumbnail-preview {
+        margin-top: 20px;
+    }
+
+    .thumbnail-item img {
+        border: 2px solid transparent;
+        border-radius: 4px;
+        transition: all 0.2s ease-in-out;
+        padding: 2px;
+    }
+
+    .thumbnail-item img:hover {
+        border-color: #666;
+    }
+
+    .thumbnail-item img.active {
+        border-color: #0d6efd;
+    }
+</style>
+
+<script>
+    document.querySelector('input[name="itemImages"]').addEventListener("change", function(event) {
+        const fileInput = event.target;
+        const previewContainer = document.querySelector(".preview-images");
+        previewContainer.innerHTML = ""; // 이전 미리보기 초기화
+
+        Array.from(fileInput.files).forEach(file => {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const img = document.createElement("img");
+                img.src = e.target.result;
+                img.style.width = '200px';
+                img.style.height = '200px';
+                img.style.objectFit = 'contain';
+                img.style.border = '1px solid #dee2e6';
+                img.style.borderRadius = '0.25rem';
+                previewContainer.appendChild(img);
+            };
+            reader.readAsDataURL(file);
+        });
+    });
+
+    function displayReviews(reviews) {
+        const reviewsList = $("#reviewsList");
+        reviewsList.empty();
+
+        if (reviews.length === 0) {
+            reviewsList.append('<p class="text-center">아직 리뷰가 없습니다.</p>');
+            return;
+        }
+
+        reviews.forEach(review => {
+            const stars = "★".repeat(review.rating) + "☆".repeat(5 - review.rating);
+            const date = new Date(review.createdDate);
+            const formattedDate = date.toLocaleString('ko-KR', {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit',
+                hour12: false
+            });
+
+            const reviewHtml = `
+                <div class="review-item border-bottom py-3" data-review-id="${review.reviewId}">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h5 class="mb-0">${review.memberName}</h5>
+                            <div class="d-flex align-items-center gap-2">
+                                <span class="star-rating">${stars}</span>
+                                <small class="text-muted">${formattedDate}</small>
+                            </div>
+                        </div>
+                    </div>
+                    <p class="review-content mt-2">${review.content}</p>
+                    <div class="review-images d-flex gap-2 mt-2">
+                        ${review.reviewImages ? review.reviewImages.map(img => `
+                            <img src="/images/${img.storeFileName}"
+                                 alt="리뷰 이미지"
+                                 style="width: 200px; height: 200px; object-fit: contain;"
+                                 class="rounded border">
+                        `).join('') : ''}
+                    </div>
+                    ${review.memberId === currentMemberId ? `
+                        <div class="mt-2">
+                            <button class="btn btn-sm btn-outline-primary edit-btn"
+                                    onclick="editReview(${review.reviewId}, '${review.content}', ${review.rating})">수정</button>
+                            <button class="btn btn-sm btn-outline-danger"
+                                    onclick="deleteReview(${review.reviewId})">삭제</button>
+                        </div>
+                        <div class="edit-form" style="display: none;">
+                            <div class="mb-3">
+                                <label class="form-label">평점</label>
+                                <div class="rating edit-rating">
+                                    <input type="radio" name="edit-rating-${review.reviewId}" value="5" id="edit-5-${review.reviewId}"><label for="edit-5-${review.reviewId}">☆</label>
+                                    <input type="radio" name="edit-rating-${review.reviewId}" value="4" id="edit-4-${review.reviewId}"><label for="edit-4-${review.reviewId}">☆</label>
+                                    <input type="radio" name="edit-rating-${review.reviewId}" value="3" id="edit-3-${review.reviewId}"><label for="edit-3-${review.reviewId}">☆</label>
+                                    <input type="radio" name="edit-rating-${review.reviewId}" value="2" id="edit-2-${review.reviewId}"><label for="edit-2-${review.reviewId}">☆</label>
+                                    <input type="radio" name="edit-rating-${review.reviewId}" value="1" id="edit-1-${review.reviewId}"><label for="edit-1-${review.reviewId}">☆</label>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <textarea class="form-control edit-content" rows="3"></textarea>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">이미지 수정</label>
+                                <div class="current-images mb-2">
+                                    ${review.reviewImages ? review.reviewImages.map(img => `
+                                        <div class="position-relative d-inline-block">
+                                            <img src="/images/${img.storeFileName}"
+                                                 alt="현재 이미지"
+                                                 style="width: 100px; height: 100px; object-fit: contain;"
+                                                 class="rounded border">
+                                        </div>
+                                    `).join('') : ''}
+                                </div>
+                                <input type="file" class="form-control edit-images"
+                                       multiple accept="image/*"
+                                       id="edit-images-${review.reviewId}">
+                                <div class="edit-image-preview mt-2 d-flex gap-2"></div>
+                            </div>
+                            <button class="btn btn-primary btn-sm save-edit"
+                                    onclick="saveReview(${review.reviewId})">저장</button>
+                            <button class="btn btn-secondary btn-sm"
+                                    onclick="cancelEdit(${review.reviewId})">취소</button>
+                        </div>
+                    ` : ''}
+                </div>
+            `;
+            reviewsList.append(reviewHtml);
+        });
+    }
+
+    function editReview(reviewId, content, rating) {
+        const reviewItem = $(`.review-item[data-review-id="${reviewId}"]`);
+        reviewItem.find('.edit-form').show();
+        reviewItem.find('.edit-content').val(content);
+        reviewItem.find(`input[name="edit-rating-${reviewId}"][value="${rating}"]`).prop('checked', true);
+        reviewItem.find('.review-content, .edit-btn, .btn-outline-danger').hide();
+    }
+
+    function cancelEdit(reviewId) {
+        const reviewItem = $(`.review-item[data-review-id="${reviewId}"]`);
+        reviewItem.find('.edit-form').hide();
+        reviewItem.find('.review-content, .edit-btn, .btn-outline-danger').show();
+    }
+
+    function deleteReview(reviewId) {
+        if (!confirm("리뷰를 삭제하시겠습니까?")) return;
+
+        $.ajax({
+            url: `/api/reviews/${reviewId}`,
+            method: "DELETE",
+            success: function() {
+                alert("리뷰가 삭제되었습니다.");
+                loadReviews();
+                updateItemRating();
+                $("#reviewContent").val("");
+                $("input[name='rating']").prop("checked", false);
+            },
+            error: function(xhr) {
+                alert(xhr.responseText);
+            }
+        });
+    }
+
+    function updateItemRating() {
+        $.ajax({
+            url: `/api/items/${itemId}/rating`,
+            method: "GET",
+            success: function(response) {
+                updateAverageRating(response.averageRating, response.reviewCount);
+            },
+            error: function(xhr) {
+                console.error("Failed to update rating:", xhr);
+            }
+        });
+    }
+
+    // 이미지 미리보기
+    document.getElementById('reviewImages').addEventListener('change', function(e) {
+        const preview = document.getElementById('imagePreview');
+        preview.innerHTML = '';
+
+        Array.from(e.target.files).forEach(file => {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const img = document.createElement('img');
+                img.src = e.target.result;
+                img.style.width = '200px';
+                img.style.height = '200px';
+                img.style.objectFit = 'contain';
+                img.style.border = '1px solid #dee2e6';
+                img.style.borderRadius = '0.25rem';
+                preview.appendChild(img);
+            }
+            reader.readAsDataURL(file);
+        });
+    });
+</script>
+</body>
+</html>
