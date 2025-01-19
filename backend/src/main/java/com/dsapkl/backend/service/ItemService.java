@@ -213,4 +213,8 @@ public class ItemService {
         itemForm.setItemImageListDto(itemImageDtos);
         return itemForm;
     }
+
+    public long count() {
+        return itemRepository.count();  // JPA Repository의 기본 count() 메서드 사용
+    }
 }

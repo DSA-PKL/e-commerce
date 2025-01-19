@@ -214,8 +214,8 @@ public class ItemController {
             })
             .collect(Collectors.toList());
             
-        // 통계 계산
-        long totalItems = itemForms.size();
+        // 통계 계산 - 전체 상품 수를 실제 DB의 전체 데이터로 수정
+        long totalItems = itemService.count();  // 변경된 부분
         long lowStockItems = itemForms.stream()
                 .filter(item -> item.getStockQuantity() <= 10 && item.getStockQuantity() > 0)
                 .count();
