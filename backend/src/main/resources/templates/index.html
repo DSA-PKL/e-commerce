@@ -169,18 +169,15 @@
     <div class="d-flex justify-content-end">
         <form th:action="@{/}" method="get" class="d-flex gap-2" style="width: 600px;">
             <select class="form-select rounded-pill" name="category" style="width: 200px;">
-                <option value="">All Categories</option>
-                <option value="APPAREL">Apparel</option>
-                <option value="ELECTRONICS">Electronics</option>
-                <option value="BOOKS">Books</option>
-                <option value="HOME_AND_KITCHEN">Home & Kitchen</option>
-                <option value="HEALTH_AND_BEAUTY">Health & Beauty</option>
+                <option value="" th:selected="${selectedCategory == null}">All Categories</option>
+                <option value="APPAREL" th:selected="${selectedCategory == T(com.dsapkl.backend.entity.Category).APPAREL}">Apparel</option>
+                <option value="ELECTRONICS" th:selected="${selectedCategory == T(com.dsapkl.backend.entity.Category).ELECTRONICS}">Electronics</option>
+                <option value="BOOKS" th:selected="${selectedCategory == T(com.dsapkl.backend.entity.Category).BOOKS}">Books</option>
+                <option value="HOME_AND_KITCHEN" th:selected="${selectedCategory == T(com.dsapkl.backend.entity.Category).HOME_AND_KITCHEN}">Home & Kitchen</option>
+                <option value="HEALTH_AND_BEAUTY" th:selected="${selectedCategory == T(com.dsapkl.backend.entity.Category).HEALTH_AND_BEAUTY}">Health & Beauty</option>
             </select>
-            <input 
-                class="form-control rounded-pill" 
-                type="search" 
-                placeholder="Search products" 
-                name="query" />
+            <input class="form-control rounded-pill" type="search" placeholder="Search products" 
+                   name="query" th:value="${searchQuery}"/>
             <button class="btn btn-dark rounded-pill px-4 search-btn" type="submit">
                 Search
             </button>

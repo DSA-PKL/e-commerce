@@ -46,41 +46,52 @@
         })
     }
 
+    document.addEventListener('DOMContentLoaded', function() {
+        // 취소 버튼에 이벤트 리스너 추가
+        document.querySelectorAll('.cancel-order-btn').forEach(button => {
+            button.addEventListener('click', function() {
+                const orderId = this.getAttribute('data-order-id');
+                const paymentIntentId = this.getAttribute('data-payment-intent-id');
+                cancelOrder(orderId, paymentIntentId);
+            });
+        });
+    });
+
     function cancelOrder(orderId, paymentIntentId) {
         if (!confirm('Are you sure you want to cancel this order?')) {
             return;
         }
 
-        //1. 먼저 Stripe 환불 처리
         fetch(`/api/refund?paymentIntentId=${paymentIntentId}`, {
-            method: 'POST'
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            }
         })
-            .then(response => response.json())
-            .then(data => {
-                if (data.status === 'success') {
-                    fetch(`/order/${orderId}/cancel`, {
-                        method: 'POST'
-                    })
-                        .then(response => {
-                            if (response.ok) {
-                                alert('The order has been canceled.');
-                                window.location.reload();
-                            } else {
-                                alert('Failed to cancel the order.');
-                            }
-                        })
-                        .catch(error => {
-                            console.error('Error', error);
-                            alert('An error occurred while canceling the order.');
-                        });
-                } else {
-                    alert('Failed to process the refund: ' + data.error);
-                }
-            })
-            .catch(error => {
-                console.error('Error: ', error);
-                alert('An error occurred while processing the refund.');
-            });
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                return fetch(`/order/${orderId}/cancel`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+            } else {
+                throw new Error(data.error || 'Failed to process refund');
+            }
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Failed to cancel order');
+            }
+            alert('The order has been canceled successfully.');
+            location.reload();
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert(error.message || 'An error occurred while processing your request.');
+        });
     }
 
 </script>
@@ -123,7 +134,8 @@
                 <div class="card-header bg-white py-3">
                     <div class="d-flex justify-content-between align-items-center">
                         <h5 class="mb-0" th:text="${order.orderDate} + ' Order'"></h5>
-                        <span class="badge bg-primary" 
+                        <span class="badge" 
+                              th:classappend="${order.orderStatus.name() == 'ORDER' ? 'bg-primary' : 'bg-danger'}"
                               th:text="${order.orderStatus.name() == 'ORDER' ? 'Processing' : 'Cancelled'}">
                         </span>
                     </div>
@@ -134,9 +146,15 @@
                     <div th:each="orderItem : ${order.getOrderItemDtoList()}" class="mb-3">
                         <div class="row align-items-center">
                             <div class="col-md-2">
-                                <img th:src="|/images/${orderItem.getImgUrl()}|"
+                                <img th:if="${orderItem.imgUrl != null}"
+                                     th:src="${orderItem.imgUrl.startsWith('http') ? orderItem.imgUrl : '/images/' + orderItem.imgUrl}"
                                      class="img-fluid rounded" alt="Product Image"
                                      style="width: 100px; height: 100px; object-fit: contain;">
+                                <div th:unless="${orderItem.imgUrl != null}" 
+                                     class="d-flex align-items-center justify-content-center bg-light rounded" 
+                                     style="width: 100px; height: 100px;">
+                                    <i class="bi bi-image text-muted" style="font-size: 2rem;"></i>
+                                </div>
                             </div>
                             <div class="col-md-4">
                                 <h6 class="mb-1" th:text="${orderItem.itemName}"></h6>
@@ -170,8 +188,9 @@
                                 </h5>
                             </div>
                             <div th:if="${order.orderStatus.name() == 'ORDER'}">
-                                <button class="btn btn-outline-dark" 
-                                        th:onclick="|cancelOrder(${order.orderId}, '${order.paymentIntentId}')|">
+                                <button class="btn btn-outline-dark cancel-order-btn" 
+                                        th:data-order-id="${order.orderId}"
+                                        th:data-payment-intent-id="${order.paymentIntentId}">
                                     Cancel Order
                                 </button>
                             </div>

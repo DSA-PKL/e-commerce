@@ -147,10 +147,76 @@
         .product-link {
             color: var(--primary-color);
             text-decoration: none;
+            font-size: 0.95rem;
+            line-height: 1.2;
+            margin-left: 0.5rem;
         }
 
         .product-link:hover {
             color: var(--primary-color);
+            text-decoration: underline;
+        }
+
+        .img-fluid {
+            max-width: 100%;
+            height: auto;
+            object-fit: cover;
+        }
+
+        .rounded {
+            border-radius: 0.5rem !important;
+        }
+
+        /* 이미지 컨테이너 호버 효과 */
+        .image-container {
+            overflow: hidden;
+            transition: transform 0.2s;
+        }
+
+        .image-container:hover {
+            transform: scale(1.05);
+        }
+
+        /* 상품 이미지 관련 스타일 */
+        .product-image-container {
+            width: 80px;
+            height: 80px;
+            min-width: 80px;
+            min-height: 80px;
+            background-color: #f8f9fa;
+            border-radius: 0.5rem;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid #dee2e6;
+            margin-right: 0.5rem;
+        }
+
+        .image-wrapper, .no-image-wrapper {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .product-image {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            padding: 4px;
+            background-color: #f8f9fa;
+        }
+
+        .no-image-wrapper i {
+            font-size: 1.5rem;
+            color: #adb5bd;
+        }
+
+        /* 호버 효과 */
+        .product-image-container:hover {
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
         }
     </style>
 
@@ -433,32 +499,23 @@
                         <td>
 
                             <div class="d-flex align-items-center">
-
-                                <img th:if="${!item.getItemImageListDto().isEmpty()}"
-
-                                     th:src="|/images/${item.getItemImageListDto().get(0).getStoreName()}|"
-
-                                     class="rounded"
-
-                                     alt="Product Image">
-
-                                <img th:unless="${!item.getItemImageListDto().isEmpty()}"
-
-                                     src="https://dummyimage.com/40x40/dee2e6/6c757d.jpg"
-
-                                     class="rounded"
-
-                                     alt="Default Image">
-
+                                <div class="product-image-container">
+                                    <div th:if="${item.getItemImageListDto() != null and !item.getItemImageListDto().isEmpty()}"
+                                         class="image-wrapper">
+                                        <img th:src="${item.getItemImageListDto().get(0).getImageUrl()}"
+                                             alt="Product Image" 
+                                             class="product-image">
+                                    </div>
+                                    <div th:if="${item.getItemImageListDto() == null or item.getItemImageListDto().isEmpty()}"
+                                         class="no-image-wrapper">
+                                        <i class="bi bi-image text-muted"></i>
+                                    </div>
+                                </div>
                                 <div class="ms-3">
-
-                                    <a th:href="@{/items/{id}(id=${item.itemId})}" 
-                                       class="product-link">
+                                    <a th:href="@{/items/{id}(id=${item.itemId})}" class="product-link">
                                         <p class="fw-bold mb-0" th:text="${item.name}">Product Name</p>
                                     </a>
-
                                 </div>
-
                             </div>
 
                         </td>

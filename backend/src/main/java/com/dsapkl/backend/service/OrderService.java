@@ -158,10 +158,21 @@ public class OrderService {
     /*
      * 주문 취소
      */
+    @Transactional
     public void cancelOrder(Long orderId) {
-        Order findOrder = orderRepository.findById(orderId).orElseGet(() -> null);
-        findOrder.cancelOrder();
-        orderRepository.flush();
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new IllegalArgumentException("Order not found"));
+                
+        // 이미 취소된 주문인지 확인
+        if (order.getStatus() == OrderStatus.CANCEL) {
+            throw new IllegalStateException("Already cancelled order");
+        }
+        
+        // 주문 취소 처리
+        order.cancelOrder();
+        
+        // 재고 원복
+        order.getOrderItems().forEach(OrderItem::cancel);
     }
 
     public List<LineItem> retrieveLineItems(String sessionId) throws StripeException {

@@ -80,6 +80,29 @@
         .delete-button:hover {
             color: var(--primary-color);
         }
+
+        /* 카트 이미지 관련 스타일 추가 */
+        .cart-image-container {
+            width: 100px;
+            height: 100px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: #f8f9fa;
+            border-radius: 0.5rem;
+            overflow: hidden;
+        }
+
+        .cart-item-image {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            padding: 5px;
+        }
+
+        .cart-item-image:hover {
+            transform: scale(1.05);
+        }
     </style>
 
 </head>
@@ -248,7 +271,15 @@
                                        class="form-check-input">
                             </div>
                             <div class="col-md-2 col-lg-2 col-xl-2">
-                                <img th:src="|/images/${cartItem.getImgUrl()}|" class="img-fluid rounded-3 cart-item-image" alt="CartItem">
+                                <div th:if="${cartItem.imgUrl != null}" class="cart-image-container">
+                                    <img th:src="${cartItem.imgUrl.startsWith('http') ? cartItem.imgUrl : '/images/' + cartItem.imgUrl}"
+                                         class="img-fluid rounded-3 cart-item-image" 
+                                         alt="CartItem">
+                                </div>
+                                <div th:unless="${cartItem.imgUrl != null}" 
+                                     class="cart-image-container d-flex align-items-center justify-content-center bg-light">
+                                    <i class="bi bi-image text-muted" style="font-size: 2rem;"></i>
+                                </div>
                             </div>
                             <div class="col-md-3 col-lg-3 col-xl-3">
                                 <p class="lead fw-normal mb-2" id="name" th:field="${cartItem.itemName}" th:text="${cartItem.itemName}">Basic T-shirt</p>

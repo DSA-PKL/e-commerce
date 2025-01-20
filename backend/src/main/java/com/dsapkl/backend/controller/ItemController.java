@@ -7,6 +7,7 @@ import com.dsapkl.backend.entity.Category;
 import com.dsapkl.backend.entity.Item;
 import com.dsapkl.backend.entity.ItemImage;
 import com.dsapkl.backend.entity.Member;
+import com.dsapkl.backend.repository.MemberRepository;
 import com.dsapkl.backend.repository.query.CartQueryDto;
 import com.dsapkl.backend.service.CartService;
 import com.dsapkl.backend.service.ItemImageService;
@@ -17,6 +18,7 @@ import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
+import org.apache.catalina.security.SecurityUtil;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.ResponseEntity;
@@ -25,6 +27,7 @@ import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.beans.factory.annotation.Value;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -34,6 +37,8 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import static com.dsapkl.backend.controller.CartController.getMember;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Controller
 //@Slf4j
@@ -42,6 +47,11 @@ public class ItemController {
     private final ItemService itemService;
     private final ItemImageService itemImageService;
     private final CartService cartService;
+    private static final Logger log = LoggerFactory.getLogger(ItemController.class);
+    private final MemberRepository memberRepository;
+
+    @Value("${stripe.public.key}")
+    private String stripePublicKey;
 
 //    APPAREL, ELECTRONICS, BOOKS, HOME_AND_KITCHEN, HEALTH_AND_BEAUTY
 
@@ -98,36 +108,34 @@ public class ItemController {
     /**
      * 상품 상세 조회
      */
-    @GetMapping("items/{itemId}")
-    public String itemView(@PathVariable(name = "itemId") Long itemId, Model model, HttpServletRequest request) {
-        Item item = itemService.findItem(itemId);
-        if (item == null) {
+    @GetMapping("/items/{itemId}")
+    public String itemView(@PathVariable("itemId") Long itemId, Model model, HttpServletRequest request) {
+        try {
+            // 상품 조회
+            ItemForm itemForm = itemService.getItemDtl(itemId);
+            if (itemForm == null) {
+                return "redirect:/";
+            }
+
+            // 현재 로그인한 회원 정보 조회
+            Member member = getMember(request);
+            
+            // 장바구니 아이템 카운트
+            if (member != null) {
+                List<CartQueryDto> cartItems = cartService.findCartItems(member.getId());
+                model.addAttribute("cartItemCount", cartItems.size());
+            }
+            
+            // 모델에 데이터 추가
+            model.addAttribute("item", itemForm);
+            model.addAttribute("currentMemberId", member != null ? member.getId() : null);
+            model.addAttribute("stripePublicKey", stripePublicKey);
+            
+            return "item/itemView";
+        } catch (Exception e) {
+            log.error("Error in itemView: ", e);
             return "redirect:/";
         }
-
-        List<ItemImage> itemImageList = itemImageService.findItemImageDetail(itemId, "N");
-        List<ItemImageDto> itemImageDtoList = itemImageList.stream()
-                .map(ItemImageDto::new)
-                .collect(Collectors.toList());
-
-        ItemForm itemForm = ItemForm.from(item);
-        itemForm.setItemImageListDto(itemImageDtoList);
-        model.addAttribute("item", itemForm);
-
-        // 카트 숫자 // th:text="${cartItemCount}" 쓰기 위함
-
-
-        Member member = getMember(request);
-        if (member != null) {
-            List<CartQueryDto> cartItemListForm = cartService.findCartItems(member.getId());
-            int cartItemCount = cartItemListForm.size();
-            model.addAttribute("cartItemListForm", cartItemListForm);
-            model.addAttribute("cartItemCount", cartItemCount);
-        }
-
-        model.addAttribute("currentMemberId", member != null ? member.getId() : null);
-
-        return "item/itemView";
     }
 
     /**
@@ -189,64 +197,59 @@ public class ItemController {
 
     @GetMapping("/items/manage")
     public String manageItems(Model model, 
-                             @RequestParam(defaultValue = "0") int page,
-                             @RequestParam(defaultValue = "10") int size,
-                             @RequestParam(required = false) String query,
-                             @RequestParam(required = false) String category,
-                             @RequestParam(required = false) String status,
-                             HttpServletRequest request) {
-        
-        // 전체 아이템 조회 (페이지네이션 없이)
-        List<Item> allItems = itemService.findAll();
-        
-        // ItemStats 생성 (전체 데이터 기준)
-        ItemStats itemStats = ItemStats.builder()
-                .totalCount(itemService.count())
-                .lowStockCount(allItems.stream()
-                        .filter(item -> item.getStockQuantity() <= 10 && item.getStockQuantity() > 0)
-                        .count())
-                .onSaleCount(allItems.stream()
-                        .filter(item -> item.getStockQuantity() > 0)
-                        .count())
-                .soldOutCount(allItems.stream()
-                        .filter(item -> item.getStockQuantity() == 0)
-                        .count())
-                .build();
-        
-        // 페이지네이션된 데이터 조회
-        Page<Item> itemPage;
-        if (query != null || category != null || status != null) {
-            itemPage = itemService.searchItems(query, category, status, PageRequest.of(page, size));
-        } else {
-            itemPage = itemService.findItemsPage(PageRequest.of(page, size));
-        }
-        
-        // ItemForm으로 변환
-        List<ItemForm> itemForms = itemPage.getContent().stream()
-            .map(item -> {
-                ItemForm form = ItemForm.from(item);
-                List<ItemImage> images = itemImageService.findItemImageDetail(item.getId(), "N");
-                form.setItemImageListDto(images.stream()
-                    .map(ItemImageDto::new)
-                    .collect(Collectors.toList()));
-                return form;
-            })
-            .collect(Collectors.toList());
+                            @RequestParam(defaultValue = "0") int page,
+                            @RequestParam(defaultValue = "10") int size,
+                            @RequestParam(required = false) String query,
+                            @RequestParam(required = false) String category,
+                            @RequestParam(required = false) String status) {
+        try {
+            // 전체 아이템 조회 (통계용)
+            List<Item> allItems = itemService.findAll();
             
-        // 모델에 데이터 추가
-        model.addAttribute("items", itemForms);
-        model.addAttribute("itemStats", itemStats);
-        model.addAttribute("currentPage", itemPage.getNumber());
-        model.addAttribute("totalPages", itemPage.getTotalPages());
-
-        // 카트 아이템 카운트
-        Member member = getMember(request);
-        if (member != null) {
-            List<CartQueryDto> cartItemListForm = cartService.findCartItems(member.getId());
-            model.addAttribute("cartItemCount", cartItemListForm.size());
+            // ItemStats 생성
+            ItemStats itemStats = ItemStats.builder()
+                    .totalCount(itemService.count())
+                    .lowStockCount(allItems.stream()
+                            .filter(item -> item.getStockQuantity() <= 10 && item.getStockQuantity() > 0)
+                            .count())
+                    .onSaleCount(allItems.stream()
+                            .filter(item -> item.getStockQuantity() > 0)
+                            .count())
+                    .soldOutCount(allItems.stream()
+                            .filter(item -> item.getStockQuantity() == 0)
+                            .count())
+                    .build();
+            
+            // 페이지네이션된 데이터 조회
+            Page<Item> itemPage;
+            if (query != null || category != null || status != null) {
+                itemPage = itemService.searchItems(query, category, status, PageRequest.of(page, size));
+            } else {
+                itemPage = itemService.findItemsPage(PageRequest.of(page, size));
+            }
+            
+            // ItemForm으로 변환
+            List<ItemForm> itemForms = itemPage.getContent().stream()
+                .map(item -> {
+                    ItemForm form = ItemForm.from(item);
+                    List<ItemImage> images = itemImageService.findItemImageDetail(item.getId(), "N");
+                    form.setItemImageListDto(images.stream()
+                        .map(ItemImageDto::new)
+                        .collect(Collectors.toList()));
+                    return form;
+                })
+                .collect(Collectors.toList());
+                
+            model.addAttribute("items", itemForms);
+            model.addAttribute("itemStats", itemStats);
+            model.addAttribute("currentPage", itemPage.getNumber());
+            model.addAttribute("totalPages", itemPage.getTotalPages());
+            
+            return "item/itemManage";
+        } catch (Exception e) {
+            log.error("Error in manageItems: ", e);
+            return "redirect:/";
         }
-
-        return "item/itemManage";
     }
 
     @GetMapping("/items/{itemId}/edit")

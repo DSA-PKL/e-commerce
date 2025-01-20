@@ -21,6 +21,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import java.util.List;
 
 import static com.dsapkl.backend.controller.CartController.getMember;
+import com.dsapkl.backend.entity.Category;
 
 @Controller
 @Slf4j
@@ -37,6 +38,10 @@ public class HomeController {
                       @RequestParam(value = "orderStatus", required = false) OrderStatus orderStatus,
                       @RequestParam(value = "category", required = false) String category,
                       Model model, HttpServletRequest request) {
+
+        // 검색어와 카테고리를 모델에 추가
+        model.addAttribute("searchQuery", query);
+        model.addAttribute("selectedCategory", category != null ? Category.valueOf(category) : null);
 
         List<Item> items = itemService.searchItems(query, category);
         HttpSession session = request.getSession(false);

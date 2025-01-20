@@ -92,20 +92,20 @@
                             </div>
 
                             <!-- Current Images -->
-                            <div th:if="${itemForm.itemId != null}" class="mb-3">
-                                <label class="form-label">Current Images</label>
-                                <div class="current-images">
-                                    <div th:each="image : ${itemForm.itemImageListDto}" class="position-relative d-inline-block">
-                                        <img th:src="@{${'/images/' + image.storeName}}"
-                                             style="width: 200px; height: 200px; object-fit: contain; margin-right: 10px; margin-bottom: 10px;"
-                                             class="border rounded p-1">
+                            <div class="current-images mb-3" th:if="${itemForm.itemId != null}">
+                                <label class="form-label d-block">Current Images</label>
+                                <div class="d-flex flex-wrap gap-3 mt-2">
+                                    <div th:each="image : ${itemForm.itemImageListDto}" class="position-relative">
+                                        <img th:src="${image.getImageUrl()}"
+                                             style="width: 200px; height: 200px; object-fit: contain;"
+                                             class="img-thumbnail">
                                     </div>
                                 </div>
                             </div>
 
                             <!-- Image Upload -->
                             <div class="mb-3">
-                                <label for="formFileMultiple" class="form-label"
+                                <label for="formFileMultiple" class="form-label d-block"
                                        th:text="${itemForm.itemId == null ? 'Upload Product Images' : 'Upload Additional Images'}">
                                 </label>
                                 <input class="form-control" type="file" id="formFileMultiple" name="itemImages" multiple>
@@ -170,14 +170,13 @@
         margin-top: 20px;
         border-top: 1px solid #dee2e6;
         padding-top: 20px;
+        width: 100%;
     }
 
     .preview-images img {
         width: 200px;
         height: 200px;
         object-fit: contain;
-        margin-right: 10px;
-        margin-bottom: 10px;
         border: 1px solid #dee2e6;
         border-radius: 4px;
         padding: 5px;
@@ -185,16 +184,25 @@
     }
 
     .current-images {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 10px;
-        margin-bottom: 20px;
-        margin-top: 10px;
+        margin-bottom: 2rem;
     }
 
-    .current-images .position-relative {
-        display: inline-block;
-        margin-bottom: 10px;
+    .current-images .form-label {
+        margin-bottom: 1rem;
+        font-weight: 500;
+    }
+
+    .current-images .d-flex {
+        width: 100%;
+    }
+
+    .current-images img {
+        background-color: #f8f9fa;
+        transition: transform 0.2s;
+    }
+
+    .current-images img:hover {
+        transform: scale(1.05);
     }
 
     .navbar-dark {
@@ -204,27 +212,25 @@
     .bg-dark {
         background-color: var(--primary-color) !important;
     }
+
+    .form-label {
+        display: block;
+        margin-bottom: 0.5rem;
+    }
 </style>
 
 <script th:inline="javascript">
     document.getElementById("formFileMultiple").addEventListener("change", function(event) {
         const fileInput = event.target;
         const previewContainer = document.querySelector(".preview-images");
-
-        // 미리보기 섹션 제목 추가
-        previewContainer.innerHTML = "<h6 class='w-100 mb-3'>New Image Preview</h6>";
+        previewContainer.innerHTML = "";
 
         Array.from(fileInput.files).forEach(file => {
             const reader = new FileReader();
             reader.onload = function(e) {
                 const img = document.createElement("img");
                 img.src = e.target.result;
-                img.style.width = "200px";
-                img.style.height = "200px";
-                img.style.objectFit = "contain";
-                img.style.marginRight = "10px";
-                img.style.marginBottom = "10px";
-                img.classList.add("border", "rounded", "p-1");
+                img.className = "preview-image";
                 previewContainer.appendChild(img);
             };
             reader.readAsDataURL(file);

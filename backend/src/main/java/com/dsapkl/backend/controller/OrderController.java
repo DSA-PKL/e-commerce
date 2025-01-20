@@ -160,8 +160,12 @@ public class OrderController {
      */
     @PostMapping("/order/{orderId}/cancel")
     @ResponseBody
-    public ResponseEntity<String> cancelOrder(@PathVariable("orderId") Long orderId) {
-        orderService.cancelOrder(orderId);
-        return ResponseEntity.ok("Success");
+    public ResponseEntity<String> cancelOrder(@PathVariable Long orderId) {
+        try {
+            orderService.cancelOrder(orderId);
+            return ResponseEntity.ok("Order cancelled successfully");
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
     }
 }

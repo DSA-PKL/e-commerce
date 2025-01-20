@@ -23,192 +23,48 @@
     var currentMemberId = /*[[${currentMemberId}]]*/ null;
     var itemId = /*[[${item.itemId}]]*/ null;
 
-    $(document).ready(function() {
-        loadReviews();
-
-        $("#reviewForm").on("submit", function(e) {
-            e.preventDefault();
-            submitReview();
-        });
-
-        calculateTotalPrice();
-
-        $("#orderCount").on('input change', function() {
+    // 1. 페이지 로드 시 초기화
+    document.addEventListener('DOMContentLoaded', function() {
+        // 수량 입력 필드 초기화
+        const orderCountInput = document.getElementById('orderCount');
+        if (orderCountInput) {
+            orderCountInput.addEventListener('change', calculateTotalPrice);
             calculateTotalPrice();
-        });
+        }
 
-        // 캐네일 클릭 이벤트 처리
-        $('.thumbnail-item').click(function() {
-            const slideIndex = $(this).data('slide-index');
-            $('#productImageSlider').carousel(slideIndex);
-
-            // 활성 썸네일 표시 업데이트
-            $('.thumbnail-item img').removeClass('active');
-            $(this).find('img').addClass('active');
-        });
-
-        // 캐러셀 슬라이드 이벤트 처리
-        $('#productImageSlider').on('slide.bs.carousel', function (e) {
-            // 활성 썸네일 업데이트
-            $('.thumbnail-item img').removeClass('active');
-            $('.thumbnail-item').eq(e.to).find('img').addClass('active');
-        });
-
-        // 캐러셀 초기화 (자동 슬라이드 비활성화)
-        var carousel = new bootstrap.Carousel(document.getElementById('productImageSlider'), {
-            interval: false
-        });
-
-        // 리뷰 이미지 미리보기
-        $("#reviewImages").on('change', function(e) {
-            const preview = $("#imagePreview");
-            preview.empty();
-
-            Array.from(e.target.files).forEach(file => {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    const img = $('<img>')
-                        .attr('src', e.target.result)
-                        .css({
-                            'width': '200px',
-                            'height': '200px',
-                            'object-fit': 'contain',
-                            'margin': '10px',
-                            'border': '1px solid #dee2e6',
-                            'border-radius': '4px',
-                            'background-color': '#f8f9fa'
-                        });
-                    preview.append(img);
+        // 썸네일 이미지 초기화
+        const thumbnailItems = document.querySelectorAll('.thumbnail-item');
+        thumbnailItems.forEach(item => {
+            item.addEventListener('click', function() {
+                const slideIndex = this.getAttribute('data-slide-index');
+                if (slideIndex) {
+                    const carousel = new bootstrap.Carousel(document.getElementById('productImageSlider'));
+                    carousel.to(parseInt(slideIndex));
                 }
-                reader.readAsDataURL(file);
             });
         });
 
-        // 수정 모드의 이미지 미리보기
-        $(document).on('change', '.edit-images', function(e) {
-            const previewContainer = $(this).siblings('.edit-image-preview');
-            const currentImages = $(this).siblings('.current-images');
-            previewContainer.empty();
-            
-            // 새 이미지가 선택되면 기존 이미지 숨기기
-            if (e.target.files.length > 0) {
-                currentImages.hide();
-            } else {
-                currentImages.show();
-            }
-
-            Array.from(e.target.files).forEach(file => {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    const img = $('<img>')
-                        .attr('src', e.target.result)
-                        .css({
-                            'width': '200px',
-                            'height': '200px',
-                            'object-fit': 'contain',
-                            'margin': '10px',
-                            'border': '1px solid #dee2e6',
-                            'border-radius': '4px',
-                            'background-color': '#f8f9fa'
-                        });
-                    previewContainer.append(img);
-                }
-                reader.readAsDataURL(file);
-            });
-        });
+        // 리뷰 로드
+        loadReviews();
     });
 
-    function submitReview() {
-        if ($("#reviewForm").data("submitting")) {
-            return;
-        }
-        $("#reviewForm").data("submitting", true);
-
-        const rating = $("input[name='rating']:checked").val();
-        const content = $("#reviewContent").val().trim();
-        const formData = new FormData();
-        const files = $("#reviewImages")[0].files;
-
-        if (!rating) {
-            alert("Please select a rating.");
-            return;
-        }
-
-        if (!content) {
-            alert("Please enter the contents.");
-            return;
-        }
-
-        formData.append("itemId", itemId);
-        formData.append("content", content);
-        formData.append("rating", rating);
-
-        if (files.length > 0) {
-            for (let i = 0; i < files.length; i++) {
-                formData.append("images", files[i]);
-            }
-        }
-
-        $.ajax({
-            url: "/api/reviews",
-            method: "POST",
-            data: formData,
-            processData: false,
-            contentType: false,
-            success: function(response) {
-                alert("Review has been posted.");
-                $("#reviewContent").val("");
-                $("input[name='rating']").prop("checked", false);
-                $("#reviewImages").val("");
-                $("#imagePreview").empty();
-                loadReviews();
-                updateItemRating();
-            },
-            error: function(xhr) {
-                alert(xhr.responseText);
-            }
-        });
-    }
-
-    function loadReviews() {
-        console.log("Loading reviews for item:", itemId);
-        $.ajax({
-            url: `/api/items/${itemId}/reviews`,
-            method: "GET",
-            success: function(reviews) {
-                console.log("Received reviews:", reviews);
-                displayReviews(reviews);
-            },
-            error: function(xhr) {
-                console.error("Failed to load reviews:", xhr);
-            }
-        });
-    }
-
+    // 2. 상품 관련 함수들
     function calculateTotalPrice() {
-        var quantity = $("#orderStockQuantity").val() * 1;
-        var count = parseInt($("#orderCount").val()) || 1;
-        var price = parseInt($("#orderPrice").val()) || 0;
-
-        if (count < 1) {
-            $("#orderCount").val(1);
-            count = 1;
-        }
-
-        if (quantity < count) {
-            alert("Insufficient stock. Available: " + quantity + " units");
-            $("#orderCount").val(1);
-            count = 1;
-        }
-
-        var totalPrice = price * count;
-        $("#totalPrice").html(totalPrice.toLocaleString() + ' KRW');
+        const orderCountInput = document.getElementById('orderCount');
+        const totalPriceElement = document.getElementById('totalPrice');
+        
+        if (!orderCountInput || !totalPriceElement) return;
+        
+        const quantity = parseInt(orderCountInput.value) || 1;
+        const price = [[${item.price}]];
+        const totalPrice = quantity * price;
+        
+        totalPriceElement.textContent = totalPrice.toLocaleString() + ' KRW';
     }
 
     function addCart() {
         const itemId = parseInt($("#orderItemId").val());
-
-        var cartForm = {
+        const cartForm = {
             itemId: itemId,
             count: 1
         };
@@ -234,25 +90,19 @@
     }
 
     function initiateCheckout() {
-        const stripe = Stripe('pk_test_51QclmbPPwZvRdRPft9sFx9zsufQlSONBFumadXCRUH00AnFSd05QYS1jcjUczdO5u0IR10pgjM36COA7DvmI6iSR00KsLTQ9s2');
-
-        const count = $("#orderCount").val();
-        const itemId = $("#orderItemId").val();
-        const itemName = $(".display-5.fw-bolder").text();
-        const price = $("#orderPrice").val();
-
-        console.log({
-            itemId: itemId,
-            count: count,
-            price: price,
-            itemName: itemName
-        })
+        const count = document.getElementById('orderCount').value;
+        const stockQuantity = [[${item.stockQuantity}]];
+        
+        if (count > stockQuantity) {
+            alert("재고가 부족합니다. 현재 재고: " + stockQuantity + "개");
+            return;
+        }
 
         const checkoutData = {
-            itemId: itemId,
-            count: count,
-            price: price,
-            itemName: itemName
+            itemId: [[${item.itemId}]],
+            count: parseInt(count),
+            price: [[${item.price}]],
+            itemName: [[${item.name}]]
         };
 
         fetch('/api/checkout/create-checkout-session-single', {
@@ -262,106 +112,48 @@
             },
             body: JSON.stringify(checkoutData)
         })
-            .then(response => response.json())
-            .then(data => {
-                return stripe.redirectToCheckout({ sessionId: data.sessionId})
-                    .then(result => {if (result.error) {alert(result.error.message);}})
-                    .catch(error => {console.error('Error:', error);
-                        alert('Payment processing failed.');})
-            });
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('결제 처리 중 오류가 발생했습니다.');
+            }
+            return response.json();
+        })
+        .then(data => {
+            const stripe = Stripe([[${stripePublicKey}]]);
+            return stripe.redirectToCheckout({ sessionId: data.sessionId });
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert(error.message || '결제 처리 중 오류가 발생했습니다.');
+        });
     }
 
+    // 3. 수정 모드 관련 함수들
     function toggleEditMode() {
         const viewElements = document.querySelectorAll('.view-mode');
         const editElements = document.querySelectorAll('.edit-mode');
-
+        
         viewElements.forEach(el => {
-            el.style.display = el.style.display === 'none' ? '' : 'none';
+            el.classList.toggle('hidden');
         });
-
+        
         editElements.forEach(el => {
-            el.style.display = el.style.display === 'none' ? '' : 'none';
+            el.style.display = el.style.display === 'none' ? 'block' : 'none';
         });
     }
 
-    function updateAverageRating(averageRating, reviewCount) {
-        const stars = '★'.repeat(Math.floor(averageRating)) + '☆'.repeat(5 - Math.floor(averageRating));
-        $('.star-rating').first().text(stars);
-        $('.text-muted').first().text(`(${averageRating.toFixed(1)}) (${reviewCount} reviews)`);
-    }
-
-    function saveReview(reviewId) {
-        const reviewItem = $(`.review-item[data-review-id="${reviewId}"]`);
-        const content = reviewItem.find('.edit-content').val();
-        const rating = reviewItem.find(`input[name="edit-rating-${reviewId}"]:checked`).val();
-        const formData = new FormData();
-        const files = reviewItem.find('.edit-images')[0].files;
-
-        if (!rating) {
-            alert("Please select a rating.");
-            return;
-        }
-
-        if (!content || content.trim() === '') {
-            alert("Please enter your review.");
-            return;
-        }
-
-        formData.append("itemId", itemId);
-        formData.append("content", content.trim());
-        formData.append("rating", rating);
-
-        if (files.length > 0) {
-            for (let i = 0; i < files.length; i++) {
-                formData.append("images", files[i]);
-            }
-        }
-
+    // 4. 리뷰 관련 함수들
+    function loadReviews() {
+        console.log("Loading reviews for item:", itemId);
         $.ajax({
-            url: `/api/reviews/${reviewId}`,
-            method: "PUT",
-            data: formData,
-            processData: false,
-            contentType: false,
-            success: function() {
-                alert("Review has been updated.");
-                loadReviews();
-                updateItemRating();
-            },
-            error: function(xhr) {
-                alert(xhr.responseText);
-            }
-        });
-    }
-
-    function deleteReview(reviewId) {
-        if (!confirm("Are you sure you want to delete this review?")) return;
-
-        $.ajax({
-            url: `/api/reviews/${reviewId}`,
-            method: "DELETE",
-            success: function() {
-                alert("Review has been deleted.");
-                loadReviews();
-                updateItemRating();
-                $("#reviewContent").val("");
-                $("input[name='rating']").prop("checked", false);
-            },
-            error: function(xhr) {
-                alert(xhr.responseText);
-            }
-        });
-    }
-
-    function updateItemRating() {
-        $.ajax({
-            url: `/api/items/${itemId}/rating`,
+            url: `/api/items/${itemId}/reviews`,
             method: "GET",
-            success: function(response) {
-                updateAverageRating(response.averageRating, response.reviewCount);
+            success: function(reviews) {
+                console.log("Received reviews:", reviews);
+                displayReviews(reviews);
             },
             error: function(xhr) {
-                console.error("Failed to update rating:", xhr);
+                console.error("Failed to load reviews:", xhr);
             }
         });
     }
@@ -457,6 +249,58 @@
         });
     }
 
+    function saveReview(reviewId) {
+        if ($("#reviewForm").data("submitting")) {
+            return;
+        }
+        $("#reviewForm").data("submitting", true);
+
+        const rating = $("input[name='rating']:checked").val();
+        const content = $("#reviewContent").val().trim();
+        const formData = new FormData();
+        const files = $("#reviewImages")[0].files;
+
+        if (!rating) {
+            alert("Please select a rating.");
+            return;
+        }
+
+        if (!content) {
+            alert("Please enter the contents.");
+            return;
+        }
+
+        formData.append("itemId", itemId);
+        formData.append("content", content);
+        formData.append("rating", rating);
+
+        if (files.length > 0) {
+            for (let i = 0; i < files.length; i++) {
+                formData.append("images", files[i]);
+            }
+        }
+
+        $.ajax({
+            url: "/api/reviews",
+            method: "POST",
+            data: formData,
+            processData: false,
+            contentType: false,
+            success: function(response) {
+                alert("Review has been posted.");
+                $("#reviewContent").val("");
+                $("input[name='rating']").prop("checked", false);
+                $("#reviewImages").val("");
+                $("#imagePreview").empty();
+                loadReviews();
+                updateItemRating();
+            },
+            error: function(xhr) {
+                alert(xhr.responseText);
+            }
+        });
+    }
+
     function editReview(reviewId, content, rating) {
         const reviewItem = $(`.review-item[data-review-id="${reviewId}"]`);
         reviewItem.find('.edit-form').show();
@@ -470,6 +314,25 @@
         });
     }
 
+    function deleteReview(reviewId) {
+        if (!confirm("Are you sure you want to delete this review?")) return;
+
+        $.ajax({
+            url: `/api/reviews/${reviewId}`,
+            method: "DELETE",
+            success: function() {
+                alert("Review has been deleted.");
+                loadReviews();
+                updateItemRating();
+                $("#reviewContent").val("");
+                $("input[name='rating']").prop("checked", false);
+            },
+            error: function(xhr) {
+                alert(xhr.responseText);
+            }
+        });
+    }
+
     function cancelEdit(reviewId) {
         const reviewItem = $(`.review-item[data-review-id="${reviewId}"]`);
         reviewItem.find('.edit-form').hide();
@@ -478,32 +341,121 @@
         reviewItem.find('.edit-image-preview').empty();  // 미리보기 초기화
         reviewItem.find('.current-images').show();  // 기존 이미지 다시 표시
     }
+
+    function updateAverageRating(averageRating, reviewCount) {
+        const stars = '★'.repeat(Math.floor(averageRating)) + '☆'.repeat(5 - Math.floor(averageRating));
+        $('.star-rating').first().text(stars);
+        $('.text-muted').first().text(`(${averageRating.toFixed(1)}) (${reviewCount} reviews)`);
+    }
+
+    function updateItemRating() {
+        $.ajax({
+            url: `/api/items/${itemId}/rating`,
+            method: "GET",
+            success: function(response) {
+                updateAverageRating(response.averageRating, response.reviewCount);
+            },
+            error: function(xhr) {
+                console.error("Failed to update rating:", xhr);
+            }
+        });
+    }
+
+    function previewImages(input) {
+        const previewContainer = input.nextElementSibling;
+        previewContainer.innerHTML = '';
+        
+        if (input.files) {
+            Array.from(input.files).forEach(file => {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const img = document.createElement('img');
+                    img.src = e.target.result;
+                    img.style.width = '200px';
+                    img.style.height = '200px';
+                    img.style.objectFit = 'contain';
+                    img.className = 'img-thumbnail';
+                    previewContainer.appendChild(img);
+                };
+                reader.readAsDataURL(file);
+            });
+        }
+    }
     /*]]>*/
 </script>
 
 <body>
 <!-- Navigation-->
-<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+<nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm">
     <div class="container px-4 px-lg-5">
-        <a class="navbar-brand" th:href="@{/}">PKLshop</a>
+        <a class="navbar-brand fw-bold" th:href="@{/}">PKLshop</a>
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" 
                 aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
             <span class="navbar-toggler-icon"></span>
         </button>
         <div class="collapse navbar-collapse" id="navbarSupportedContent">
-            <ul class="navbar-nav me-auto mb-2 mb-lg-0 ms-lg-4"></ul>
+            <ul class="navbar-nav me-auto mb-2 mb-lg-0 ms-lg-4">
+            </ul>
+            <div class="d-flex gap-2">
+                <!-- 로그인하지 않은 경우 -->
+                <div th:unless="${currentMemberId != null}" class="d-flex gap-2">
+                    <form th:action="@{/members}">
+                        <button class="btn btn-outline-dark px-4 rounded-pill nav-btn">
+                            Login
+                        </button>
+                    </form>
+                    <form th:action="@{/members/new}">
+                        <button class="btn btn-dark px-4 rounded-pill nav-btn">
+                            Sign Up
+                        </button>
+                    </form>
+                </div>
+                <!-- 로그인한 경우 -->
+                <div th:if="${currentMemberId != null}" class="d-flex gap-2">
+                    <form th:action="@{/cart}">
+                        <button class="btn btn-outline-dark rounded-pill nav-btn">
+                            <i class="bi-cart-fill me-1"></i>
+                            Cart
+                            <span class="badge bg-dark text-white ms-1 rounded-pill" th:text="${cartItemCount}">0</span>
+                        </button>
+                    </form>
+                    <form th:action="@{/orders}">
+                        <button class="btn btn-outline-dark rounded-pill nav-btn">Orders</button>
+                    </form>
+                    <form th:action="@{/logout}" method="post">
+                        <button class="btn btn-dark rounded-pill nav-btn">Logout</button>
+                    </form>
+                </div>
+            </div>
         </div>
     </div>
 </nav>
-<!-- Product section-->
+
+<!-- 스타일 추가 -->
+<style>
+    .nav-btn {
+        transition: all 0.2s;
+    }
+    
+    .nav-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+    
+    .navbar {
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    }
+</style>
+
+<!-- Product section -->
 <section class="py-5">
     <div class="container px-4 px-lg-5 my-5" th:object="${item}">
         <div class="row gx-4 gx-lg-5 align-items-start">
-            <!-- 메인 이미지 -->
+            <!-- 왼쪽 이미지 영역 - 메인 뷰와 수정 모드에서 공유 -->
             <div class="col-md-6">
                 <div class="image-container">
                     <!-- 메인 이미지 슬라이더 -->
-                    <div id="productImageSlider" class="carousel slide mb-3 view-mode">
+                    <div id="productImageSlider" class="carousel slide mb-3">
                         <div class="carousel-inner">
                             <!-- 이미지가 없을 경우 기본 이미지 표시 -->
                             <div th:if="${item.getItemImageListDto().isEmpty()}" class="carousel-item active">
@@ -513,7 +465,8 @@
                             <!-- 이미지 리스트 순회 -->
                             <div th:each="image, iterStat : ${item.getItemImageListDto()}"
                                  th:class="${iterStat.first} ? 'carousel-item active' : 'carousel-item'">
-                                <img th:src="|/images/${image.getStoreName()}|" class="d-block w-100"
+                                <img th:src="${image.getImageUrl()}" 
+                                     class="d-block w-100"
                                      style="width: 100%; height: 400px; object-fit: contain; background-color: #f8f9fa;"
                                      th:alt="${item.getName()}">
                             </div>
@@ -531,13 +484,13 @@
                         </th:block>
                     </div>
                     
-                    <!-- 썸네일 미리보기를 슬라이더 아래로 이동 -->
+                    <!-- 썸네일 미리보기 -->
                     <div class="thumbnail-preview" th:if="${!item.getItemImageListDto().isEmpty()}">
                         <div class="d-flex flex-wrap gap-2 justify-content-center">
                             <div th:each="image, iterStat : ${item.getItemImageListDto()}"
                                  class="thumbnail-item"
                                  th:data-slide-index="${iterStat.index}">
-                                <img th:src="|/images/${image.getStoreName()}|"
+                                <img th:src="${image.getImageUrl()}"
                                      th:class="${iterStat.first} ? 'active' : ''"
                                      style="width: 60px; height: 60px; object-fit: contain; cursor: pointer;"
                                      th:alt="${item.getName()}">
@@ -547,8 +500,9 @@
                 </div>
             </div>
 
-            <!-- 상품 정보 -->
+            <!-- 오른쪽 영역 - 상품 정보/수정 폼 -->
             <div class="col-md-6">
+                <!-- 메인 뷰 모드 -->
                 <div class="view-mode">
                     <h1 class="h3 fw-bold" th:text="${item.getName()}">Shop item template</h1>
                     <div class="mb-3">
@@ -568,7 +522,7 @@
                         <div class="input-group" style="width: 200px;">
                             <span class="input-group-text">Quantity</span>
                             <input class="form-control text-center" id="orderCount" name="orderCount" type="number"
-                                   value="1" min="1" th:max="${item.stockQuantity}"/>
+                                   value="1" min="1" th:max="${item.stockQuantity}" onchange="calculateTotalPrice()"/>
                         </div>
                         <div class="input-group" style="width: 200px;">
                             <span class="input-group-text">Stock</span>
@@ -580,11 +534,12 @@
                     
                     <div class="bg-light p-3 rounded mb-3">
                         <div class="fw-bold mb-1">Total Price</div>
-                        <div class="fs-4 fw-bold" id="totalPrice"></div>
+                        <div class="fs-4 fw-bold" id="totalPrice" th:text="${#numbers.formatInteger(item.price, 0, 'COMMA')} + ' KRW'"></div>
                     </div>
 
                     <div class="d-flex gap-2">
-                        <button class="btn btn-outline-dark" type="button" th:onclick="initiateCheckout()">
+                        <button class="btn btn-dark" type="button" th:onclick="initiateCheckout()">
+                            <i class="bi-bag-check-fill me-1"></i>
                             Buy Now
                         </button>
                         <button class="btn btn-outline-dark" type="button" th:onclick="addCart()">
@@ -602,18 +557,53 @@
                     </div>
                 </div>
 
-                <!-- 수정 모드 부분 -->
+                <!-- 수정 모드 -->
                 <div class="edit-mode" style="display: none;">
-                    <div class="current-images mb-3">
-                        <label class="form-label">Current Image</label>
-                        <div class="d-flex flex-wrap gap-3">
-                            <div th:each="image : ${item.itemImageListDto}" class="position-relative">
-                                <img th:src="|/images/${image.storeName}|"
-                                     style="width: 200px; height: 200px; object-fit: contain; background-color: #f8f9fa;"
-                                     class="img-thumbnail">
-                            </div>
+                    <form th:action="@{/items/{itemId}/edit(itemId=${item.itemId})}" method="post" enctype="multipart/form-data">
+                        <!-- 기본 정보 필드들 -->
+                        <div class="mb-3">
+                            <label class="form-label">Product Name</label>
+                            <input type="text" class="form-control" name="name" th:value="${item.name}" required>
                         </div>
-                    </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Price</label>
+                            <input type="number" class="form-control" name="price" th:value="${item.price}" required>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Stock Quantity</label>
+                            <input type="number" class="form-control" name="stockQuantity" th:value="${item.stockQuantity}" required>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Category</label>
+                            <select class="form-select" name="category" required>
+                                <option value="APPAREL" th:selected="${item.category == 'APPAREL'}">Apparel</option>
+                                <option value="ELECTRONICS" th:selected="${item.category == 'ELECTRONICS'}">Electronics</option>
+                                <option value="BOOKS" th:selected="${item.category == 'BOOKS'}">Books</option>
+                                <option value="HOME_AND_KITCHEN" th:selected="${item.category == 'HOME_AND_KITCHEN'}">Home & Kitchen</option>
+                                <option value="HEALTH_AND_BEAUTY" th:selected="${item.category == 'HEALTH_AND_BEAUTY'}">Health & Beauty</option>
+                            </select>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Description</label>
+                            <textarea class="form-control" name="description" rows="5" required th:text="${item.description}"></textarea>
+                        </div>
+
+                        <!-- 새 이미지 업로드 -->
+                        <div class="mb-3">
+                            <label class="form-label">Add New Images</label>
+                            <input type="file" class="form-control" name="itemImages" multiple accept="image/*" onchange="previewImages(this)">
+                            <div class="preview-images mt-2 d-flex flex-wrap gap-2"></div>
+                        </div>
+
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-primary">Save Changes</button>
+                            <button type="button" class="btn btn-secondary" onclick="toggleEditMode()">Cancel</button>
+                        </div>
+                    </form>
                 </div>
             </div>
         </div>
@@ -628,7 +618,7 @@
                 <div class="mb-4">
                     <h4 class="mb-3">Product Detail Images</h4>
                     <div th:each="image : ${item.itemImageListDto}" class="mb-3">
-                        <img th:src="|/images/${image.storeName}|"
+                        <img th:src="${image.getImageUrl()}"
                              class="img-fluid"
                              style="width: 100%; height: 500px; object-fit: contain; background-color: #f8f9fa;"
                              th:alt="${item.name}">
@@ -648,7 +638,7 @@
 </section>
 
 <!-- Reviews Section -->
-<div class="container reviews-section">
+<div class="container reviews-section view-mode">
     <h3 class="mb-4">Product Reviews</h3>
 
     <!-- Review Form -->
@@ -967,174 +957,15 @@
     .thumbnail-preview img.active {
         border: 2px solid var(--primary-color) !important;
     }
+
+    .edit-mode {
+        display: none;
+    }
+
+    /* toggleEditMode 함수가 호출될 때 view-mode 요소들을 숨김 */
+    .view-mode.hidden {
+        display: none !important;
+    }
 </style>
-
-<script>
-    document.querySelector('input[name="itemImages"]').addEventListener("change", function(event) {
-        const fileInput = event.target;
-        const previewContainer = document.querySelector(".preview-images");
-        previewContainer.innerHTML = ""; // 이전 미리보기 초기화
-
-        Array.from(fileInput.files).forEach(file => {
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                const img = document.createElement("img");
-                img.src = e.target.result;
-                img.style.width = '200px';
-                img.style.height = '200px';
-                img.style.objectFit = 'contain';
-                img.style.border = '1px solid #dee2e6';
-                img.style.borderRadius = '0.25rem';
-                previewContainer.appendChild(img);
-            };
-            reader.readAsDataURL(file);
-        });
-    });
-
-    function displayReviews(reviews) {
-        const reviewsList = $("#reviewsList");
-        reviewsList.empty();
-
-        if (reviews.length === 0) {
-            reviewsList.append('<p class="text-center">No reviews yet.</p>');
-            return;
-        }
-
-        reviews.forEach(review => {
-            const stars = "★".repeat(review.rating) + "☆".repeat(5 - review.rating);
-            const date = new Date(review.createdDate);
-            const formattedDate = date.toLocaleString('ko-KR', {
-                year: 'numeric',
-                month: '2-digit',
-                day: '2-digit',
-                hour: '2-digit',
-                minute: '2-digit',
-                hour12: false
-            });
-
-            const reviewHtml = `
-                <div class="review-item border-bottom py-3" data-review-id="${review.reviewId}">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <h5 class="mb-0">${review.memberName}</h5>
-                            <div class="d-flex align-items-center gap-2">
-                                <span class="star-rating">${stars}</span>
-                                <small class="text-muted">${formattedDate}</small>
-                            </div>
-                        </div>
-                    </div>
-                    <p class="review-content mt-2">${review.content}</p>
-                    <div class="review-images d-flex gap-2 mt-2">
-                        ${review.reviewImages ? review.reviewImages.map(img => `
-                            <img src="/images/${img.storeFileName}"
-                                 alt="Review Image"
-                                 style="width: 200px; height: 200px; object-fit: contain;"
-                                 class="rounded border">
-                        `).join('') : ''}
-                    </div>
-                    ${review.memberId === currentMemberId ? `
-                        <div class="mt-2">
-                            <button class="btn btn-primary btn-sm"
-                                    onclick="editReview(${review.reviewId}, '${review.content}', ${review.rating})">Edit</button>
-                            <button class="btn btn-secondary btn-sm"
-                                    onclick="deleteReview(${review.reviewId})">Delete</button>
-                        </div>
-                        <div class="edit-form" style="display: none;">
-                            <div class="mb-3">
-                                <label class="form-label">Rating</label>
-                                <div class="rating edit-rating">
-                                    <input type="radio" name="edit-rating-${review.reviewId}" value="5" id="edit-5-${review.reviewId}"><label for="edit-5-${review.reviewId}">☆</label>
-                                    <input type="radio" name="edit-rating-${review.reviewId}" value="4" id="edit-4-${review.reviewId}"><label for="edit-4-${review.reviewId}">☆</label>
-                                    <input type="radio" name="edit-rating-${review.reviewId}" value="3" id="edit-3-${review.reviewId}"><label for="edit-3-${review.reviewId}">☆</label>
-                                    <input type="radio" name="edit-rating-${review.reviewId}" value="2" id="edit-2-${review.reviewId}"><label for="edit-2-${review.reviewId}">☆</label>
-                                    <input type="radio" name="edit-rating-${review.reviewId}" value="1" id="edit-1-${review.reviewId}"><label for="edit-1-${review.reviewId}">☆</label>
-                                </div>
-                            </div>
-                            <div class="mb-3">
-                                <textarea class="form-control edit-content" rows="3"></textarea>
-                            </div>
-                            <div class="mb-3">
-                                <label class="form-label">Edit Images</label>
-                                <div class="current-images mb-2">
-                                    ${review.reviewImages ? review.reviewImages.map(img => `
-                                        <div class="position-relative d-inline-block">
-                                            <img src="/images/${img.storeFileName}"
-                                                 alt="Current Image"
-                                                 style="width: 100px; height: 100px; object-fit: contain;"
-                                                 class="rounded border">
-                                        </div>
-                                    `).join('') : ''}
-                                </div>
-                                <input type="file" class="form-control edit-images"
-                                       multiple accept="image/*"
-                                       id="edit-images-${review.reviewId}">
-                                <div class="edit-image-preview mt-2 d-flex gap-2"></div>
-                            </div>
-                            <button class="btn btn-primary btn-sm save-edit"
-                                    onclick="saveReview(${review.reviewId})">Save</button>
-                            <button class="btn btn-secondary btn-sm"
-                                    onclick="cancelEdit(${review.reviewId})">Cancel</button>
-                        </div>
-                    ` : ''}
-                </div>
-            `;
-            reviewsList.append(reviewHtml);
-        });
-    }
-
-    function editReview(reviewId, content, rating) {
-        const reviewItem = $(`.review-item[data-review-id="${reviewId}"]`);
-        reviewItem.find('.edit-form').show();
-        reviewItem.find('.edit-content').val(content);
-        reviewItem.find(`input[name="edit-rating-${reviewId}"][value="${rating}"]`).prop('checked', true);
-        reviewItem.find('.review-content, .edit-btn, .btn-outline-danger').hide();
-        
-        // 이미지 수정 시 기존 이미지 미리보기 숨기기
-        reviewItem.find('.edit-images').on('change', function() {
-            reviewItem.find('.current-images').hide();
-        });
-    }
-
-    function cancelEdit(reviewId) {
-        const reviewItem = $(`.review-item[data-review-id="${reviewId}"]`);
-        reviewItem.find('.edit-form').hide();
-        reviewItem.find('.review-content, .edit-btn, .btn-outline-danger').show();
-        reviewItem.find('.edit-images').val('');  // 파일 입력 초기화
-        reviewItem.find('.edit-image-preview').empty();  // 미리보기 초기화
-        reviewItem.find('.current-images').show();  // 기존 이미지 다시 표시
-    }
-
-    function deleteReview(reviewId) {
-        if (!confirm("Are you sure you want to delete this review?")) return;
-
-        $.ajax({
-            url: `/api/reviews/${reviewId}`,
-            method: "DELETE",
-            success: function() {
-                alert("Review has been deleted.");
-                loadReviews();
-                updateItemRating();
-                $("#reviewContent").val("");
-                $("input[name='rating']").prop("checked", false);
-            },
-            error: function(xhr) {
-                alert(xhr.responseText);
-            }
-        });
-    }
-
-    function updateItemRating() {
-        $.ajax({
-            url: `/api/items/${itemId}/rating`,
-            method: "GET",
-            success: function(response) {
-                updateAverageRating(response.averageRating, response.reviewCount);
-            },
-            error: function(xhr) {
-                console.error("Failed to update rating:", xhr);
-            }
-        });
-    }
-</script>
 </body>
 </html>
