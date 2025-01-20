@@ -10,27 +10,31 @@ import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.Pattern;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
+@Transactional
 @RequiredArgsConstructor
-@Transactional(readOnly = true)
 public class MemberService {
     private final MemberRepository memberRepository;
     private final CartRepository cartRepository;
     private final EmailService emailService;
     private final MemberInfoRepository memberInfoRepository;
+    private final PasswordEncoder passwordEncoder;
 
-    //회원가입
-    @Transactional(readOnly = false)
+    @Transactional
     public Long join(Member member) {
         validateDuplicateMember(member);
+        member.updatePassword(passwordEncoder.encode(member.getPassword()));  // setPassword -> updatePassword
+        
         Member savedMember = memberRepository.save(member);
-
+        
         Cart cart = Cart.createCart(savedMember);
         cartRepository.save(cart);
 
@@ -55,7 +59,7 @@ public class MemberService {
     //로그인 체크
     public Member login(String email, String password) {
         return memberRepository.findByEmail(email)
-                .filter(m -> m.getPassword().equals(password))
+                .filter(m -> passwordEncoder.matches(password, m.getPassword()))
                 .orElse(null);
     }
 
@@ -97,4 +101,20 @@ public class MemberService {
         return UUID.randomUUID().toString().substring(0, 8);
     }
 
+    // 관리자용 메소드 추가
+    public List<Member> findAllMembers() {
+        return memberRepository.findAll();
+    }
+
+    @Transactional
+    public void deleteMember(Long memberId) {
+        Member member = memberRepository.findById(memberId)
+            .orElseThrow(() -> new IllegalArgumentException("Member not found"));
+        memberRepository.delete(member);
+    }
+
+    @Transactional(readOnly = true)
+    public Optional<Member> findByEmail(String email) {
+        return memberRepository.findByEmail(email);
+    }
 }

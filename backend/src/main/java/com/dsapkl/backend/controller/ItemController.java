@@ -36,7 +36,7 @@ import java.util.stream.Collectors;
 import static com.dsapkl.backend.controller.CartController.getMember;
 
 @Controller
-//@Slf4j
+@RequestMapping("/items")
 @RequiredArgsConstructor
 public class ItemController {
     private final ItemService itemService;
@@ -45,7 +45,7 @@ public class ItemController {
 
 //    APPAREL, ELECTRONICS, BOOKS, HOME_AND_KITCHEN, HEALTH_AND_BEAUTY
 
-    @GetMapping("/items/new")
+    @GetMapping("/new")
     public String createItemForm(Model model) {
         List<CategoryCode> categoryCode = new ArrayList<>();
         categoryCode.add(new CategoryCode("APPAREL", "Apparel"));
@@ -65,7 +65,7 @@ public class ItemController {
         private String displayName;
     }
 
-    @PostMapping("/items/new")
+    @PostMapping("/new")
     public String createItem(@Valid @ModelAttribute ItemForm itemForm, BindingResult bindingResult, Model model,
                              @RequestParam("category") String category,
                              @RequestPart(name = "itemImages") List<MultipartFile> multipartFiles
@@ -98,42 +98,44 @@ public class ItemController {
     /**
      * 상품 상세 조회
      */
-    @GetMapping("items/{itemId}")
-    public String itemView(@PathVariable(name = "itemId") Long itemId, Model model, HttpServletRequest request) {
-        Item item = itemService.findItem(itemId);
+    @GetMapping("/view/{id}")
+    public String itemView(@PathVariable("id") Long id, Model model, HttpServletRequest request) {
+        Item item = itemService.findItem(id);
         if (item == null) {
             return "redirect:/";
         }
 
-        List<ItemImage> itemImageList = itemImageService.findItemImageDetail(itemId, "N");
+        List<ItemImage> itemImageList = itemImageService.findItemImageDetail(id, "N");
         List<ItemImageDto> itemImageDtoList = itemImageList.stream()
-                .map(ItemImageDto::new)
+                .map(image -> {
+                    ItemImageDto dto = new ItemImageDto(image);
+                    // 외부 URL인 경우 그대로 사용, 내부 이미지인 경우 /images/ 경로 추가
+                    if (!dto.getStoreName().startsWith("http")) {
+                        dto.setStoreName("/images/" + dto.getStoreName());
+                    }
+                    return dto;
+                })
                 .collect(Collectors.toList());
 
         ItemForm itemForm = ItemForm.from(item);
         itemForm.setItemImageListDto(itemImageDtoList);
         model.addAttribute("item", itemForm);
 
-        // 카트 숫자 // th:text="${cartItemCount}" 쓰기 위함
-
-
+        // 카트 정보
         Member member = getMember(request);
         if (member != null) {
             List<CartQueryDto> cartItemListForm = cartService.findCartItems(member.getId());
-            int cartItemCount = cartItemListForm.size();
-            model.addAttribute("cartItemListForm", cartItemListForm);
-            model.addAttribute("cartItemCount", cartItemCount);
+            model.addAttribute("cartItemCount", cartItemListForm.size());
         }
 
         model.addAttribute("currentMemberId", member != null ? member.getId() : null);
-
         return "item/itemView";
     }
 
     /**
      * 상품 삭제
      */
-    @PostMapping("/items/{itemId}/delete")
+    @PostMapping("/{itemId}/delete")
     public String deleteItem(@PathVariable Long itemId) {
         itemService.deleteItem(itemId);
         return "redirect:/"; // 삭제 후 메인 페이지로 이동
@@ -141,7 +143,7 @@ public class ItemController {
 
     }
 
-    @PostMapping("/items/{itemId}/edit")
+    @PostMapping("/{itemId}/edit")
     public String updateItem(@PathVariable("itemId") Long itemId,
                              @RequestParam("name") String name,
                              @RequestParam("price") int price,
@@ -187,7 +189,7 @@ public class ItemController {
         return ResponseEntity.ok(response);
     }
 
-    @GetMapping("/items/manage")
+    @GetMapping("/manage")
     public String manageItems(Model model, 
                              @RequestParam(defaultValue = "0") int page,
                              @RequestParam(defaultValue = "10") int size,
@@ -249,7 +251,7 @@ public class ItemController {
         return "item/itemManage";
     }
 
-    @GetMapping("/items/{itemId}/edit")
+    @GetMapping("/{itemId}/edit")
     public String itemEditForm(@PathVariable("itemId") Long itemId, Model model) {
         try {
             ItemForm itemForm = itemService.getItemDtl(itemId);
@@ -268,5 +270,4 @@ public class ItemController {
             return "redirect:/items/manage";
         }
     }
-
 }

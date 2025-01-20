@@ -4,6 +4,7 @@ import com.dsapkl.backend.dto.*;
 import com.dsapkl.backend.entity.Address;
 import com.dsapkl.backend.entity.Interest;
 import com.dsapkl.backend.entity.Member;
+import com.dsapkl.backend.entity.Role;
 import com.dsapkl.backend.service.CartService;
 import com.dsapkl.backend.service.MemberInfoService;
 import com.dsapkl.backend.service.MemberService;
@@ -27,6 +28,7 @@ import java.util.Map;
 @Controller
 @Slf4j
 @RequiredArgsConstructor
+@RequestMapping("/members")
 public class MemberController {
 
     private final MemberService memberService;
@@ -37,13 +39,10 @@ public class MemberController {
     /*
     회원가입
      */
-    @GetMapping("/members/new")
-    public String createMemberForm(@ModelAttribute("memberForm") MemberForm memberForm, Model model) {
-        List<RoleCode> roleCodes = new ArrayList<>();
-        roleCodes.add(new RoleCode("admin","Seller"));
-        roleCodes.add(new RoleCode("user","Buyer"));
-        model.addAttribute("roleCodes", roleCodes);
-
+    @GetMapping("/new")
+    public String createForm(Model model) {
+        model.addAttribute("memberForm", new MemberForm());
+        model.addAttribute("roleCodes", Role.values());  // ADMIN, USER 선택 가능
         return "members/createMemberForm";
     }
 
@@ -55,7 +54,7 @@ public class MemberController {
     }
 
     //회원가입
-    @PostMapping("/members/new")
+    @PostMapping("/new")
     public String createMember(@Valid @ModelAttribute MemberForm memberForm,
                                BindingResult bindingResult, Model model,
                                @RequestParam("role") String role,
@@ -115,37 +114,34 @@ public class MemberController {
     /*
     로그인
      */
-    @GetMapping("/members")
-    public String loginForm(Model model){
+    @GetMapping("/login")
+    public String loginForm(Model model) {
         model.addAttribute("loginForm", new LoginForm());
         return "members/loginForm";
     }
 
-    @PostMapping("/members")
-    public String login(@Valid @ModelAttribute LoginForm form
-            , BindingResult bindingResult
-            , HttpServletRequest request){
-
-        //이메일 또는 비밀번호를 누락시
+    @PostMapping("/login")
+    public String login(@Valid @ModelAttribute("loginForm") LoginForm form,
+                       BindingResult bindingResult,
+                       HttpServletRequest request) {
         if (bindingResult.hasErrors()) {
-            log.info("error={}", bindingResult);
             return "members/loginForm";
         }
 
-        Member loginMember = memberService.login(form.getEmail(), form.getPassword());
-        log.info("login? {}", loginMember);
+        try {
+            Member loginMember = memberService.login(form.getEmail(), form.getPassword());
+            if (loginMember == null) {
+                bindingResult.reject("loginFail", "Invalid email or password");
+                return "members/loginForm";
+            }
 
-        if (loginMember == null) {
-            bindingResult.reject("loginfail", "Invalid email or password.");
+            HttpSession session = request.getSession();
+            session.setAttribute(SessionConst.LOGIN_MEMBER, loginMember);
+            return "redirect:/";
+        } catch (Exception e) {
+            bindingResult.reject("loginError", "An error occurred during login");
             return "members/loginForm";
         }
-    /*
-    세션
-    */
-        HttpSession session = request.getSession();  //만약 세션이 있으면 기존 세션을 반환하고, 없으면 신규 세션 생성
-        session.setAttribute(SessionConst.LOGIN_MEMBER, loginMember);  //세션에 회원 정보 보관
-
-        return "redirect:/";
     }
 
     /*
@@ -160,16 +156,16 @@ public class MemberController {
         return "redirect:/";
     }
 
-    @GetMapping("/members/find-email")
+    @GetMapping("/find-email")
     public String findEmailForm(Model model) {
         return "members/findEmail";
     }
-    @GetMapping("/members/find-password")
+    @GetMapping("/find-password")
     public String findPasswordForm(Model model) {
         return "members/findPassword";
     }
 
-    @GetMapping("/api/members/check-email")
+    @GetMapping("/api/check-email")
     @ResponseBody
     public Map<String, Boolean> checkEmailDuplicate(@RequestParam("email") String email) {
         boolean isAvailable = memberService.isEmailAvailable(email);
@@ -178,7 +174,7 @@ public class MemberController {
         return response;
     }
 
-    @GetMapping("/api/members/check-phone")
+    @GetMapping("/api/check-phone")
     @ResponseBody
     public Map<String, Boolean> checkPhoneDuplicate(@RequestParam("phoneNumber") String phoneNumber) {
         boolean isAvailable = memberService.isPhoneAvailable(phoneNumber);
@@ -187,7 +183,7 @@ public class MemberController {
         return response;
     }
 
-    @PostMapping("/members/find-email")
+    @PostMapping("/find-email")
     public String findEmail(@Valid @ModelAttribute FindEmailRequestDto requestDto, BindingResult bindingResult, Model model) {
         if (bindingResult.hasErrors()) {
             return "members/findEmail";
@@ -202,7 +198,7 @@ public class MemberController {
         }
     }
 
-    @PostMapping("/members/find-password")
+    @PostMapping("/find-password")
     public String findPassword(@Valid @ModelAttribute FindPasswordRequestDto requestDto, BindingResult bindingResult, Model model) {
         if (bindingResult.hasErrors()) {
             return "members/findPassword";
@@ -214,6 +210,21 @@ public class MemberController {
             model.addAttribute("errorMessage", "No matching member information found.");
             return "members/findPassword";
         }
+    }
+
+    // 관리자용 회원 관리 페이지
+    @GetMapping("/manage")
+    public String manageMember(Model model) {
+        List<Member> members = memberService.findAllMembers();
+        model.addAttribute("members", members);
+        return "members/memberManage";
+    }
+    
+    // 관리자용 회원 삭제
+    @PostMapping("/manage/delete/{id}")
+    public String deleteMember(@PathVariable Long id) {
+        memberService.deleteMember(id);
+        return "redirect:/members/manage";
     }
 }
 

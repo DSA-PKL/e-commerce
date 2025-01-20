@@ -10,7 +10,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Entity
-@Table(name = "`order`")
+@Table(name = "orders")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Order {
@@ -74,7 +74,11 @@ public class Order {
 
     //주문 취소
     public void cancelOrder() {
-        this.status = OrderStatus.CANCEL;
+        if (this.status == OrderStatus.SHIPPED || 
+            this.status == OrderStatus.DELIVERED) {
+            throw new IllegalStateException("이미 배송된 상품은 취소가 불가능합니다.");
+        }
+        this.status = OrderStatus.CANCELLED;
 
         //상품 재고 수량 복귀
         for (OrderItem orderItem : orderItems) {
@@ -82,5 +86,8 @@ public class Order {
         }
     }
 
+    public void setStatus(OrderStatus status) {
+        this.status = status;
+    }
 
 }

@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      layout:decorate="~{layout/base}">
+<div layout:fragment="content">
+    <!-- Admin authority check -->
+    <div sec:authorize="hasAuthority('ADMIN')">
+        <div class="container">
+            <div class="row mb-3">
+                <div class="col">
+                    <h2>Order Management</h2>
+                </div>
+            </div>
+
+            <!-- Order Statistics -->
+            <div class="row mb-4">
+                <div class="col-md-3">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title">Total Orders</h5>
+                            <p class="card-text" th:text="${#lists.size(orders)}">0</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title">Pending Orders</h5>
+                            <p class="card-text" 
+                               th:text="${#lists.size(orders.?[status == T(com.dsapkl.backend.entity.OrderStatus).PENDING])}">0</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title">Processing Orders</h5>
+                            <p class="card-text" 
+                               th:text="${#lists.size(orders.?[status == T(com.dsapkl.backend.entity.OrderStatus).PROCESSING])}">0</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title">Completed Orders</h5>
+                            <p class="card-text" 
+                               th:text="${#lists.size(orders.?[status == T(com.dsapkl.backend.entity.OrderStatus).DELIVERED])}">0</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Order List -->
+            <div class="table-responsive">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Order ID</th>
+                            <th>Member</th>
+                            <th>Order Date</th>
+                            <th>Total Amount</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="order : ${orders}">
+                            <td th:text="${order.id}"></td>
+                            <td>
+                                <a th:href="@{/members/{id}(id=${order.member.id})}" 
+                                   th:text="${order.member.name}">Member Name</a>
+                            </td>
+                            <td th:text="${#temporals.format(order.orderDate, 'yyyy-MM-dd HH:mm')}"></td>
+                            <td th:text="${#numbers.formatInteger(order.totalPrice, 3, 'COMMA')}"></td>
+                            <td th:text="${order.status}"></td>
+                            <td>
+                                <select class="form-control form-control-sm" 
+                                        th:onchange="'updateOrderStatus(this.value, ' + ${order.id} + ')'">
+                                    <option value="PENDING" th:selected="${order.status == 'PENDING'}">Pending</option>
+                                    <option value="PROCESSING" th:selected="${order.status == 'PROCESSING'}">Processing</option>
+                                    <option value="SHIPPED" th:selected="${order.status == 'SHIPPED'}">Shipped</option>
+                                    <option value="DELIVERED" th:selected="${order.status == 'DELIVERED'}">Delivered</option>
+                                    <option value="CANCELLED" th:selected="${order.status == 'CANCELLED'}">Cancelled</option>
+                                </select>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <!-- Message for unauthorized users -->
+    <div sec:authorize="!hasAuthority('ADMIN')" class="alert alert-danger">
+        Administrator privileges are required to access this page.
+    </div>
+</div>
+
+<script th:inline="javascript">
+function updateOrderStatus(status, orderId) {
+    if (confirm('Are you sure you want to update the order status?')) {
+        fetch(`/api/orders/manage/${orderId}/status`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ status: status })
+        }).then(response => {
+            if (response.ok) {
+                location.reload();
+            } else {
+                alert('Failed to update order status');
+            }
+        });
+    }
+}
+</script>
+</html> 

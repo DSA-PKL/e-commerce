@@ -8,19 +8,19 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // 이메일 체크 버튼에 이벤트 리스너 추가
-    const emailBtn = document.getElementById('checkEmailBtn');
-    console.log('Email button:', emailBtn);  // 버튼 엘리먼트 확인
+    const checkEmailBtn = document.getElementById('checkEmailBtn');
+    console.log('Email button:', checkEmailBtn);  // 버튼 엘리먼트 확인
     
-    if (emailBtn) {
-        emailBtn.addEventListener('click', checkEmailDuplicate);
+    if (checkEmailBtn) {
+        checkEmailBtn.addEventListener('click', checkEmailDuplicate);
     }
     
     // 전화번호 체크 버튼에 이벤트 리스너 추가
-    const phoneBtn = document.getElementById('checkPhoneBtn');
-    console.log('Phone button:', phoneBtn);  // 버튼 엘리먼트 확인
+    const checkPhoneBtn = document.getElementById('checkPhoneBtn');
+    console.log('Phone button:', checkPhoneBtn);  // 버튼 엘리먼트 확인
     
-    if (phoneBtn) {
-        phoneBtn.addEventListener('click', checkPhoneDuplicate);
+    if (checkPhoneBtn) {
+        checkPhoneBtn.addEventListener('click', checkPhoneDuplicate);
     }
 });
 

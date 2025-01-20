@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      layout:decorate="~{layout/base}">
+<div layout:fragment="content">
+    <!-- Admin authority check -->
+    <div sec:authorize="hasAuthority('ADMIN')">
+        <div class="container">
+            <div class="row mb-3">
+                <div class="col">
+                    <h2>Member Management</h2>
+                </div>
+            </div>
+
+            <!-- Member Statistics -->
+            <div class="row mb-4">
+                <div class="col-md-3">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title">Total Members</h5>
+                            <p class="card-text" th:text="${#lists.size(members)}">0</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title">Admin Users</h5>
+                            <p class="card-text" 
+                               th:text="${#lists.size(members.?[role == T(com.dsapkl.backend.entity.Role).ADMIN])}">0</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title">Regular Users</h5>
+                            <p class="card-text" 
+                               th:text="${#lists.size(members.?[role == T(com.dsapkl.backend.entity.Role).USER])}">0</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Member List -->
+            <div class="table-responsive">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Name</th>
+                            <th>Email</th>
+                            <th>Role</th>
+                            <th>Phone</th>
+                            <th>Address</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="member : ${members}">
+                            <td th:text="${member.id}"></td>
+                            <td th:text="${member.name}"></td>
+                            <td th:text="${member.email}"></td>
+                            <td th:text="${member.role}"></td>
+                            <td th:text="${member.phoneNumber}"></td>
+                            <td th:text="${member.address?.fullAddress}"></td>
+                            <td>
+                                <form th:action="@{/api/members/manage/delete}" method="post" style="display: inline;">
+                                    <input type="hidden" name="id" th:value="${member.id}">
+                                    <button type="submit" class="btn btn-sm btn-danger"
+                                            onclick="return confirm('Are you sure you want to delete this member?');">
+                                        Delete
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <!-- Message for unauthorized users -->
+    <div sec:authorize="!hasAuthority('ADMIN')" class="alert alert-danger">
+        Administrator privileges are required to access this page.
+    </div>
+</div>
+</html> 

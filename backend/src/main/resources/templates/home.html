@@ -116,7 +116,7 @@
             </ul>
 
             <div class="d-flex gap-2">
-                <form th:action="@{/members}">
+                <form th:action="@{/members/login}">
                     <button class="btn btn-outline-dark px-4 rounded-pill nav-btn">
                         Login
                     </button>
@@ -204,7 +204,7 @@
                     <!-- 버튼 -->
                     <div class="card-footer bg-transparent border-0 p-4 text-center">
                         <a class="btn btn-outline-dark w-100 rounded-pill hover-shadow"
-                           th:href="@{/items/{id}(id=${item.id})}">
+                           th:href="@{/items/view/{id}(id=${item.id})}">
                             View Details
                         </a>
                     </div>

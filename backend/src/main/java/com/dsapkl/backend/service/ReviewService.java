@@ -128,4 +128,17 @@ public class ReviewService {
                 .map(ReviewResponseDto::from)
                 .collect(Collectors.toList());
     }
+
+    // 모든 리뷰 조회
+    public List<Review> findAllReviews() {
+        return reviewRepository.findAll();
+    }
+
+    // 리뷰 삭제 (관리자용)
+    @Transactional
+    public void deleteReview(Long reviewId) {
+        Review review = reviewRepository.findById(reviewId)
+            .orElseThrow(() -> new IllegalArgumentException("Review not found"));
+        reviewRepository.delete(review);
+    }
 } 

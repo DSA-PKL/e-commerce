@@ -11,10 +11,13 @@ import com.stripe.model.checkout.Session;
 import com.stripe.param.checkout.SessionListLineItemsParams;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import lombok.RequiredArgsConstructor;
 
 import java.util.*;
 
 @Service
+@Transactional(readOnly = true)
+@RequiredArgsConstructor
 public class OrderService {
 
     private final ItemRepository itemRepository;
@@ -27,19 +30,6 @@ public class OrderService {
     private final RecommendationService recommendationService;
     private final ClusterItemPreferenceRepository clusterItemPreferenceRepository;
     private final ClusterRepository clusterRepository;
-
-    public OrderService(ItemRepository itemRepository, MemberRepository memberRepository, OrderRepository orderRepository, CartService cartService, OrderItemRepository orderItemRepository, MemberInfoService memberInfoService, RecommendationService recommendationService, ClusterItemPreferenceRepository clusterItemPreferenceRepository, ClusterRepository clusterRepository, MemberInfoRepository memberInfoRepository) {
-        this.itemRepository = itemRepository;
-        this.memberRepository = memberRepository;
-        this.orderRepository = orderRepository;
-        this.cartService = cartService;
-        this.orderItemRepository = orderItemRepository;
-        this.memberInfoService = memberInfoService;
-        this.recommendationService = recommendationService;
-        this.clusterItemPreferenceRepository = clusterItemPreferenceRepository;
-        this.clusterRepository = clusterRepository;
-        this.memberInfoRepository = memberInfoRepository;
-    }
 
     /**
      * 단일 주문
@@ -59,7 +49,7 @@ public class OrderService {
         OrderItem orderItem = OrderItem.createOrderItem(count, orderPrice, findItem);
         orderItemList.add(orderItem);
 
-        OrderStatus orderStatus = OrderStatus.ORDER;
+        OrderStatus orderStatus = OrderStatus.PENDING;
 
         Order order = Order.createOrder(orderStatus , findMember, paymentIntentId, orderItemList);
 
@@ -123,7 +113,7 @@ public class OrderService {
             paymentIntentId = cartForm.getPaymentIntentId();
         }
 
-        OrderStatus orderStatus = OrderStatus.ORDER;
+        OrderStatus orderStatus = OrderStatus.PENDING;
 
         Order order = Order.createOrder(orderStatus, findMember, paymentIntentId, orderItemList);
 
@@ -206,6 +196,24 @@ public class OrderService {
         } catch (Exception e) {
             // Log error and continue
             System.err.println("Error occurred while updating cluster item preference: " + e.getMessage());
+        }
+    }
+
+    // 모든 주문 조회
+    public List<Order> findAllOrders() {
+        return orderRepository.findAll();
+    }
+
+    // 주문 상태 업데이트
+    @Transactional
+    public void updateOrderStatus(Long orderId, String status) {
+        Order order = orderRepository.findById(orderId)
+            .orElseThrow(() -> new IllegalArgumentException("Order not found"));
+        try {
+            OrderStatus newStatus = OrderStatus.valueOf(status);
+            order.setStatus(newStatus);
+        } catch (IllegalArgumentException e) {
+            throw new IllegalArgumentException("Invalid order status");
         }
     }
 }

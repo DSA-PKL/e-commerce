@@ -1,758 +1,148 @@
 <!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      layout:decorate="~{layout/base}">
+<div layout:fragment="content">
+    <!-- Admin authority check -->
+    <div sec:authorize="hasAuthority('ADMIN')">
+        <div class="container">
+            <div class="row mb-3">
+                <div class="col">
+                    <h2>Product Management</h2>
+                </div>
+            </div>
 
-<html xmlns:th="http://www.thymeleaf.org">
-
-<head>
-
-    <meta charset="utf-8"/>
-
-    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no"/>
-
-    <title>Product Management - PKLshop</title>
-
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.5.0/font/bootstrap-icons.css" rel="stylesheet"/>
-
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css" rel="stylesheet"/>
-
-    <link href="/css/styles.css" rel="stylesheet"/>
-
-    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
-
-    <style>
-        :root {
-            --primary-color: #212529;
-            --secondary-color: #495057;
-            --background-color: #f8f9fa;
-            --border-color: #dee2e6;
-            --white: #ffffff;
-        }
-
-        .card {
-            border: none;
-            border-radius: 0.5rem;
-            box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
-            margin-bottom: 2rem;
-        }
-
-        .btn-outline-dark {
-            color: var(--primary-color);
-            border-color: var(--primary-color);
-        }
-
-        .btn-outline-dark:hover {
-            background-color: var(--primary-color);
-            border-color: var(--primary-color);
-            color: var(--white);
-        }
-
-        .navbar-dark {
-            background-color: var(--primary-color) !important;
-        }
-
-        .bg-dark {
-            background-color: var(--primary-color) !important;
-        }
-
-        .table img {
-            transition: transform 0.2s;
-            width: 60px;
-            height: 60px;
-            border: 1px solid var(--border-color);
-            border-radius: 0.5rem;
-            padding: 0.25rem;
-            background-color: var(--white);
-            object-fit: contain;
-        }
-
-        .table img:hover {
-            transform: scale(1.05);
-            border-color: var(--primary-color);
-        }
-
-        .badge {
-            padding: 0.5rem 0.75rem;
-            font-weight: 500;
-        }
-
-        .badge.bg-success {
-            background-color: #28a745 !important;
-        }
-
-        .badge.bg-warning {
-            background-color: #ffc107 !important;
-            color: #212529;
-        }
-
-        .badge.bg-danger {
-            background-color: #dc3545 !important;
-        }
-
-        .table td, .table th {
-            padding: 1rem;
-            vertical-align: middle;
-        }
-
-        .form-select, .form-control {
-            padding: 0.5rem 1rem;
-        }
-
-        .btn {
-            padding: 0.5rem 1rem;
-        }
-
-        /* 상품명 링크 색상 수정 */
-        .text-primary {
-            color: var(--primary-color) !important;
-        }
-
-        /* 페이지네이션 스타일 수정 */
-        .pagination {
-            flex-wrap: wrap;
-            gap: 0.25rem;
-        }
-        
-        .page-item {
-            margin: 2px;
-        }
-        
-        .page-link {
-            min-width: 40px;
-            height: 40px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 0 0.5rem;
-            color: var(--primary-color);
-            border-color: var(--border-color);
-        }
-
-        /* 페이지네이션 컨테이너 수정 */
-        .pagination-container {
-            overflow-x: auto;
-            padding: 1rem 0;
-        }
-        
-        /* 많은 페이지 번호를 처리하기 위한 스타일 */
-        @media (max-width: 768px) {
-            .pagination .page-item:not(.active):not(:first-child):not(:last-child) {
-                display: none;
-            }
-            
-            .pagination .page-item.active {
-                display: block;
-            }
-        }
-
-        /* 상품명 링크 스타일 수정 */
-        .product-link {
-            color: var(--primary-color);
-            text-decoration: none;
-        }
-
-        .product-link:hover {
-            color: var(--primary-color);
-        }
-    </style>
-
-</head>
-
-<body class="bg-light">
-
-<!-- Navigation-->
-
-<nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm">
-
-    <div class="container px-4 px-lg-5">
-
-        <a class="navbar-brand fw-bold" th:href="@{/}">PKLshop</a>
-
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" 
-
-                aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
-
-            <span class="navbar-toggler-icon"></span>
-
-        </button>
-
-        <div class="collapse navbar-collapse" id="navbarSupportedContent">
-
-            <ul class="navbar-nav me-auto mb-2 mb-lg-0 ms-lg-4"></ul>
-
-        </div>
-
-    </div>
-
-</nav>
-
-
-
-<div class="container mt-5">
-
-    <h2 class="mb-4">Product Management</h2>
-
-
-
-    <!-- 통계 카드 -->
-
-    <div class="row mb-4">
-
-        <div class="col-md-3">
-
-            <div class="card bg-white">
-
-                <div class="card-body">
-
-                    <div class="d-flex align-items-center">
-
-                        <i class="bi bi-box-seam fs-3 me-2"></i>
-
-                        <div>
-
-                            <h6 class="card-subtitle mb-1 text-muted">Total Products</h6>
-
-                            <h3 class="card-title mb-0" th:text="${itemStats.totalCount}">0</h3>
-
+            <!-- Product Statistics -->
+            <div class="row mb-4">
+                <div class="col-md-3">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title">Total Products</h5>
+                            <p class="card-text" th:text="${itemStats.totalCount}">0</p>
                         </div>
-
                     </div>
-
                 </div>
-
-            </div>
-
-        </div>
-
-        <div class="col-md-3">
-
-            <div class="card bg-white">
-
-                <div class="card-body">
-
-                    <div class="d-flex align-items-center">
-
-                        <i class="bi bi-exclamation-triangle fs-3 me-2 text-warning"></i>
-
-                        <div>
-
-                            <h6 class="card-subtitle mb-1 text-muted">Low Stock</h6>
-
-                            <h3 class="card-title mb-0" th:text="${itemStats.lowStockCount}">0</h3>
-
+                <div class="col-md-3">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title">On Sale</h5>
+                            <p class="card-text" th:text="${itemStats.onSaleCount}">0</p>
                         </div>
-
                     </div>
-
                 </div>
-
-            </div>
-
-        </div>
-
-        <div class="col-md-3">
-
-            <div class="card bg-white">
-
-                <div class="card-body">
-
-                    <div class="d-flex align-items-center">
-
-                        <i class="bi bi-check-circle fs-3 me-2 text-success"></i>
-
-                        <div>
-
-                            <h6 class="card-subtitle mb-1 text-muted">On Sale</h6>
-
-                            <h3 class="card-title mb-0" th:text="${itemStats.onSaleCount}">0</h3>
-
+                <div class="col-md-3">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title">Low Stock</h5>
+                            <p class="card-text" th:text="${itemStats.lowStockCount}">0</p>
                         </div>
-
                     </div>
-
                 </div>
-
-            </div>
-
-        </div>
-
-        <div class="col-md-3">
-
-            <div class="card bg-white">
-
-                <div class="card-body">
-
-                    <div class="d-flex align-items-center">
-
-                        <i class="bi bi-x-circle fs-3 me-2 text-danger"></i>
-
-                        <div>
-
-                            <h6 class="card-subtitle mb-1 text-muted">Discontinued</h6>
-
-                            <h3 class="card-title mb-0" th:text="${itemStats.soldOutCount}">0</h3>
-
+                <div class="col-md-3">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title">Sold Out</h5>
+                            <p class="card-text" th:text="${itemStats.soldOutCount}">0</p>
                         </div>
-
                     </div>
-
                 </div>
-
             </div>
 
-        </div>
-
-    </div>
-
-
-
-    <!-- 검색 및 필터 -->
-
-    <div class="d-flex flex-wrap align-items-center gap-3 mb-4">
-
-        <form th:action="@{/items/manage}" method="get" class="row g-3 flex-grow-1">
-
-            <div class="col-md-4">
-
-                <div class="input-group">
-
-                    <span class="input-group-text bg-white"><i class="bi bi-search"></i></span>
-
-                    <input type="text" class="form-control" name="query" 
-
-                           placeholder="Search by product name or code" th:value="${param.query}">
-
+            <!-- Search and Filter -->
+            <div class="row mb-3">
+                <div class="col">
+                    <form th:action="@{/api/items/manage}" method="get" class="form-inline">
+                        <input type="text" name="query" class="form-control mr-2" placeholder="Search product name">
+                        <select name="category" class="form-control mr-2">
+                            <option value="">Select Category</option>
+                            <option value="APPAREL">Apparel</option>
+                            <option value="ELECTRONICS">Electronics</option>
+                            <option value="BOOKS">Books</option>
+                            <option value="HOME_AND_KITCHEN">Home & Kitchen</option>
+                            <option value="HEALTH_AND_BEAUTY">Health & Beauty</option>
+                        </select>
+                        <select name="status" class="form-control mr-2">
+                            <option value="">Select Status</option>
+                            <option value="ON_SALE">On Sale</option>
+                            <option value="LOW_STOCK">Low Stock</option>
+                            <option value="SOLD_OUT">Sold Out</option>
+                        </select>
+                        <button type="submit" class="btn btn-primary">Search</button>
+                        <a th:href="@{/items/new}" class="btn btn-success ml-2">Add Product</a>
+                    </form>
                 </div>
-
             </div>
 
-            <div class="col-md-2">
-
-                <select class="form-select" name="category">
-
-                    <option value="">All Categories</option>
-
-                    <option th:each="category : ${T(com.dsapkl.backend.entity.Category).values()}"
-
-                            th:value="${category}"
-
-                            th:text="${category.name()}"
-
-                            th:selected="${param.category == category.name()}">
-
-                    </option>
-
-                </select>
-
+            <!-- Product List -->
+            <div class="row">
+                <div class="col">
+                    <div class="table-responsive">
+                        <table class="table">
+                            <thead>
+                            <tr>
+                                <th>Product Image</th>
+                                <th>Product Name</th>
+                                <th>Category</th>
+                                <th>Price</th>
+                                <th>Stock</th>
+                                <th>Actions</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr th:each="item : ${items}">
+                                <td>
+                                    <img th:if="${not #lists.isEmpty(item.itemImageListDto)}"
+                                         th:src="${item.itemImageListDto[0].imgUrl}"
+                                         style="width: 50px; height: 50px; object-fit: cover;">
+                                </td>
+                                <td th:text="${item.name}"></td>
+                                <td th:text="${item.category}"></td>
+                                <td th:text="${#numbers.formatInteger(item.price, 3, 'COMMA')}"></td>
+                                <td th:text="${item.stockQuantity}"></td>
+                                <td>
+                                    <a th:href="@{/items/{id}/edit(id=${item.id})}"
+                                       class="btn btn-sm btn-primary">Edit</a>
+                                    <form th:action="@{/api/items/manage/delete}" method="post" style="display: inline;">
+                                        <input type="hidden" name="id" th:value="${item.id}">
+                                        <button type="submit"
+                                                class="btn btn-sm btn-danger"
+                                                onclick="return confirm('Are you sure you want to delete this product?');">Delete</button>
+                                    </form>
+                                </td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
 
-            <div class="col-md-2">
-
-                <select class="form-select" name="status">
-
-                    <option value="">All Status</option>
-
-                    <option value="SELLING" th:selected="${param.status == 'SELLING'}">On Sale</option>
-
-                    <option value="SOLDOUT" th:selected="${param.status == 'SOLDOUT'}">Sold Out</option>
-
-                    <option value="LOW_STOCK" th:selected="${param.status == 'LOW_STOCK'}">Low Stock</option>
-
-                </select>
-
+            <!-- Pagination -->
+            <div class="row">
+                <div class="col">
+                    <nav aria-label="Page navigation">
+                        <ul class="pagination justify-content-center">
+                            <li class="page-item" th:classappend="${currentPage == 0 ? 'disabled' : ''}">
+                                <a class="page-link" th:href="@{/api/items/manage(page=${currentPage - 1})}">Previous</a>
+                            </li>
+                            <li class="page-item" th:each="pageNum : ${#numbers.sequence(0, totalPages - 1)}"
+                                th:classappend="${pageNum == currentPage ? 'active' : ''}">
+                                <a class="page-link" th:href="@{/api/items/manage(page=${pageNum})}"
+                                   th:text="${pageNum + 1}"></a>
+                            </li>
+                            <li class="page-item"
+                                th:classappend="${currentPage == totalPages - 1 ? 'disabled' : ''}">
+                                <a class="page-link" th:href="@{/api/items/manage(page=${currentPage + 1})}">Next</a>
+                            </li>
+                        </ul>
+                    </nav>
+                </div>
             </div>
-
-            <div class="col-md-2">
-
-                <button type="submit" class="btn btn-dark w-100">
-
-                    <i class="bi bi-search"></i> Search
-
-                </button>
-
-            </div>
-
-            <!-- 현재 페이지 크기와 정렬 상태 유지를 위한 hidden 필드들 -->
-
-            <input type="hidden" name="page" value="0">
-
-            <input type="hidden" name="size" th:value="${param.size}">
-
-        </form>
-
-        <div class="ms-3">
-
-            <a th:href="@{/items/new}" class="btn btn-outline-dark">
-
-                <i class="bi bi-plus-lg"></i> Add New Product
-
-            </a>
-
         </div>
-
     </div>
-
-
-
-    <!-- 제품 목록 -->
-
-    <div class="card mb-4">
-
-        <div class="card-body p-0">
-
-            <div class="table-responsive">
-
-                <table class="table table-hover mb-0">
-
-                    <thead class="bg-light">
-
-                    <tr>
-
-                        <th class="border-0">Product Info</th>
-
-                        <th class="border-0">Product Code</th>
-
-                        <th class="border-0">Category</th>
-
-                        <th class="border-0">Price</th>
-
-                        <th class="border-0">Stock</th>
-
-                        <th class="border-0">Status</th>
-
-                        <th class="border-0">Last Modified</th>
-
-                        <th class="border-0">Actions</th>
-
-                    </tr>
-
-                    </thead>
-
-                    <tbody>
-
-                    <tr th:each="item : ${items}">
-
-                        <td>
-
-                            <div class="d-flex align-items-center">
-
-                                <img th:if="${!item.getItemImageListDto().isEmpty()}"
-
-                                     th:src="|/images/${item.getItemImageListDto().get(0).getStoreName()}|"
-
-                                     class="rounded"
-
-                                     alt="Product Image">
-
-                                <img th:unless="${!item.getItemImageListDto().isEmpty()}"
-
-                                     src="https://dummyimage.com/40x40/dee2e6/6c757d.jpg"
-
-                                     class="rounded"
-
-                                     alt="Default Image">
-
-                                <div class="ms-3">
-
-                                    <a th:href="@{/items/{id}(id=${item.itemId})}" 
-                                       class="product-link">
-                                        <p class="fw-bold mb-0" th:text="${item.name}">Product Name</p>
-                                    </a>
-
-                                </div>
-
-                            </div>
-
-                        </td>
-
-                        <td th:text="${item.category.name() + '-' + item.itemId}">SNK-2024-001</td>
-
-                        <td th:text="${item.category.name()}">Shoes</td>
-
-                        <td th:text="${#numbers.formatInteger(item.price, 0, 'COMMA') + ' KRW'}">89,000 KRW</td>
-
-                        <td th:text="${item.stockQuantity}">245</td>
-
-                        <td>
-
-                            <span th:if="${item.stockQuantity > 10}" class="badge bg-success">On Sale</span>
-
-                            <span th:if="${item.stockQuantity <= 10 && item.stockQuantity > 0}" class="badge bg-warning">Low Stock</span>
-
-                            <span th:if="${item.stockQuantity == 0}" class="badge bg-danger">Sold Out</span>
-
-                        </td>
-
-                        <td th:text="${#temporals.format(item.createdDate, 'yyyy-MM-dd')}">2024-02-15</td>
-
-                        <td>
-
-                            <div class="btn-group">
-
-                                <a th:href="@{/items/{itemId}/edit(itemId=${item.itemId}, redirectUrl='manage')}" 
-
-                                   class="btn btn-outline-dark btn-sm">
-
-                                    <i class="bi bi-pencil"></i>
-
-                                </a>
-
-                                <button type="button" class="btn btn-outline-dark btn-sm" 
-
-                                        th:onclick="'deleteItem(' + ${item.itemId} + ')'">
-
-                                    <i class="bi bi-trash"></i>
-
-                                </button>
-
-                            </div>
-
-                        </td>
-
-                    </tr>
-
-                    </tbody>
-
-                </table>
-
-            </div>
-
-        </div>
-
+    <!-- Message for unauthorized users -->
+    <div sec:authorize="!hasAuthority('ADMIN')" class="alert alert-danger">
+        Administrator privileges are required to access this page.
     </div>
-
-
-
-    <!-- 페이지네이션 -->
-
-    <div class="d-flex justify-content-between align-items-center my-4">
-
-        <div>
-
-            <select class="form-select form-select-sm" style="width: 130px;" 
-
-                    onchange="changePageSize(this.value)">
-
-                <option value="10" th:selected="${param.size == null || param.size == 10}">10 per page</option>
-
-                <option value="20" th:selected="${param.size == 20}">20 per page</option>
-
-                <option value="50" th:selected="${param.size == 50}">50 per page</option>
-
-            </select>
-
-        </div>
-
-        <div class="pagination-container">
-
-            <nav th:if="${totalPages > 0}">
-
-                <ul class="pagination mb-0">
-
-                    <!-- 이전 그룹으로 이동 -->
-
-                    <li class="page-item" th:classappend="${currentPage < 10 ? 'disabled' : ''}">
-
-                        <a class="page-link" th:href="@{/items/manage(
-
-                            page=${((currentPage/10)*10) - 1},
-
-                            size=${param.size},
-
-                            query=${param.query},
-
-                            category=${param.category},
-
-                            status=${param.status}
-
-                        )}">
-
-                            <i class="bi bi-chevron-double-left"></i>
-
-                        </a>
-
-                    </li>
-
-                    <!-- 이전 페이지 -->
-
-                    <li class="page-item" th:classappend="${currentPage == 0 ? 'disabled' : ''}">
-
-                        <a class="page-link" th:href="@{/items/manage(
-
-                            page=${currentPage - 1},
-
-                            size=${param.size},
-
-                            query=${param.query},
-
-                            category=${param.category},
-
-                            status=${param.status}
-
-                        )}">
-
-                            <i class="bi bi-chevron-left"></i>
-
-                        </a>
-
-                    </li>
-
-                    <!-- 페이지 번호 -->
-
-                    <li class="page-item" 
-
-                        th:each="pageNum : ${#numbers.sequence(((currentPage/10)*10), ((currentPage/10)*10) + 9)}"
-
-                        th:if="${pageNum < totalPages}"
-
-                        th:classappend="${pageNum == currentPage ? 'active' : ''}">
-
-                        <a class="page-link" 
-
-                           th:href="@{/items/manage(
-
-                               page=${pageNum},
-
-                               size=${param.size},
-
-                               query=${param.query},
-
-                               category=${param.category},
-
-                               status=${param.status}
-
-                           )}"
-
-                           th:text="${pageNum + 1}">1</a>
-
-                    </li>
-
-                    <!-- 다음 페이지 -->
-
-                    <li class="page-item" th:classappend="${currentPage == totalPages - 1 ? 'disabled' : ''}">
-
-                        <a class="page-link" th:href="@{/items/manage(
-
-                            page=${currentPage + 1},
-
-                            size=${param.size},
-
-                            query=${param.query},
-
-                            category=${param.category},
-
-                            status=${param.status}
-
-                        )}">
-
-                            <i class="bi bi-chevron-right"></i>
-
-                        </a>
-
-                    </li>
-
-                    <!-- 다음 그룹으로 이동 -->
-
-                    <li class="page-item" 
-
-                        th:classappend="${((currentPage/10)*10) + 10 >= totalPages ? 'disabled' : ''}">
-
-                        <a class="page-link" th:href="@{/items/manage(
-
-                            page=${((currentPage/10)*10) + 10},
-
-                            size=${param.size},
-
-                            query=${param.query},
-
-                            category=${param.category},
-
-                            status=${param.status}
-
-                        )}">
-
-                            <i class="bi bi-chevron-double-right"></i>
-
-                        </a>
-
-                    </li>
-
-                </ul>
-
-            </nav>
-
-        </div>
-
-    </div>
-
 </div>
-
-<div class="pb-5"></div>
-
-<footer class="py-5 bg-dark">
-
-    <div class="container">
-
-        <p class="m-0 text-center text-white">Copyright &copy; PKLshop</p>
-
-    </div>
-
-</footer>
-
-
-
-<script>
-
-function deleteItem(itemId) {
-
-    if (confirm('Are you sure you want to delete this product?')) {
-
-        fetch(`/items/${itemId}/delete`, {
-
-            method: 'POST',
-
-        }).then(response => {
-
-            if (response.ok) {
-
-                alert('Product has been deleted.');
-
-                location.reload();
-
-            } else {
-
-                alert('Failed to delete product.');
-
-            }
-
-        }).catch(error => {
-
-            console.error('Error:', error);
-
-            alert('An error occurred while deleting the product.');
-
-        });
-
-    }
-
-}
-
-
-
-function changePageSize(size) {
-
-    const url = new URL(window.location.href);
-
-    url.searchParams.set('size', size);
-
-    url.searchParams.set('page', '0');  // 페이지 크기가 변경되면 첫 페이지로 이동
-
-    window.location.href = url.toString();
-
-}
-
-</script>
-
-
-
-</body>
-
 </html> 

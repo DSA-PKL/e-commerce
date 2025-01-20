@@ -119,6 +119,14 @@
             </ul>
             &nbsp
 
+            <!-- 관리자 메뉴 -->
+            <div sec:authorize="hasAuthority('ADMIN')">
+                <a class="nav-link" th:href="@{/items/manage}">Product Management</a>
+                <a class="nav-link" th:href="@{/orders/manage}">Order Management</a>
+                <a class="nav-link" th:href="@{/members/manage}">Member Management</a>
+                <a class="nav-link" th:href="@{/reviews/manage}">Review Management</a>
+            </div>
+
             <!-- 사용자 환영 메시지 추가 -->
 
             <div class="d-flex align-items-center gap-3">
@@ -146,9 +154,12 @@
                     </button>
                 </form>
 
-                <form th:action="@{/logout}" method="post">
-                    <button class="btn btn-dark rounded-pill nav-btn">Logout</button>
-                </form>
+                <!-- 로그인한 사용자 공통 메뉴 -->
+                <div sec:authorize="isAuthenticated()">
+                    <form th:action="@{/members/logout}" method="post">
+                        <button type="submit" class="btn btn-link nav-link">Logout</button>
+                    </form>
+                </div>
             </div>
 
         </div>

@@ -18,4 +18,8 @@ public class Address {
         this.street = street;
         this.zipcode = zipcode;
     }
+
+    public String getFullAddress() {
+        return city + " " + street + " (" + zipcode + ")";
+    }
 }

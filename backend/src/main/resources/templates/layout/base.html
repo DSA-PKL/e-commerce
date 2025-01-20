@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org"  th:fragment="layout (content)"
-      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout">
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
@@ -72,6 +73,42 @@
 <body>
 <div th:fragment="wrapper">
 <div th:replace="~{fragments/header::header}"></div>
+<nav>
+    <!-- 기존 메뉴 -->
+    <a th:href="@{/}">홈</a>
+    <a th:href="@{/items/view}">상품목록</a>
+    
+    <!-- 비로그인 사용자 메뉴 -->
+    <div sec:authorize="isAnonymous()">
+        <a th:href="@{/members/login}">로그인</a>
+        <a th:href="@{/members/new}">회원가입</a>
+    </div>
+    
+    <!-- 로그인한 일반 사용자 메뉴 -->
+    <div sec:authorize="hasAuthority('USER')">
+        <a class="nav-link" th:href="@{/cart}">Cart</a>
+        <a class="nav-link" th:href="@{/orders}">My Orders</a>
+        <a class="nav-link" th:href="@{/mypage}">My Page</a>
+    </div>
+    
+    <!-- 관리자 메뉴 -->
+    <div sec:authorize="hasAuthority('ADMIN')">
+        <a class="nav-link" th:href="@{/items/manage}">Product Management</a>
+        <a class="nav-link" th:href="@{/orders/manage}">Order Management</a>
+        <a class="nav-link" th:href="@{/members/manage}">Member Management</a>
+        <a class="nav-link" th:href="@{/reviews/manage}">Review Management</a>
+    </div>
+    
+    <!-- 로그인한 사용자 공통 메뉴 -->
+    <div sec:authorize="isAuthenticated()">
+        <form th:action="@{/members/logout}" method="post" style="display: inline;">
+            <button type="submit" class="btn btn-link nav-link">Logout</button>
+        </form>
+    </div>
+    <div sec:authorize="!isAuthenticated()">
+        <a class="nav-link" th:href="@{/members/login}">Login</a>
+    </div>
+</nav>
 <div layout:fragment="content" class="content"></div>
 <!--<div th:replace="${content}" class="content"></div>-->
 <div th:replace="~{fragments/footer::footer}"></div>

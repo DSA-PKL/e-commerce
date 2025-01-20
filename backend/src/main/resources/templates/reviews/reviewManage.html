@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      layout:decorate="~{layout/base}">
+<div layout:fragment="content">
+    <!-- Admin authority check -->
+    <div sec:authorize="hasAuthority('ADMIN')">
+        <div class="container">
+            <div class="row mb-3">
+                <div class="col">
+                    <h2>Review Management</h2>
+                </div>
+            </div>
+
+            <!-- Review Statistics -->
+            <div class="row mb-4">
+                <div class="col-md-3">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title">Total Reviews</h5>
+                            <p class="card-text" th:text="${#lists.size(reviews)}">0</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title">Average Rating</h5>
+                            <p class="card-text" th:text="${#aggregates.avg(reviews.![rating])}">0.0</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Review List -->
+            <div class="table-responsive">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Product</th>
+                            <th>Member</th>
+                            <th>Rating</th>
+                            <th>Content</th>
+                            <th>Date</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="review : ${reviews}">
+                            <td th:text="${review.id}"></td>
+                            <td>
+                                <a th:href="@{/items/{id}(id=${review.item.id})}" 
+                                   th:text="${review.item.name}">Product Name</a>
+                            </td>
+                            <td th:text="${review.member.name}"></td>
+                            <td>
+                                <div class="rating">
+                                    <span th:text="${review.rating}"></span>
+                                    <i class="bi bi-star-fill text-warning"></i>
+                                </div>
+                            </td>
+                            <td th:text="${review.content}"></td>
+                            <td th:text="${#temporals.format(review.createdDate, 'yyyy-MM-dd')}"></td>
+                            <td>
+                                <form th:action="@{/api/reviews/manage/delete}" method="post" style="display: inline;">
+                                    <input type="hidden" name="id" th:value="${review.id}">
+                                    <button type="submit" class="btn btn-sm btn-danger"
+                                            onclick="return confirm('Are you sure you want to delete this review?');">
+                                        Delete
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <!-- Message for unauthorized users -->
+    <div sec:authorize="!hasAuthority('ADMIN')" class="alert alert-danger">
+        Administrator privileges are required to access this page.
+    </div>
+</div>
+</html> 

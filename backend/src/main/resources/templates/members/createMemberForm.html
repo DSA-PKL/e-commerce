@@ -42,7 +42,7 @@
             <div class="card shadow-sm">
                 <div class="card-body p-5">
                     <h2 class="text-center mb-4">Sign Up</h2>
-                    <form th:action th:object="${memberForm}" method="post">
+                    <form th:action="@{/members/new}" th:object="${memberForm}" method="post">
                         <div th:if="${#fields.hasGlobalErrors()}">
                             <p class="field-error" th:each="err : ${#fields.globalErrors()}"
                                th:text="${err}">Global Error Message</p>
@@ -94,15 +94,15 @@
                         <br>
                         <div>
                             <label for="city">&nbsp;&nbsp;City&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</label>
-                            <input type="text" id="city" th:field="*{city}" class="formcontrol" style="width: 200px;">
+                            <input type="text" id="city" th:field="*{city}" class="form-control" style="width: 200px;">
                         </div>
                         <div>
                             <label for="street">&nbsp;&nbsp;Street&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</label>
-                            <input type="text" id="street" th:field="*{street}" class="formcontrol" style="width: 200px;">
+                            <input type="text" id="street" th:field="*{street}" class="form-control" style="width: 200px;">
                         </div>
                         <div>
                             <label for="zipcode">&nbsp;&nbsp;Zip Code&nbsp;&nbsp;</label>
-                            <input type="text" id="zipcode" th:field="*{zipcode}" class="formcontrol" style="width: 200px;">
+                            <input type="text" id="zipcode" th:field="*{zipcode}" class="form-control" style="width: 200px;">
                         </div>
                         <br>
                         <div class="row mb-4">
@@ -139,14 +139,11 @@
                         <br>
                         &nbsp
 
-
-
-
-                        <select name="role" id="role" class="formcontrol">
-                            <option value="">Seller/Buyer Registration</option>
-                            <option th:each="roleCode : ${roleCodes}"
-                                    th:value="${roleCode.code}"
-                                    th:text="${roleCode.displayName}" />
+                        <select name="role" id="role" class="form-control">
+                            <option value="">Select Role</option>
+                            <option th:each="role : ${roleCodes}"
+                                    th:value="${role.name()}"
+                                    th:text="${role.description}">ROLE</option>
                         </select>
                         <hr class="my-4">
                         <div class="row mt-4">

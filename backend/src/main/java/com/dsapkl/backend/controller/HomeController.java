@@ -92,7 +92,7 @@ public class HomeController {
         List<OrderDto> ordersDetail = orderService.findOrdersDetail(member.getId(), orderStatus);
 
         long orderCount = ordersDetail.stream()
-                .filter(order -> order.getOrderStatus() == OrderStatus.ORDER)
+                .filter(order -> order.getOrderStatus() == OrderStatus.PENDING)
                 .count();
         model.addAttribute("orderCount", orderCount);
 
@@ -106,4 +106,14 @@ public class HomeController {
                 .orElse(0); // 선호도 정보가 없으면 0점
     }
 
+    @GetMapping("/error")
+    public String error() {
+        return "error/error";
+    }
+
+    // 접근 거부 페이지
+    @GetMapping("/access-denied")
+    public String accessDenied() {
+        return "error/access-denied";
+    }
 }

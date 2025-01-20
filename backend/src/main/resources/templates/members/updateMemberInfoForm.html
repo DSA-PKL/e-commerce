@@ -19,7 +19,7 @@
         <div class="col-md-8">
             <h2 class="text-center mb-4">Manage Member Information</h2>
 
-            <form th:action="@{/api/member-info/update/{memberId}(memberId=${memberInfo.memberId})}"
+            <form th:action="@{/api/member-info/update}"
                   th:object="${memberInfoCreateDto}"
                   method="post">
 

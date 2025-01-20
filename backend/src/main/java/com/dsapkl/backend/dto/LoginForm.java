@@ -2,17 +2,15 @@ package com.dsapkl.backend.dto;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotEmpty;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.Data;
 
-@Getter
-@Setter
+@Data
 public class LoginForm {
 
-    @NotEmpty(message = "Email address is required.")
-    @Email
+    @NotEmpty(message = "Email is required")
+    @Email(message = "Please enter a valid email")
     private String email;
 
-    @NotEmpty(message = "Password is required.")
+    @NotEmpty(message = "Password is required")
     private String password;
 }
