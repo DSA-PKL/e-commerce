@@ -39,13 +39,14 @@ public class HomeController {
     @GetMapping("/")
     public String home(@RequestParam(required = false) String query,
                       @RequestParam(required = false) String category,
-                      @RequestParam(required = false, defaultValue = "0") int page,
+                      @RequestParam(required = false, defaultValue = "1") int page,
                       Model model,
                       HttpServletRequest request) {
         
         Member member = getMember(request);
         
-        Pageable pageable = PageRequest.of(page, 12);
+        // 페이지는 0부터 시작하므로 1을 빼줍니다
+        Pageable pageable = PageRequest.of(page - 1, 12);
         Page<Item> items;
         
         // 검색 조건이 있는 경우
@@ -56,9 +57,27 @@ public class HomeController {
             items = itemService.findItemsPage(pageable);
         }
         
-        model.addAttribute("items", items);
-        model.addAttribute("maxPage", items.getTotalPages());
-        model.addAttribute("page", page);
+        // 페이지네이션을 위한 변수들 계산
+        int totalPages = items.getTotalPages();
+        int currentPage = page;
+        int pageGroup = (currentPage - 1) / 10;
+        int startPage = pageGroup * 10 + 1;
+        int endPage = Math.min(startPage + 9, totalPages);
+        
+        // 이전/다음 그룹의 첫 페이지 계산
+        int prevGroupPage = startPage - 10;
+        int nextGroupPage = startPage + 10;
+        
+        // 페이지네이션 관련 모델 속성 추가
+        model.addAttribute("currentPage", currentPage);
+        model.addAttribute("startPage", startPage);
+        model.addAttribute("endPage", endPage);
+        model.addAttribute("totalPages", totalPages);
+        model.addAttribute("prevGroupPage", prevGroupPage);
+        model.addAttribute("nextGroupPage", nextGroupPage);
+        
+        // 기존 모델 속성들
+        model.addAttribute("items", items.getContent());
         model.addAttribute("query", query);
         model.addAttribute("category", category);
         
