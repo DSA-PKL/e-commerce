@@ -91,4 +91,16 @@ public class CartService {
             .getCartItems().size();
     }
 
+    public boolean isItemInCart(Long memberId, Long itemId) {
+        Cart cart = cartRepository.findByMemberId(memberId)
+                .orElse(null);
+        
+        if (cart == null) {
+            return false;
+        }
+        
+        return cartItemRepository.findByCartIdAndItemId(cart.getId(), itemId)
+                .isPresent();
+    }
+
 }

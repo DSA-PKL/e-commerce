@@ -13,6 +13,9 @@ import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -34,74 +37,46 @@ public class HomeController {
     private final ClusterItemPreferenceRepository clusterItemPreferenceRepository;
 
     @GetMapping("/")
-    public String home(@RequestParam(value = "query", required = false) String query,
-                      @RequestParam(value = "orderStatus", required = false) OrderStatus orderStatus,
-                      @RequestParam(value = "category", required = false) String category,
-                      Model model, HttpServletRequest request) {
-
-        // 검색어와 카테고리를 모델에 추가
-        model.addAttribute("searchQuery", query);
-        model.addAttribute("selectedCategory", category != null ? Category.valueOf(category) : null);
-
-        List<Item> items = itemService.searchItems(query, category);
-        HttpSession session = request.getSession(false);
-
-        // 비로그인 사용자
-        if (session == null || session.getAttribute(SessionConst.LOGIN_MEMBER) == null) {
-            model.addAttribute("items", items);
-            return "home";
-        }
-
-        // 로그인된 사용자
+    public String home(@RequestParam(required = false) String query,
+                      @RequestParam(required = false) String category,
+                      @RequestParam(required = false, defaultValue = "0") int page,
+                      Model model,
+                      HttpServletRequest request) {
+        
         Member member = getMember(request);
-
-        try {
-            MemberInfo memberInfo = memberInfoRepository.findById(member.getId())
-                    .orElseThrow(() -> new IllegalArgumentException("Member information not found."));
-
-            Cluster cluster = memberInfo.getCluster_id();
-            if (cluster != null) {
-                // 최대 선호도 점수 계산
-                int maxScore = 0;
-                for (Item item : items) {
-                    if (!item.getScore().isEmpty()) {
-                        maxScore = Math.max(maxScore, item.getScore().get(0).getPreferenceScore());
-                    }
-                }
-                
-                model.addAttribute("maxScore", maxScore);
-                
-                // 정렬 로직은 유지
-                List<Item> sortedItems = items.stream()
-                    .sorted((item1, item2) -> {
-                        Integer score1 = getPreferenceScore(cluster, item1);
-                        Integer score2 = getPreferenceScore(cluster, item2);
-                        return score2.compareTo(score1);
-                    })
-                    .toList();
-                items = sortedItems;
-            }
-        } catch (Exception e) {
-            System.err.println("Error occurred while sorting preferences: " + e.getMessage());
+        
+        Pageable pageable = PageRequest.of(page, 12);
+        Page<Item> items;
+        
+        // 검색 조건이 있는 경우
+        if ((query != null && !query.trim().isEmpty()) || 
+            (category != null && !category.trim().isEmpty())) {
+            items = itemService.searchItems(query, category, null, pageable);
+        } else {
+            items = itemService.findItemsPage(pageable);
         }
-
+        
         model.addAttribute("items", items);
-
-        // 장바구니 정보
-        List<CartQueryDto> cartItemListForm = cartService.findCartItems(member.getId());
-        int cartItemCount = cartItemListForm.size();
-        model.addAttribute("cartItemListForm", cartItemListForm);
-        model.addAttribute("cartItemCount", cartItemCount);
-
-        // 주문 정보
-        List<OrderDto> ordersDetail = orderService.findOrdersDetail(member.getId(), orderStatus);
-
-        long orderCount = ordersDetail.stream()
-                .filter(order -> order.getOrderStatus() == OrderStatus.ORDER)
-                .count();
-        model.addAttribute("orderCount", orderCount);
-
-        return "index";
+        model.addAttribute("maxPage", items.getTotalPages());
+        model.addAttribute("page", page);
+        model.addAttribute("query", query);
+        model.addAttribute("category", category);
+        
+        // 로그인한 경우
+        if (member != null) {
+            // 장바구니 아이템 카운트
+            List<CartQueryDto> cartItems = cartService.findCartItems(member.getId());
+            model.addAttribute("cartItemCount", cartItems.size());
+            
+            // 주문 개수
+            List<OrderDto> orders = orderService.findOrdersDetail(member.getId(), OrderStatus.ORDER);
+            model.addAttribute("orderCount", orders.size());
+            
+            return "index";
+        }
+        
+        // 로그인하지 않은 경우
+        return "home";
     }
 
     // 아이템의 선호도 점수를 조회하는 메서드

@@ -6,6 +6,7 @@ import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -14,6 +15,7 @@ import java.util.List;
 @Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
+@Setter
 public class Item {
 
     @Id
@@ -44,6 +46,9 @@ public class Item {
     @Column(updatable = false)
     private LocalDateTime modifiedDate;
 
+    @Column(name = "member_id")
+    private Long memberId;  // 상품 등록자 ID
+
     @PrePersist
     public void prePersist() {
         this.createdDate = LocalDateTime.now();
@@ -67,8 +72,15 @@ public class Item {
 
 
 
-    public static Item createItem(String name, int price, int stockQuantity, String description, Category category) {
-        return new Item(name, price, stockQuantity, description, category);
+    public static Item createItem(String name, int price, int stockQuantity, String description, Category category, Long memberId) {
+        Item item = new Item();
+        item.setName(name);
+        item.setPrice(price);
+        item.setStockQuantity(stockQuantity);
+        item.setDescription(description);
+        item.setCategory(category);
+        item.setMemberId(memberId);
+        return item;
     }
 
        public void updateItem(String name, int price, int stockQuantity, String description, Category category) {
@@ -117,5 +129,27 @@ public class Item {
 
     }
 
-
+    public void setName(String name) {
+        this.name = name;
+    }
+    
+    public void setPrice(int price) {
+        this.price = price;
+    }
+    
+    public void setStockQuantity(int stockQuantity) {
+        this.stockQuantity = stockQuantity;
+    }
+    
+    public void setDescription(String description) {
+        this.description = description;
+    }
+    
+    public void setCategory(Category category) {
+        this.category = category;
+    }
+    
+    public void setMemberId(Long memberId) {
+        this.memberId = memberId;
+    }
 }

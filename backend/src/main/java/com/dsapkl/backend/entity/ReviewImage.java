@@ -44,4 +44,8 @@ public class ReviewImage extends BaseTimeEntity {
     public void delete() {
         this.deleteYN = "Y";
     }
+
+    public String getImageUrl() {
+        return "/images/" + this.getStoreFileName();
+    }
 } 

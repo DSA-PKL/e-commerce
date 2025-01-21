@@ -21,8 +21,13 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.beans.factory.annotation.Value;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
+import jakarta.persistence.criteria.CriteriaBuilder;
+import jakarta.persistence.criteria.CriteriaQuery;
+import jakarta.persistence.criteria.Root;
+import jakarta.persistence.criteria.Predicate;
 
 @Service
 @RequiredArgsConstructor
@@ -36,13 +41,14 @@ public class ItemService {
     private final ItemImageService itemImageService;
 
     //상품 정보 저장
-    public Long saveItem(ItemServiceDTO itemServiceDTO, List<MultipartFile> multipartFileList) throws IOException {
+    public Long saveItem(ItemForm itemForm, List<MultipartFile> multipartFileList, Long memberId) throws IOException {
         Item item = Item.createItem(
-                itemServiceDTO.getName(),
-                itemServiceDTO.getPrice(),
-                itemServiceDTO.getStockQuantity(),
-                itemServiceDTO.getDescription(),
-                itemServiceDTO.getCategory());
+                itemForm.getName(),
+                itemForm.getPrice(),
+                itemForm.getStockQuantity(),
+                itemForm.getDescription(),
+                itemForm.getCategory(),
+                memberId);
 
         List<ItemImage> itemImages = filehandler.storeImages(multipartFileList);
 
@@ -156,47 +162,34 @@ public class ItemService {
         return itemRepository.findAll(pageable);
     }
 
-    public Page<Item> searchItems(String query, String categoryStr, String status, Pageable pageable) {
-        final Category selectedCategory = (categoryStr != null && !categoryStr.isEmpty()) ? 
-            Category.valueOf(categoryStr) : null;
-
-        Specification<Item> spec = Specification.where(null);
-        
-        if (selectedCategory != null) {
-            spec = spec.and((root, criteriaQuery, criteriaBuilder) ->
-                criteriaBuilder.equal(root.get("category"), selectedCategory)
-            );
-        }
-
-        if (query != null && !query.isEmpty()) {
-            spec = spec.and((root, criteriaQuery, criteriaBuilder) ->
-                criteriaBuilder.or(
-                    criteriaBuilder.like(criteriaBuilder.lower(root.get("name")), "%" + query.toLowerCase() + "%"),
-                    criteriaBuilder.like(root.get("id").as(String.class), "%" + query + "%")
-                )
-            );
-        }
-
-        if (status != null) {
-            switch (status) {
-                case "SELLING":
-                    spec = spec.and((root, criteriaQuery, criteriaBuilder) ->
-                        criteriaBuilder.greaterThan(root.get("stockQuantity"), 10));
-                    break;
-                case "LOW_STOCK":
-                    spec = spec.and((root, criteriaQuery, criteriaBuilder) ->
-                        criteriaBuilder.and(
-                            criteriaBuilder.greaterThan(root.get("stockQuantity"), 0),
-                            criteriaBuilder.lessThanOrEqualTo(root.get("stockQuantity"), 10)
-                        ));
-                    break;
-                case "SOLDOUT":
-                    spec = spec.and((root, criteriaQuery, criteriaBuilder) ->
-                        criteriaBuilder.equal(root.get("stockQuantity"), 0));
-                    break;
+    @Transactional(readOnly = true)
+    public Page<Item> searchItems(String query, String category, String status, Pageable pageable) {
+        Specification<Item> spec = (root, criteriaQuery, criteriaBuilder) -> {
+            List<Predicate> predicates = new ArrayList<>();
+            
+            // 검색어 조건
+            if (query != null && !query.trim().isEmpty()) {
+                String pattern = "%" + query.toLowerCase() + "%";
+                predicates.add(criteriaBuilder.or(
+                    criteriaBuilder.like(criteriaBuilder.lower(root.get("name")), pattern),
+                    criteriaBuilder.like(criteriaBuilder.lower(root.get("description")), pattern)
+                ));
             }
-        }
-
+            
+            // 카테고리 조건
+            if (category != null && !category.trim().isEmpty()) {
+                try {
+                    Category categoryEnum = Category.valueOf(category.toUpperCase());
+                    predicates.add(criteriaBuilder.equal(root.get("category"), categoryEnum));
+                } catch (IllegalArgumentException e) {
+                    log.debug("Invalid category value: {}", category);
+                    // 잘못된 카테고리는 무시하고 계속 진행
+                }
+            }
+            
+            return predicates.isEmpty() ? null : criteriaBuilder.and(predicates.toArray(new Predicate[0]));
+        };
+        
         return itemRepository.findAll(spec, pageable);
     }
 
@@ -222,5 +215,14 @@ public class ItemService {
     @Transactional(readOnly = true)
     public List<Item> findAll() {
         return itemRepository.findAll();
+    }
+
+    public void checkItemOwner(Long itemId, Long memberId) {
+        Item item = itemRepository.findById(itemId)
+                .orElseThrow(() -> new IllegalArgumentException("상품이 존재하지 않습니다."));
+        
+        if (!item.getMemberId().equals(memberId)) {
+            throw new IllegalStateException("해당 상품의 수정/삭제 권한이 없습니다.");
+        }
     }
 }

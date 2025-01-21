@@ -23,9 +23,10 @@ public class ReviewResponseDto {
     @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
     private LocalDateTime modifiedDate;
     private List<ReviewImageDto> reviewImages;
+    private boolean isOwner;
 
-    public static ReviewResponseDto from(Review review) {
-        return ReviewResponseDto.builder()
+    public static ReviewResponseDto from(Review review, Long currentMemberId) {
+        ReviewResponseDto dto = ReviewResponseDto.builder()
                 .reviewId(review.getId())
                 .itemId(review.getItem().getId())
                 .memberId(review.getMember().getId())
@@ -34,8 +35,11 @@ public class ReviewResponseDto {
                 .rating(review.getRating())
                 .createdDate(review.getCreatedDate())
                 .reviewImages(review.getReviewImages().stream()
-                        .map(ReviewImageDto::from)
+                        .map(ReviewImageDto::new)
                         .collect(Collectors.toList()))
+                .isOwner(review.getMember().getId().equals(currentMemberId))
                 .build();
+        dto.modifiedDate = review.getModifiedDate();
+        return dto;
     }
 } 

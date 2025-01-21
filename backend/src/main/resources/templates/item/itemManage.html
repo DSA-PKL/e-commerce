@@ -218,6 +218,40 @@
         .product-image-container:hover {
             box-shadow: 0 0 10px rgba(0,0,0,0.1);
         }
+
+        .nav-btn {
+            transition: all 0.2s;
+            padding: 0.5rem 1rem;
+            font-size: 0.9rem;
+        }
+        
+        .nav-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        .navbar {
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+
+        /* 권한없음 배지 스타일 */
+        .permission-badge {
+            display: inline-block;
+            padding: 0.35rem 0.65rem;
+            font-size: 0.75rem;
+            font-weight: 500;
+            line-height: 1;
+            color: #6c757d;
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 0.5rem;
+            transition: all 0.2s;
+        }
+
+        .permission-badge i {
+            margin-right: 0.25rem;
+            font-size: 0.8rem;
+        }
     </style>
 
 </head>
@@ -225,29 +259,41 @@
 <body class="bg-light">
 
 <!-- Navigation-->
-
 <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm">
-
     <div class="container px-4 px-lg-5">
-
         <a class="navbar-brand fw-bold" th:href="@{/}">PKLshop</a>
-
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" 
-
                 aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
-
             <span class="navbar-toggler-icon"></span>
-
         </button>
-
         <div class="collapse navbar-collapse" id="navbarSupportedContent">
-
-            <ul class="navbar-nav me-auto mb-2 mb-lg-0 ms-lg-4"></ul>
-
+            <ul class="navbar-nav me-auto mb-2 mb-lg-0 ms-lg-4">
+                <li class="nav-item">
+                    <a class="nav-link" th:href="@{/items/manage}">Product Management</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" th:href="@{/orders}">Order History</a>
+                </li>
+            </ul>
+            <div class="d-flex align-items-center gap-3">
+                <form th:action="@{/cart}">
+                    <button class="btn btn-outline-dark rounded-pill nav-btn">
+                        <i class="bi-cart-fill me-1"></i>
+                        Cart
+                        <span class="badge bg-dark text-white ms-1 rounded-pill" 
+                              style="font-size: 0.7rem; padding: 0.25rem 0.5rem;" 
+                              th:text="${cartItemCount}">0</span>
+                    </button>
+                </form>
+                <form th:action="@{/orders}">
+                    <button class="btn btn-outline-dark rounded-pill nav-btn">Orders</button>
+                </form>
+                <form th:action="@{/logout}" method="post">
+                    <button class="btn btn-dark rounded-pill nav-btn">Logout</button>
+                </form>
+            </div>
         </div>
-
     </div>
-
 </nav>
 
 
@@ -538,30 +584,27 @@
 
                         </td>
 
-                        <td th:text="${#temporals.format(item.createdDate, 'yyyy-MM-dd')}">2024-02-15</td>
+                        <td th:text="${item.modifiedDate != null ? 
+                                      #temporals.format(item.modifiedDate, 'yyyy-MM-dd') : 
+                                      #temporals.format(item.createdDate, 'yyyy-MM-dd')}">
+                            2024-02-15
+                        </td>
 
                         <td>
-
-                            <div class="btn-group">
-
-                                <a th:href="@{/items/{itemId}/edit(itemId=${item.itemId}, redirectUrl='manage')}" 
-
-                                   class="btn btn-outline-dark btn-sm">
-
+                            <div class="btn-group" th:if="${item.memberId == currentMemberId}">
+                                <a th:href="@{/items/{itemId}/edit(itemId=${item.itemId})}" 
+                                   class="btn btn-outline-dark btn-sm"
+                                   th:onclick="return checkPermission([[${item.memberId}]], [[${currentMemberId}]], 'edit')">
                                     <i class="bi bi-pencil"></i>
-
                                 </a>
-
                                 <button type="button" class="btn btn-outline-dark btn-sm" 
-
-                                        th:onclick="'deleteItem(' + ${item.itemId} + ')'">
-
+                                        th:onclick="checkPermissionAndDelete([[${item.memberId}]], [[${currentMemberId}]], [[${item.itemId}]])">
                                     <i class="bi bi-trash"></i>
-
                                 </button>
-
                             </div>
-
+                            <span class="permission-badge" th:unless="${item.memberId == currentMemberId}">
+                                <i class="bi bi-lock"></i>No Permission
+                            </span>
                         </td>
 
                     </tr>
@@ -758,41 +801,35 @@
 
 <script>
 
-function deleteItem(itemId) {
-
-    if (confirm('Are you sure you want to delete this product?')) {
-
-        fetch(`/items/${itemId}/delete`, {
-
-            method: 'POST',
-
-        }).then(response => {
-
-            if (response.ok) {
-
-                alert('Product has been deleted.');
-
-                location.reload();
-
-            } else {
-
-                alert('Failed to delete product.');
-
-            }
-
-        }).catch(error => {
-
-            console.error('Error:', error);
-
-            alert('An error occurred while deleting the product.');
-
-        });
-
+function checkPermission(itemMemberId, currentMemberId, action) {
+    if (itemMemberId !== currentMemberId) {
+        alert('You do not have permission to ' + action + ' this item.');
+        return false;
     }
-
+    return true;
 }
 
-
+function checkPermissionAndDelete(itemMemberId, currentMemberId, itemId) {
+    if (!checkPermission(itemMemberId, currentMemberId, 'delete')) {
+        return;
+    }
+    
+    if (confirm('Are you sure you want to delete this product?')) {
+        fetch(`/items/${itemId}/delete`, {
+            method: 'POST'
+        }).then(response => {
+            if (response.ok) {
+                alert('Product has been deleted.');
+                location.reload();
+            } else {
+                alert('Failed to delete product.');
+            }
+        }).catch(error => {
+            console.error('Error:', error);
+            alert('An error occurred while deleting the product.');
+        });
+    }
+}
 
 function changePageSize(size) {
 

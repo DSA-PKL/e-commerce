@@ -73,9 +73,12 @@ public class ReviewService {
         }
 
         // 새 이미지가 있는 경우에만 기존 이미지 삭제 처리
-        if (images != null && !images.isEmpty()) {
+        if (images != null && !images.isEmpty() && !images.get(0).isEmpty()) {
             // 기존 이미지들을 물리적으로 삭제
             List<ReviewImage> existingImages = reviewImageRepository.findByReviewIdAndDeleteYN(reviewId, "N");
+            for (ReviewImage image : existingImages) {
+                fileHandler.deleteImage(image.getStoreFileName()); // 실제 파일 삭제
+            }
             reviewImageRepository.deleteAll(existingImages);
             review.getReviewImages().clear();  // 리뷰의 이미지 컬렉션 초기화
 
@@ -103,9 +106,10 @@ public class ReviewService {
 
     // 상품의 모든 리뷰 조회
     @Transactional(readOnly = true)
-    public List<ReviewResponseDto> getItemReviews(Long itemId) {
-        return reviewRepository.findByItemIdOrderByCreatedDateDesc(itemId).stream()
-                .map(ReviewResponseDto::from)
+    public List<ReviewResponseDto> getItemReviews(Long itemId, Long currentMemberId) {
+        List<Review> reviews = reviewRepository.findByItemIdOrderByCreatedDateDesc(itemId);
+        return reviews.stream()
+                .map(review -> ReviewResponseDto.from(review, currentMemberId))
                 .collect(Collectors.toList());
     }
 
@@ -125,7 +129,7 @@ public class ReviewService {
     @Transactional(readOnly = true)
     public List<ReviewResponseDto> getMemberReviews(Long memberId) {
         return reviewRepository.findByMemberIdOrderByCreatedDateDesc(memberId).stream()
-                .map(ReviewResponseDto::from)
+                .map(review -> ReviewResponseDto.from(review, memberId))
                 .collect(Collectors.toList());
     }
 } 

@@ -53,9 +53,8 @@
 
                             <!-- Category -->
                             <div class="mb-3">
-                                <label for="category" class="form-label">Category</label>
-                                <select name="category" id="category" class="form-select">
-                                    <option value="">Select Category</option>
+                                <label class="form-label">Category</label>
+                                <select class="form-select" name="category" required>
                                     <option th:each="categoryCode : ${categoryCode}"
                                             th:value="${categoryCode.code}"
                                             th:text="${categoryCode.displayName}"

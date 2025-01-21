@@ -28,6 +28,7 @@ import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -76,32 +77,21 @@ public class ItemController {
     }
 
     @PostMapping("/items/new")
-    public String createItem(@Valid @ModelAttribute ItemForm itemForm, BindingResult bindingResult, Model model,
-                             @RequestParam("category") String category,
-                             @RequestPart(name = "itemImages") List<MultipartFile> multipartFiles
-    ) throws IOException {
-
-        if (bindingResult.hasErrors()) {
-            List<CategoryCode> categoryCode = new ArrayList<>();
-            categoryCode.add(new CategoryCode("APPAREL", "Apparel"));
-            categoryCode.add(new CategoryCode("ELECTRONICS", "Electronics"));
-            categoryCode.add(new CategoryCode("BOOKS", "Books"));
-            categoryCode.add(new CategoryCode("HOME_AND_KITCHEN", "Home & Kitchen"));
-            categoryCode.add(new CategoryCode("HEALTH_AND_BEAUTY", "Health & Beauty"));
-            model.addAttribute("categoryCode", categoryCode);
+    public String createItem(@Valid ItemForm itemForm, BindingResult result, Model model,
+                           @RequestParam("itemImages") List<MultipartFile> itemImages,
+                           HttpServletRequest request) {
+        Member member = getMember(request);
+        if (member == null) {
+            return "redirect:/members/login";
+        }
+        
+        try {
+            itemService.saveItem(itemForm, itemImages, member.getId());
+        } catch (IOException e) {
+            model.addAttribute("errorMessage", "An error occurred while registering the product.");
             return "item/itemForm";
         }
-
-        //상품 이미지를 등록안하면
-        if (multipartFiles.get(0).isEmpty()) {
-            model.addAttribute("errorMessage", "Please upload product images!");
-            return "item/itemForm";
-        }
-
-        //
-
-        itemService.saveItem(itemForm.toServiceDTO(), multipartFiles);
-
+        
         return "redirect:/";
     }
 
@@ -111,13 +101,11 @@ public class ItemController {
     @GetMapping("/items/{itemId}")
     public String itemView(@PathVariable("itemId") Long itemId, Model model, HttpServletRequest request) {
         try {
-            // 상품 조회
             ItemForm itemForm = itemService.getItemDtl(itemId);
             if (itemForm == null) {
                 return "redirect:/";
             }
 
-            // 현재 로그인한 회원 정보 조회
             Member member = getMember(request);
             
             // 장바구니 아이템 카운트
@@ -126,7 +114,6 @@ public class ItemController {
                 model.addAttribute("cartItemCount", cartItems.size());
             }
             
-            // 모델에 데이터 추가
             model.addAttribute("item", itemForm);
             model.addAttribute("currentMemberId", member != null ? member.getId() : null);
             model.addAttribute("stripePublicKey", stripePublicKey);
@@ -142,11 +129,20 @@ public class ItemController {
      * 상품 삭제
      */
     @PostMapping("/items/{itemId}/delete")
-    public String deleteItem(@PathVariable Long itemId) {
-        itemService.deleteItem(itemId);
-        return "redirect:/"; // 삭제 후 메인 페이지로 이동
-
-
+    @ResponseBody
+    public ResponseEntity<String> deleteItem(@PathVariable Long itemId, HttpServletRequest request) {
+        Member member = getMember(request);
+        if (member == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("You need to log in.");
+        }
+        
+        try {
+            itemService.checkItemOwner(itemId, member.getId());  // 권한 체크
+            itemService.deleteItem(itemId);
+            return ResponseEntity.ok("The product has been deleted.");
+        } catch (IllegalStateException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(e.getMessage());
+        }
     }
 
     @PostMapping("/items/{itemId}/edit")
@@ -201,8 +197,22 @@ public class ItemController {
                             @RequestParam(defaultValue = "10") int size,
                             @RequestParam(required = false) String query,
                             @RequestParam(required = false) String category,
-                            @RequestParam(required = false) String status) {
+                            @RequestParam(required = false) String status,
+                            HttpServletRequest request) {
         try {
+            // 현재 로그인한 사용자 정보 가져오기
+            Member member = getMember(request);
+            if (member == null) {
+                return "redirect:/members/login";
+            }
+            
+            // 현재 사용자 ID를 모델에 추가
+            model.addAttribute("currentMemberId", member.getId());
+            
+            // 장바구니 아이템 카운트 추가
+            List<CartQueryDto> cartItems = cartService.findCartItems(member.getId());
+            model.addAttribute("cartItemCount", cartItems.size());
+            
             // 전체 아이템 조회 (통계용)
             List<Item> allItems = itemService.findAll();
             
@@ -253,8 +263,14 @@ public class ItemController {
     }
 
     @GetMapping("/items/{itemId}/edit")
-    public String itemEditForm(@PathVariable("itemId") Long itemId, Model model) {
+    public String itemEditForm(@PathVariable("itemId") Long itemId, Model model, HttpServletRequest request) {
+        Member member = getMember(request);
+        if (member == null) {
+            return "redirect:/members/login";
+        }
+        
         try {
+            itemService.checkItemOwner(itemId, member.getId());  // 권한 체크
             ItemForm itemForm = itemService.getItemDtl(itemId);
             List<CategoryCode> categoryCode = new ArrayList<>();
             categoryCode.add(new CategoryCode("APPAREL", "Apparel"));
@@ -266,8 +282,8 @@ public class ItemController {
             model.addAttribute("categoryCode", categoryCode);
             model.addAttribute("isEdit", true);  // 수정 모드임을 표시
             return "item/itemForm";
-        } catch (EntityNotFoundException e) {
-            model.addAttribute("errorMessage", "Product does not exist.");
+        } catch (IllegalStateException e) {
+            model.addAttribute("errorMessage", e.getMessage());
             return "redirect:/items/manage";
         }
     }

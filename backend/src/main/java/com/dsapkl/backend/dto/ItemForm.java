@@ -36,6 +36,8 @@ public class ItemForm {
 
     private String description;
 
+    private Long memberId;
+
     private List<ItemImageDto> itemImageListDto = new ArrayList<>();
 
     private double averageRating;
@@ -62,8 +64,7 @@ public class ItemForm {
         form.setStockQuantity(item.getStockQuantity());
         form.setDescription(item.getDescription());
         form.setCategory(item.getCategory());
-        form.setAverageRating(item.getAverageRating());
-        form.setReviewCount(item.getReviewCount());
+        form.setMemberId(item.getMemberId());
         form.setCreatedDate(item.getCreatedDate());
         form.setModifiedDate(item.getModifiedDate());
         return form;

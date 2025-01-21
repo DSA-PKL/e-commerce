@@ -95,7 +95,7 @@ public class CartController {
 
             } catch (StripeException e) {
                 e.printStackTrace();
-                model.addAttribute("error", "결제 정보를 불러오는 데 실패했습니다.");
+                model.addAttribute("error", "Failed to retrieve payment information.");
             }
         } else {
             cartItemListForm = cartService.findCartItems(member.getId());
@@ -138,6 +138,16 @@ public class CartController {
         cartService.deleteCartItem(form.getCartItemId());
 
         return ResponseEntity.ok("success");
+    }
+
+    @GetMapping("/cart/check/{itemId}")
+    @ResponseBody
+    public ResponseEntity<Boolean> checkCartItem(@PathVariable Long itemId, HttpServletRequest request) {
+        Member member = getMember(request);
+        if (member == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        return ResponseEntity.ok(cartService.isItemInCart(member.getId(), itemId));
     }
 
     //다른 컨트롤러에서도 사용하기 위해 static

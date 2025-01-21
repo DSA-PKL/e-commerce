@@ -29,7 +29,7 @@
         const orderCountInput = document.getElementById('orderCount');
         if (orderCountInput) {
             orderCountInput.addEventListener('change', calculateTotalPrice);
-            calculateTotalPrice();
+        calculateTotalPrice();
         }
 
         // 썸네일 이미지 초기화
@@ -41,11 +41,11 @@
                     const carousel = new bootstrap.Carousel(document.getElementById('productImageSlider'));
                     carousel.to(parseInt(slideIndex));
                 }
-            });
         });
+    });
 
         // 리뷰 로드
-        loadReviews();
+                loadReviews();
     });
 
     // 2. 상품 관련 함수들
@@ -69,32 +69,61 @@
             count: 1
         };
 
+        // 먼저 장바구니에 이미 있는지 확인
         $.ajax({
-            url: "/cart",
-            data: JSON.stringify(cartForm),
-            type: 'POST',
-            contentType: 'application/json',
-            success: function (response) {
-                alert("Item added to cart.");
-                $(".badge.bg-dark.text-white.ms-1.rounded-pill").text(response.count);
+            url: `/cart/check/${itemId}`,
+            type: 'GET',
+            success: function(exists) {
+                if (exists) {
+                    alert("This item is already in your cart.");
+                    return;
+                }
+                
+                // 장바구니에 없으면 추가
+                $.ajax({
+                    url: "/cart",
+                    data: JSON.stringify(cartForm),
+                    type: 'POST',
+                    contentType: 'application/json',
+                    success: function (response) {
+                        alert("Item added to cart.");
+                        $(".badge.bg-dark.text-white.ms-1.rounded-pill").text(response.count);
+                    },
+                    error: function (jqXHR) {
+                        if (jqXHR.status === 401) {
+                            alert("Login is required.");
+                            location.href = "/members";
+                        } else {
+                            alert(jqXHR.responseText);
+                        }
+                    }
+                });
             },
-            error: function (jqXHR) {
+            error: function(jqXHR) {
                 if (jqXHR.status === 401) {
                     alert("Login is required.");
                     location.href = "/members";
                 } else {
-                    alert(jqXHR.responseText);
+                    alert("Failed to check cart.");
                 }
             }
         });
     }
 
     function initiateCheckout() {
+        // 로그인 체크
+        const currentMemberId = [[${currentMemberId}]];
+        if (!currentMemberId) {
+            alert("login is required.");
+            window.location.href = "/members";
+            return;
+        }
+
         const count = document.getElementById('orderCount').value;
         const stockQuantity = [[${item.stockQuantity}]];
         
         if (count > stockQuantity) {
-            alert("재고가 부족합니다. 현재 재고: " + stockQuantity + "개");
+            alert("out of stock. Current inventory: " + stockQuantity + "units");
             return;
         }
 
@@ -114,17 +143,17 @@
         })
         .then(response => {
             if (!response.ok) {
-                throw new Error('결제 처리 중 오류가 발생했습니다.');
+                throw new Error('An error occurred during payment processing.');
             }
             return response.json();
         })
-        .then(data => {
+            .then(data => {
             const stripe = Stripe([[${stripePublicKey}]]);
             return stripe.redirectToCheckout({ sessionId: data.sessionId });
         })
         .catch(error => {
             console.error('Error:', error);
-            alert(error.message || '결제 처리 중 오류가 발생했습니다.');
+            alert(error.message || 'An error occurred during payment processing.');
         });
     }
 
@@ -132,11 +161,11 @@
     function toggleEditMode() {
         const viewElements = document.querySelectorAll('.view-mode');
         const editElements = document.querySelectorAll('.edit-mode');
-        
+
         viewElements.forEach(el => {
             el.classList.toggle('hidden');
         });
-        
+
         editElements.forEach(el => {
             el.style.display = el.style.display === 'none' ? 'block' : 'none';
         });
@@ -144,173 +173,126 @@
 
     // 4. 리뷰 관련 함수들
     function loadReviews() {
-        console.log("Loading reviews for item:", itemId);
-        $.ajax({
-            url: `/api/items/${itemId}/reviews`,
-            method: "GET",
-            success: function(reviews) {
-                console.log("Received reviews:", reviews);
-                displayReviews(reviews);
-            },
-            error: function(xhr) {
-                console.error("Failed to load reviews:", xhr);
-            }
-        });
+        const pathArray = window.location.pathname.split('/');
+        const itemId = pathArray[pathArray.length - 1];
+        
+        fetch(`/api/items/${itemId}/reviews`)
+            .then(response => response.json())
+            .then(reviews => {
+                const reviewsList = document.getElementById('reviewsList');
+                reviewsList.innerHTML = reviews.map(review => `
+                    <div class="card mb-3" id="review-${review.reviewId}">
+                        <div class="card-body">
+                            <div class="mb-2">
+                                <h6 class="card-subtitle text-muted">
+                                    ${review.memberName || 'Anonymous'} • 
+                                    ${new Date(review.createdDate).toLocaleDateString()}
+                                </h6>
+                                <div class="text-warning">
+                                    ${'★'.repeat(review.rating)}${'☆'.repeat(5-review.rating)}
+                                </div>
+                            </div>
+                            <p class="card-text">${review.content}</p>
+                            ${review.reviewImages && review.reviewImages.length > 0 ? `
+                                <div class="review-images d-flex flex-wrap gap-2 mt-2 mb-3">
+                                    ${review.reviewImages.map(img => `
+                                        <img src="${img.imageUrl}" alt="Review image">
+                                    `).join('')}
+                                </div>
+                            ` : ''}
+                            ${review.owner ? `
+                                <div class="d-flex gap-2">
+                                    <button class="btn btn-outline-dark rounded-pill" onclick="editReview(${review.reviewId})">
+                                        <i class="bi bi-pencil"></i> Edit
+                                    </button>
+                                    <button class="btn btn-outline-danger rounded-pill" onclick="deleteReview(${review.reviewId})">
+                                        <i class="bi bi-trash"></i> Delete
+                                    </button>
+                                </div>
+                            ` : ''}
+                        </div>
+                    </div>
+                `).join('');
+            });
     }
 
-    function displayReviews(reviews) {
-        const reviewsList = $("#reviewsList");
-        reviewsList.empty();
-
-        if (reviews.length === 0) {
-            reviewsList.append('<p class="text-center">No reviews yet.</p>');
-            return;
-        }
-
-        reviews.forEach(review => {
-            const stars = "★".repeat(review.rating) + "☆".repeat(5 - review.rating);
-            const date = new Date(review.createdDate);
-            const formattedDate = date.toLocaleString('ko-KR', {
-                year: 'numeric',
-                month: '2-digit',
-                day: '2-digit',
-                hour: '2-digit',
-                minute: '2-digit',
-                hour12: false
-            });
-
-            const reviewHtml = `
-                <div class="review-item border-bottom py-3" data-review-id="${review.reviewId}">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <h5 class="mb-0">${review.memberName}</h5>
-                            <div class="d-flex align-items-center gap-2">
-                                <span class="star-rating">${stars}</span>
-                                <small class="text-muted">${formattedDate}</small>
-                            </div>
-                        </div>
-                    </div>
-                    <p class="review-content mt-2">${review.content}</p>
-                    <div class="review-images d-flex gap-2 mt-2">
-                        ${review.reviewImages ? review.reviewImages.map(img => `
-                            <img src="/images/${img.storeFileName}"
-                                 alt="Review Image"
-                                 style="width: 200px; height: 200px; object-fit: contain;"
-                                 class="rounded border">
-                        `).join('') : ''}
-                    </div>
-                    ${review.memberId === currentMemberId ? `
-                        <div class="mt-2">
-                            <button class="btn btn-primary btn-sm"
-                                    onclick="editReview(${review.reviewId}, '${review.content}', ${review.rating})">Edit</button>
-                            <button class="btn btn-secondary btn-sm"
-                                    onclick="deleteReview(${review.reviewId})">Delete</button>
-                        </div>
-                        <div class="edit-form" style="display: none;">
+    function editReview(reviewId) {
+        fetch(`/api/reviews/${reviewId}`)
+            .then(response => response.json())
+            .then(review => {
+                const reviewCard = document.querySelector(`#review-${reviewId}`);
+                reviewCard.innerHTML = `
+                    <div class="card-body">
+                        <form id="edit-form-${reviewId}" onsubmit="saveReview(event, ${reviewId})">
                             <div class="mb-3">
                                 <label class="form-label">Rating</label>
-                                <div class="rating edit-rating">
-                                    <input type="radio" name="edit-rating-${review.reviewId}" value="5" id="edit-5-${review.reviewId}"><label for="edit-5-${review.reviewId}">☆</label>
-                                    <input type="radio" name="edit-rating-${review.reviewId}" value="4" id="edit-4-${review.reviewId}"><label for="edit-4-${review.reviewId}">☆</label>
-                                    <input type="radio" name="edit-rating-${review.reviewId}" value="3" id="edit-3-${review.reviewId}"><label for="edit-3-${review.reviewId}">☆</label>
-                                    <input type="radio" name="edit-rating-${review.reviewId}" value="2" id="edit-2-${review.reviewId}"><label for="edit-2-${review.reviewId}">☆</label>
-                                    <input type="radio" name="edit-rating-${review.reviewId}" value="1" id="edit-1-${review.reviewId}"><label for="edit-1-${review.reviewId}">☆</label>
+                                <div class="rating">
+                                    <input type="radio" name="rating" value="5" id="edit-5-${reviewId}" ${review.rating === 5 ? 'checked' : ''}>
+                                    <label for="edit-5-${reviewId}">☆</label>
+                                    <input type="radio" name="rating" value="4" id="edit-4-${reviewId}" ${review.rating === 4 ? 'checked' : ''}>
+                                    <label for="edit-4-${reviewId}">☆</label>
+                                    <input type="radio" name="rating" value="3" id="edit-3-${reviewId}" ${review.rating === 3 ? 'checked' : ''}>
+                                    <label for="edit-3-${reviewId}">☆</label>
+                                    <input type="radio" name="rating" value="2" id="edit-2-${reviewId}" ${review.rating === 2 ? 'checked' : ''}>
+                                    <label for="edit-2-${reviewId}">☆</label>
+                                    <input type="radio" name="rating" value="1" id="edit-1-${reviewId}" ${review.rating === 1 ? 'checked' : ''}>
+                                    <label for="edit-1-${reviewId}">☆</label>
                                 </div>
                             </div>
                             <div class="mb-3">
-                                <textarea class="form-control edit-content" rows="3"></textarea>
+                                <label class="form-label">Review</label>
+                                <textarea class="form-control" name="content" rows="3" required>${review.content}</textarea>
                             </div>
-                            <div class="mb-3">
-                                <label class="form-label">Edit Images</label>
-                                <div class="current-images mb-2">
-                                    ${review.reviewImages ? review.reviewImages.map(img => `
-                                        <div class="position-relative d-inline-block">
-                                            <img src="/images/${img.storeFileName}"
-                                                 alt="Current Image"
-                                                 style="width: 100px; height: 100px; object-fit: contain;"
-                                                 class="rounded border">
-                                        </div>
-                                    `).join('') : ''}
+                            ${review.reviewImages && review.reviewImages.length > 0 ? `
+                                <div class="mb-3">
+                                    <label class="form-label">Current Images</label>
+                                    <div class="review-images d-flex flex-wrap gap-2 mb-3">
+                                        ${review.reviewImages.map(img => `
+                                            <img src="${img.imageUrl}" alt="Review image">
+                                        `).join('')}
+                                    </div>
                                 </div>
-                                <input type="file" class="form-control edit-images"
-                                       multiple accept="image/*"
-                                       id="edit-images-${review.reviewId}">
-                                <div class="edit-image-preview mt-2 d-flex gap-2"></div>
+                            ` : ''}
+                            <div class="mb-3">
+                                <label class="form-label">Add New Images</label>
+                                <input type="file" class="form-control" name="reviewImages" multiple accept="image/*" onchange="previewEditImages(this)">
+                                <div class="review-image-preview mt-2 d-flex gap-2"></div>
                             </div>
-                            <button class="btn btn-primary btn-sm save-edit"
-                                    onclick="saveReview(${review.reviewId})">Save</button>
-                            <button class="btn btn-secondary btn-sm"
-                                    onclick="cancelEdit(${review.reviewId})">Cancel</button>
-                        </div>
-                    ` : ''}
-                </div>
-            `;
-            reviewsList.append(reviewHtml);
-        });
+                            <div class="d-flex gap-2">
+                                <button type="submit" class="btn btn-primary">Save Changes</button>
+                                <button type="button" class="btn btn-secondary" onclick="loadReviews()">Cancel</button>
+                            </div>
+                        </form>
+                    </div>
+                `;
+            });
     }
 
-    function saveReview(reviewId) {
-        if ($("#reviewForm").data("submitting")) {
-            return;
-        }
-        $("#reviewForm").data("submitting", true);
-
-        const rating = $("input[name='rating']:checked").val();
-        const content = $("#reviewContent").val().trim();
-        const formData = new FormData();
-        const files = $("#reviewImages")[0].files;
-
-        if (!rating) {
-            alert("Please select a rating.");
-            return;
-        }
-
-        if (!content) {
-            alert("Please enter the contents.");
-            return;
-        }
-
-        formData.append("itemId", itemId);
-        formData.append("content", content);
-        formData.append("rating", rating);
-
-        if (files.length > 0) {
-            for (let i = 0; i < files.length; i++) {
-                formData.append("images", files[i]);
-            }
-        }
-
-        $.ajax({
-            url: "/api/reviews",
-            method: "POST",
-            data: formData,
-            processData: false,
-            contentType: false,
-            success: function(response) {
-                alert("Review has been posted.");
-                $("#reviewContent").val("");
-                $("input[name='rating']").prop("checked", false);
-                $("#reviewImages").val("");
-                $("#imagePreview").empty();
-                loadReviews();
-                updateItemRating();
-            },
-            error: function(xhr) {
-                alert(xhr.responseText);
-            }
-        });
-    }
-
-    function editReview(reviewId, content, rating) {
-        const reviewItem = $(`.review-item[data-review-id="${reviewId}"]`);
-        reviewItem.find('.edit-form').show();
-        reviewItem.find('.edit-content').val(content);
-        reviewItem.find(`input[name="edit-rating-${reviewId}"][value="${rating}"]`).prop('checked', true);
-        reviewItem.find('.review-content, .edit-btn, .btn-outline-danger').hide();
+    function saveReview(event, reviewId) {
+        event.preventDefault();
+        const form = document.getElementById(`edit-form-${reviewId}`);
+        const formData = new FormData(form);
         
-        // 이미지 수정 시 기존 이미지 미리보기 숨기기
-        reviewItem.find('.edit-images').on('change', function() {
-            reviewItem.find('.current-images').hide();
+        // itemId 추가
+        const pathArray = window.location.pathname.split('/');
+        const itemId = pathArray[pathArray.length - 1];
+        formData.append('itemId', itemId);
+        
+        fetch(`/api/reviews/${reviewId}`, {
+            method: 'PUT',
+            body: formData
+        })
+        .then(response => {
+            if (!response.ok) throw new Error('Failed to update review');
+            return response.json();
+        })
+        .then(data => {
+            alert('Your review has been revised.');
+                loadReviews();
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Review modification failed.');
         });
     }
 
@@ -331,15 +313,6 @@
                 alert(xhr.responseText);
             }
         });
-    }
-
-    function cancelEdit(reviewId) {
-        const reviewItem = $(`.review-item[data-review-id="${reviewId}"]`);
-        reviewItem.find('.edit-form').hide();
-        reviewItem.find('.review-content, .edit-btn, .btn-outline-danger').show();
-        reviewItem.find('.edit-images').val('');  // 파일 입력 초기화
-        reviewItem.find('.edit-image-preview').empty();  // 미리보기 초기화
-        reviewItem.find('.current-images').show();  // 기존 이미지 다시 표시
     }
 
     function updateAverageRating(averageRating, reviewCount) {
@@ -380,6 +353,75 @@
                 reader.readAsDataURL(file);
             });
         }
+    }
+
+    // 리뷰 작성 폼 부분
+    function previewReviewImages(input) {
+        const previewContainer = input.nextElementSibling;
+        previewContainer.innerHTML = '';
+        
+        Array.from(input.files).forEach(file => {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const img = document.createElement('img');
+                img.src = e.target.result;
+                img.style.width = '100px';
+                img.style.height = '100px';
+                img.style.objectFit = 'contain';
+                img.className = 'rounded border';
+                previewContainer.appendChild(img);
+            };
+            reader.readAsDataURL(file);
+        });
+    }
+
+    // 리뷰 제출
+    function submitReview() {
+        const form = document.getElementById('reviewForm');
+        const formData = new FormData(form);
+        const itemId = document.querySelector('input[name="itemId"]').value;  // itemId 가져오기
+        
+        fetch(`/api/items/${itemId}/reviews`, {  // 실제 itemId 사용
+            method: 'POST',
+            body: formData,
+            credentials: 'same-origin'
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(response.statusText);
+            }
+            return response.json();
+        })
+        .then(data => {
+            alert('review has been registered.');
+            loadReviews();
+            form.reset();
+            document.querySelector('.review-image-preview').innerHTML = '';
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Review registration failed.');
+        });
+    }
+
+    // 리뷰 수정 시 이미지 미리보기
+    function previewEditImages(input) {
+        const previewContainer = input.nextElementSibling;  // input 바로 다음의 미리보기 컨테이너 사용
+        previewContainer.innerHTML = '';
+        
+        Array.from(input.files).forEach(file => {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const img = document.createElement('img');
+                img.src = e.target.result;
+                img.style.width = '200px';
+                img.style.height = '200px';
+                img.style.objectFit = 'contain';
+                img.className = 'rounded border';
+                previewContainer.appendChild(img);
+            };
+            reader.readAsDataURL(file);
+        });
     }
     /*]]>*/
 </script>
@@ -537,6 +579,7 @@
                         <div class="fs-4 fw-bold" id="totalPrice" th:text="${#numbers.formatInteger(item.price, 0, 'COMMA')} + ' KRW'"></div>
                     </div>
 
+                    <!-- 버튼 그룹 수정 -->
                     <div class="d-flex gap-2">
                         <button class="btn btn-dark" type="button" th:onclick="initiateCheckout()">
                             <i class="bi-bag-check-fill me-1"></i>
@@ -546,14 +589,15 @@
                             <i class="bi-cart-fill me-1"></i>
                             Add to Cart
                         </button>
-                        <button class="btn btn-primary" onclick="toggleEditMode()">
-                            Edit
+                        <!-- 수정/삭제 버튼은 로그인한 사용자의 상품일 때만 표시 -->
+                        <div th:if="${currentMemberId != null && currentMemberId == item.memberId}" class="d-flex gap-2">
+                            <button type="button" class="btn btn-outline-dark" onclick="toggleEditMode()">
+                                <i class="bi bi-pencil"></i> Edit
                         </button>
-                        <form th:action="@{/items/{itemId}/delete(itemId=${item.itemId})}" method="post">
-                            <button class="btn btn-danger" type="submit">
-                                Delete
+                            <button type="button" class="btn btn-outline-danger" th:onclick="'deleteItem(' + ${item.itemId} + ')'">
+                                <i class="bi bi-trash"></i> Delete
                             </button>
-                        </form>
+                        </div>
                     </div>
                 </div>
 
@@ -564,7 +608,7 @@
                         <div class="mb-3">
                             <label class="form-label">Product Name</label>
                             <input type="text" class="form-control" name="name" th:value="${item.name}" required>
-                        </div>
+                            </div>
                         
                         <div class="mb-3">
                             <label class="form-label">Price</label>
@@ -574,23 +618,23 @@
                         <div class="mb-3">
                             <label class="form-label">Stock Quantity</label>
                             <input type="number" class="form-control" name="stockQuantity" th:value="${item.stockQuantity}" required>
-                        </div>
+                    </div>
                         
                         <div class="mb-3">
                             <label class="form-label">Category</label>
                             <select class="form-select" name="category" required>
-                                <option value="APPAREL" th:selected="${item.category == 'APPAREL'}">Apparel</option>
-                                <option value="ELECTRONICS" th:selected="${item.category == 'ELECTRONICS'}">Electronics</option>
-                                <option value="BOOKS" th:selected="${item.category == 'BOOKS'}">Books</option>
-                                <option value="HOME_AND_KITCHEN" th:selected="${item.category == 'HOME_AND_KITCHEN'}">Home & Kitchen</option>
-                                <option value="HEALTH_AND_BEAUTY" th:selected="${item.category == 'HEALTH_AND_BEAUTY'}">Health & Beauty</option>
+                                <option value="APPAREL" th:selected="${item.category.name() == 'APPAREL'}">Apparel</option>
+                                <option value="ELECTRONICS" th:selected="${item.category.name() == 'ELECTRONICS'}">Electronics</option>
+                                <option value="BOOKS" th:selected="${item.category.name() == 'BOOKS'}">Books</option>
+                                <option value="HOME_AND_KITCHEN" th:selected="${item.category.name() == 'HOME_AND_KITCHEN'}">Home & Kitchen</option>
+                                <option value="HEALTH_AND_BEAUTY" th:selected="${item.category.name() == 'HEALTH_AND_BEAUTY'}">Health & Beauty</option>
                             </select>
-                        </div>
+                </div>
                         
                         <div class="mb-3">
                             <label class="form-label">Description</label>
                             <textarea class="form-control" name="description" rows="5" required th:text="${item.description}"></textarea>
-                        </div>
+            </div>
 
                         <!-- 새 이미지 업로드 -->
                         <div class="mb-3">
@@ -638,22 +682,19 @@
 </section>
 
 <!-- Reviews Section -->
-<div class="container reviews-section view-mode">
-    <h3 class="mb-4">Product Reviews</h3>
+<div class="container px-4 px-lg-5 my-5">
+    <h3 class="mb-4">Reviews</h3>
 
-    <!-- Review Form -->
-    <div class="card mb-4">
+    <!-- Review Form - 로그인한 경우에만 표시 -->
+    <div class="card mb-4" th:if="${currentMemberId != null}">
         <div class="card-body">
             <h5 class="card-title">Write a Review</h5>
-            <div th:if="${currentMemberId == null}" class="alert alert-warning">
-                Please <a href="/members">log in</a> to write a review.
-            </div>
-            <form id="reviewForm" th:if="${currentMemberId != null}">
-                <input type="hidden" id="itemId" th:value="${item.itemId}">
+            <form id="reviewForm" enctype="multipart/form-data">
+                <input type="hidden" name="itemId" th:value="${item.itemId}">
                 <div class="mb-3">
                     <label class="form-label">Rating</label>
                     <div class="rating">
-                        <input type="radio" name="rating" value="5" id="5"><label for="5">☆</label>
+                        <input type="radio" name="rating" value="5" id="5" required><label for="5">☆</label>
                         <input type="radio" name="rating" value="4" id="4"><label for="4">☆</label>
                         <input type="radio" name="rating" value="3" id="3"><label for="3">☆</label>
                         <input type="radio" name="rating" value="2" id="2"><label for="2">☆</label>
@@ -661,20 +702,25 @@
                     </div>
                 </div>
                 <div class="mb-3">
-                    <label for="reviewContent" class="form-label">Review Content</label>
-                    <textarea class="form-control" id="reviewContent" rows="3" required></textarea>
+                    <label class="form-label">Review</label>
+                    <textarea class="form-control" name="content" rows="3" required></textarea>
                 </div>
                 <div class="mb-3">
-                    <label for="reviewImages" class="form-label">Attach Images</label>
-                    <input class="form-control" type="file" id="reviewImages" name="images" multiple accept="image/*">
-                    <div id="imagePreview" class="mt-2 d-flex flex-wrap gap-2"></div>
+                    <label class="form-label">Images</label>
+                    <input type="file" class="form-control" name="reviewImages" multiple accept="image/*" onchange="previewReviewImages(this)">
+                    <div class="review-image-preview mt-2 d-flex gap-2"></div>
                 </div>
-                <button type="submit" class="btn btn-primary">Submit Review</button>
+                <button type="button" class="btn btn-primary" onclick="submitReview()">Submit Review</button>
             </form>
         </div>
     </div>
 
-    <!-- Reviews List -->
+    <!-- 로그인하지 않은 경우 리뷰 작성 안내 -->
+    <div class="alert alert-warning mb-4" th:if="${currentMemberId == null}">
+        Please <a href="/members">log in</a> to write a review.
+    </div>
+
+    <!-- Reviews List - 항상 표시 -->
     <div id="reviewsList">
         <!-- Reviews will be loaded here -->
     </div>
@@ -965,6 +1011,69 @@
     /* toggleEditMode 함수가 호출될 때 view-mode 요소들을 숨김 */
     .view-mode.hidden {
         display: none !important;
+    }
+
+    /* 리뷰 이미지 관련 스타일 */
+    .review-image-preview img, .edit-image-preview img {
+        width: 100px;
+        height: 100px;
+        object-fit: contain;
+        border: 1px solid #dee2e6;
+        border-radius: 4px;
+        padding: 2px;
+        background-color: #f8f9fa;
+    }
+
+    .review-images img {
+        width: 200px;
+        height: 200px;
+        object-fit: contain;
+        border: 1px solid #dee2e6;
+        border-radius: 4px;
+        padding: 5px;
+        background-color: #f8f9fa;
+    }
+
+    .review-image-preview img {
+        width: 100px;
+        height: 100px;
+        object-fit: cover;
+        border-radius: 4px;
+        border: 1px solid #dee2e6;
+    }
+
+    .rating {
+        display: flex;
+        flex-direction: row-reverse;
+        justify-content: flex-end;
+    }
+
+    .rating > input {
+        display: none;
+    }
+
+    .rating > label {
+        position: relative;
+        width: 1.1em;
+        font-size: 2em;
+        color: #ffd700;
+        cursor: pointer;
+    }
+
+    .rating > label::before {
+        content: "☆";
+        position: absolute;
+        opacity: 1;
+    }
+
+    .rating > input:checked ~ label:before {
+        content: "★";
+    }
+
+    .rating > label:hover:before,
+    .rating > label:hover ~ label:before {
+        content: "★";
+        opacity: 0.8;
     }
 </style>
 </body>

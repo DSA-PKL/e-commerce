@@ -46,18 +46,27 @@ public class ReviewController {
     @PutMapping("/api/reviews/{reviewId}")
     @ResponseBody
     public ResponseEntity<?> updateReview(@PathVariable Long reviewId,
-                                        @Valid @ModelAttribute ReviewRequestDto requestDto,
-                                        @RequestParam(required = false) List<MultipartFile> images,
+                                        @RequestParam("content") String content,
+                                        @RequestParam("rating") int rating,
+                                        @RequestParam(value = "reviewImages", required = false) List<MultipartFile> reviewImages,
+                                        @RequestParam("itemId") Long itemId,
                                         HttpServletRequest request) {
         try {
             Member member = getMember(request);
             if (member == null) {
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                        .body("Login required.");
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Login required.");
             }
-            reviewService.updateReview(reviewId, requestDto, member.getId(), images);
-            return ResponseEntity.ok().build();
-        } catch (IllegalArgumentException | IllegalStateException | IOException e) {
+
+            ReviewRequestDto requestDto = ReviewRequestDto.builder()
+                .itemId(itemId)
+                .content(content)
+                .rating(rating)
+                .build();
+
+            reviewService.updateReview(reviewId, requestDto, member.getId(), reviewImages);
+            Review updatedReview = reviewService.findById(reviewId);
+            return ResponseEntity.ok(ReviewResponseDto.from(updatedReview, member.getId()));
+        } catch (Exception e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
@@ -73,14 +82,44 @@ public class ReviewController {
 
     @GetMapping("/api/items/{itemId}/reviews")
     @ResponseBody
-    public ResponseEntity<List<ReviewResponseDto>> getItemReviews(@PathVariable Long itemId) {
-        return ResponseEntity.ok(reviewService.getItemReviews(itemId));
+    public ResponseEntity<List<ReviewResponseDto>> getItemReviews(@PathVariable Long itemId, HttpServletRequest request) {
+        Member member = getMember(request);
+        Long currentMemberId = member != null ? member.getId() : null;
+        List<ReviewResponseDto> reviews = reviewService.getItemReviews(itemId, currentMemberId);
+        return ResponseEntity.ok(reviews);
     }
 
     @GetMapping("/api/reviews/{reviewId}")
     @ResponseBody
-    public ResponseEntity<ReviewResponseDto> getReview(@PathVariable Long reviewId) {
+    public ResponseEntity<ReviewResponseDto> getReview(@PathVariable Long reviewId, HttpServletRequest request) {
         Review review = reviewService.findById(reviewId);
-        return ResponseEntity.ok(ReviewResponseDto.from(review));
+        Member member = getMember(request);
+        Long currentMemberId = member != null ? member.getId() : null;
+        return ResponseEntity.ok(ReviewResponseDto.from(review, currentMemberId));
+    }
+
+    @PostMapping("/api/items/{itemId}/reviews")
+    @ResponseBody
+    public ResponseEntity<?> createReview(@PathVariable Long itemId,
+                                        @RequestParam("rating") int rating,
+                                        @RequestParam("content") String content,
+                                        @RequestParam(value = "reviewImages", required = false) List<MultipartFile> reviewImages,
+                                        HttpServletRequest request) {
+        Member member = getMember(request);
+        if (member == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Login required.");
+        }
+
+        try {
+            ReviewRequestDto requestDto = ReviewRequestDto.builder()
+                .itemId(itemId)
+                .rating(rating)
+                .content(content)
+                .build();
+            Long reviewId = reviewService.createReview(requestDto, member.getId(), reviewImages);
+            return ResponseEntity.ok(reviewId);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
     }
 } 

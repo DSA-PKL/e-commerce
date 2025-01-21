@@ -7,9 +7,10 @@ import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import lombok.Builder;
 
 @Getter
-@Setter
+@Builder
 public class ReviewRequestDto {
     private Long itemId;
 
