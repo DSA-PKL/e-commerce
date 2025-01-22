@@ -94,6 +94,130 @@
             transform: translateY(-2px);
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
         }
+
+        /* 추천 상품 카드 특별 스타일 */
+        .bg-gradient {
+            background: linear-gradient(to bottom right, #f8f9fa, #e9ecef);
+        }
+        
+        /* 추천 상품 호버 효과 강화 */
+        .product-card {
+            transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+        }
+        
+        .product-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15);
+        }
+        
+        /* 추천 뱃지 스타일 */
+        .badge {
+            font-size: 0.85rem;
+            letter-spacing: 0.5px;
+        }
+        
+        /* 추천 상품 섹션 제목 스타일 */
+        h3 {
+            position: relative;
+            display: inline-block;
+            padding-bottom: 0.5rem;
+        }
+        
+        h3::after {
+            content: '';
+            position: absolute;
+            left: 50%;
+            bottom: 0;
+            transform: translateX(-50%);
+            width: 50px;
+            height: 2px;
+            background-color: #212529;
+        }
+
+        /* 추천/최신 상품 버튼 호버 효과 강화 */
+        .hover-shadow-lg {
+            transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1) !important;
+        }
+        
+        .hover-shadow-lg:hover {
+            transform: translateY(-2px) !important;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2) !important;
+            background-color: #000 !important;
+            color: #fff !important;
+        }
+        
+        /* 일반 상품 버튼 호버 효과 */
+        .hover-shadow:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            background-color: #343a40;
+            color: #fff;
+        }
+        
+        /* 버튼 내부 텍스트 호버 효과 */
+        .btn:hover span {
+            transform: translateY(-2px);
+        }
+        
+        /* 버튼 활성화 상태 스타일 */
+        .btn:active {
+            transform: translateY(1px);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        /* 섹션 구분선 스타일 */
+        .section-divider {
+            position: relative;
+            height: 3px;
+            background: linear-gradient(to right, transparent, #dee2e6, transparent);
+            margin: 3rem 0;
+        }
+        
+        .section-divider::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 50px;
+            height: 50px;
+            background-color: #fff;
+            border: 2px solid #dee2e6;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .section-divider::after {
+            content: '•••';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: #6c757d;
+            font-size: 1.2rem;
+            letter-spacing: 2px;
+        }
+
+        /* 섹션 제목 스타일 강화 */
+        .section-title {
+            font-size: 1.8rem;
+            font-weight: 600;
+            color: #212529;
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+        
+        .section-title::after {
+            content: '';
+            display: block;
+            width: 60px;
+            height: 3px;
+            background: linear-gradient(to right, #212529, #6c757d);
+            margin: 1rem auto 0;
+            border-radius: 2px;
+        }
     </style>
 </head>
 <body>
@@ -189,6 +313,70 @@
 <!-- Section-->
 <section class="py-5">
     <div class="container px-4 px-lg-5 mt-4">
+        <!-- 추천/최신 상품 섹션 -->
+        <div th:if="${recommendedItems != null and !recommendedItems.isEmpty()}" class="mb-5">
+            <h3 class="section-title">
+                <span th:if="${isRecommended}">
+                    Recommended Products for <span class="fw-bold" th:text="${session.loginMember.name}">User</span>
+                </span>
+                <span th:unless="${isRecommended}">
+                    Latest Products
+                </span>
+            </h3>
+            <div class="row g-4 justify-content-center">
+                <div class="col-sm-6 col-lg-4 col-xl-3" th:each="item : ${recommendedItems}">
+                    <div class="card h-100 product-card border-0 position-relative overflow-hidden">
+                        <!-- 추천/최신 뱃지 -->
+                        <div class="position-absolute" style="top: 1rem; right: 1rem;">
+                            <span class="badge bg-dark rounded-pill px-3 py-2 shadow-sm">
+                                <i class="bi me-1" th:classappend="${isRecommended} ? 'bi-star-fill text-warning' : 'bi-clock-fill text-info'"></i>
+                                <span th:text="${isRecommended} ? 'RECOMMENDED' : 'NEW'">RECOMMENDED</span>
+                            </span>
+                        </div>
+                        
+                        <!-- 상품 이미지 -->
+                        <div class="product-image bg-gradient">
+                            <img th:if="${item.getItemImageList() != null and !item.getItemImageList().isEmpty()}"
+                                 th:src="${#strings.startsWith(item.getItemImageList().get(0).getStoreName(), 'http')} ? 
+                                         ${item.getItemImageList().get(0).getStoreName()} : 
+                                         |/images/${item.getItemImageList().get(0).getStoreName()}|"
+                                 alt="Product Image"/>
+                            <div th:if="${item.getItemImageList() == null or item.getItemImageList().isEmpty()}"
+                                 class="d-flex align-items-center justify-content-center">
+                                <i class="bi bi-image text-muted" style="font-size: 3rem;"></i>
+                            </div>
+                        </div>
+
+                        <!-- 상품 정보 -->
+                        <div class="card-body p-4 text-center">
+                            <h5 class="product-title mb-3" th:text="${item.getName()}">Product</h5>
+                            <p class="product-price mb-0">
+                                <span th:text="${#numbers.formatInteger(item.getPrice(), 0, 'COMMA')}">price</span>
+                                <span class="text-muted fs-6">KRW</span>
+                            </p>
+                        </div>
+
+                        <!-- 버튼 -->
+                        <div class="card-footer bg-transparent border-0 p-4 text-center">
+                            <a class="btn btn-dark w-100 rounded-pill hover-shadow-lg position-relative overflow-hidden"
+                               th:href="@{/items/{id}(id=${item.id})}"
+                               style="transition: all 0.4s ease;">
+                                <span class="d-inline-block" style="transform: translateY(0); transition: transform 0.4s ease;">
+                                    View Details
+                                </span>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 섹션 구분선 -->
+        <div th:if="${recommendedItems != null and !recommendedItems.isEmpty()}" 
+             class="section-divider"></div>
+
+        <!-- 일반 상품 섹션 -->
+        <h3 class="section-title">All Products</h3>
         <div class="row g-4 justify-content-center">
             <!-- 빈 상품 리스트 -->
             <div th:if="${#lists.isEmpty(items)}" class="col-12 text-center">

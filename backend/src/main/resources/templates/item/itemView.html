@@ -114,7 +114,7 @@
         // 로그인 체크
         const currentMemberId = [[${currentMemberId}]];
         if (!currentMemberId) {
-            alert("login is required.");
+            alert("Login is required.");
             window.location.href = "/members";
             return;
         }
@@ -123,7 +123,7 @@
         const stockQuantity = [[${item.stockQuantity}]];
         
         if (count > stockQuantity) {
-            alert("out of stock. Current inventory: " + stockQuantity + "units");
+            alert("Out of stock. Current inventory: " + stockQuantity + " units");
             return;
         }
 
@@ -134,6 +134,7 @@
             itemName: [[${item.name}]]
         };
 
+        // Stripe 결제 세션 생성 요청
         fetch('/api/checkout/create-checkout-session-single', {
             method: 'POST',
             headers: {
@@ -143,17 +144,18 @@
         })
         .then(response => {
             if (!response.ok) {
-                throw new Error('An error occurred during payment processing.');
+                throw new Error('Payment processing failed.');
             }
             return response.json();
         })
-            .then(data => {
+        .then(data => {
+            // Stripe 객체 초기화 및 결제 페이지로 리디렉션
             const stripe = Stripe([[${stripePublicKey}]]);
             return stripe.redirectToCheckout({ sessionId: data.sessionId });
         })
         .catch(error => {
             console.error('Error:', error);
-            alert(error.message || 'An error occurred during payment processing.');
+            alert(error.message || 'Payment processing failed.');
         });
     }
 
@@ -581,7 +583,7 @@
 
                     <!-- 버튼 그룹 수정 -->
                     <div class="d-flex gap-2">
-                        <button class="btn btn-dark" type="button" th:onclick="initiateCheckout()">
+                        <button class="btn btn-dark" type="button" onclick="initiateCheckout()">
                             <i class="bi-bag-check-fill me-1"></i>
                             Buy Now
                         </button>

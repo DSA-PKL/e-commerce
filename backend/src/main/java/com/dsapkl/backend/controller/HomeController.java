@@ -22,6 +22,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static com.dsapkl.backend.controller.CartController.getMember;
 import com.dsapkl.backend.entity.Category;
@@ -83,6 +84,34 @@ public class HomeController {
         
         // 로그인한 경우
         if (member != null) {
+            // 회원 정보 조회
+            MemberInfo memberInfo = memberInfoRepository.findByMemberId(member.getId())
+                    .orElse(null);
+            
+            // 선호도 기반 추천 상품 가져오기
+            List<Item> recommendedItems;
+            if (memberInfo != null && memberInfo.getCluster_id() != null) {
+                // 클러스터의 선호도 높은 상품 4개 조회
+                List<ClusterItemPreference> preferences = clusterItemPreferenceRepository
+                        .findByClusterIdOrderByPreferenceScoreDesc(memberInfo.getCluster_id().getId());
+                
+                if (!preferences.isEmpty()) {
+                    recommendedItems = preferences.stream()
+                            .map(ClusterItemPreference::getItem)
+                            .limit(4)
+                            .collect(Collectors.toList());
+                    model.addAttribute("isRecommended", true);
+                } else {
+                    recommendedItems = itemService.findLatestItems(4);
+                    model.addAttribute("isRecommended", false);
+                }
+            } else {
+                recommendedItems = itemService.findLatestItems(4);
+                model.addAttribute("isRecommended", false);
+            }
+            
+            model.addAttribute("recommendedItems", recommendedItems);
+            
             // 장바구니 아이템 카운트
             List<CartQueryDto> cartItems = cartService.findCartItems(member.getId());
             model.addAttribute("cartItemCount", cartItems.size());

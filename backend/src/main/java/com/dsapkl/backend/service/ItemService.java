@@ -1,8 +1,6 @@
 package com.dsapkl.backend.service;
 
-import com.dsapkl.backend.entity.Category;
-import com.dsapkl.backend.entity.Item;
-import com.dsapkl.backend.entity.ItemImage;
+import com.dsapkl.backend.entity.*;
 import com.dsapkl.backend.repository.ItemImageRepository;
 import com.dsapkl.backend.repository.ItemRepository;
 import com.dsapkl.backend.dto.ItemServiceDTO;
@@ -14,11 +12,14 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.beans.factory.annotation.Value;
+import com.dsapkl.backend.repository.MemberInfoRepository;
+import com.dsapkl.backend.repository.ClusterItemPreferenceRepository;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -28,6 +29,7 @@ import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.CriteriaQuery;
 import jakarta.persistence.criteria.Root;
 import jakarta.persistence.criteria.Predicate;
+import java.util.Collections;
 
 @Service
 @RequiredArgsConstructor
@@ -39,6 +41,8 @@ public class ItemService {
     private final ItemImageRepository itemImageRepository;
     private final FileHandler filehandler;
     private final ItemImageService itemImageService;
+    private final MemberInfoRepository memberInfoRepository;
+    private final ClusterItemPreferenceRepository clusterItemPreferenceRepository;
 
     //상품 정보 저장
     public Long saveItem(ItemForm itemForm, List<MultipartFile> multipartFileList, Long memberId) throws IOException {
@@ -224,5 +228,29 @@ public class ItemService {
         if (!item.getMemberId().equals(memberId)) {
             throw new IllegalStateException("해당 상품의 수정/삭제 권한이 없습니다.");
         }
+    }
+
+    public List<Item> findLatestItems(int limit) {
+        return itemRepository.findAll(Sort.by(Sort.Direction.DESC, "id"))
+                            .stream()
+                            .limit(limit)
+                            .collect(Collectors.toList());
+    }
+
+    public List<Item> getRecommendedItems(Long memberId) {
+        // 회원의 클러스터 정보 조회
+        MemberInfo memberInfo = memberInfoRepository.findByMemberId(memberId)
+                .orElse(null);
+        
+        if (memberInfo == null || memberInfo.getCluster_id() == null) {
+            return Collections.emptyList();
+        }
+
+        // 해당 클러스터의 선호도 높은 아이템 조회 (최대 4개)
+        return clusterItemPreferenceRepository.findByClusterIdOrderByPreferenceScoreDesc(memberInfo.getCluster_id().getId())
+                .stream()
+                .map(ClusterItemPreference::getItem)
+                .limit(4)
+                .collect(Collectors.toList());
     }
 }
