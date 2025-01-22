@@ -3,9 +3,53 @@
       xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
       layout:decorate="~{layout/base}">
 <head>
-    <th:block th:replace="members/common-styles :: memberStyles"></th:block>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.5.0/font/bootstrap-icons.css" rel="stylesheet"/>
-    
+    <th:block th:replace="members/common-styles :: memberStyles"></th:block>
+    <script th:inline="javascript">
+        var error =[[${errorMessage}]];
+        if(error != null){
+            alert(error);
+        }
+
+        function checkEmailDuplicate() {
+            const email = document.querySelector('#email').value;
+            if (!email) {
+                alert('이메일을 입력해주세요.');
+                return;
+            }
+
+            fetch('/api/members/check-email?email=' + encodeURIComponent(email))
+                .then(response => response.json())
+                .then(data => {
+                    const resultDiv = document.querySelector('#emailResult');
+                    //if response true -> email exist so can't use
+                    if (!data.isAvailable) {
+                        resultDiv.innerHTML = '<span class="text-success">사용 가능한 이메일입니다.</span>';
+                    } else {
+                        resultDiv.innerHTML = '<span class="text-danger">이미 사용중인 이메일입니다.</span>';
+                    }
+                });
+        }
+
+        function checkPhoneDuplicate() {
+            const phone = document.querySelector('#phoneNumber').value;
+            if (!phone) {
+                alert('휴대폰 번호를 입력해주세요.');
+                return;
+            }
+
+            fetch('/api/members/check-phone?phoneNumber=' + encodeURIComponent(phone))
+                .then(response => response.json())
+                .then(data => {
+                    const resultDiv = document.querySelector('#phoneResult');
+                    if (!data.isAvailable) {
+                        resultDiv.innerHTML = '<span class="text-success">사용 가능한 번호입니다.</span>';
+                    } else {
+                        resultDiv.innerHTML = '<span class="text-danger">이미 사용중인 번호입니다.</span>';
+                    }
+                });
+        }
+    </script>
     <style>
         .check-result {
             margin-top: 0.5rem;
@@ -58,7 +102,7 @@
                             <div class="input-group">
                                 <input type="text" id="email" th:field="*{email}" 
                                        class="form-control" placeholder="Please enter it in e-mail format">
-                                <button type="button" id="checkEmailBtn" class="btn check-btn">
+                                <button type="button" id="checkEmailBtn" class="btn check-btn" onclick="checkEmailDuplicate()">
                                     Check Email
                                 </button>
                             </div>
@@ -84,7 +128,7 @@
                             <div class="input-group">
                                 <input type="text" th:field="*{phoneNumber}" 
                                        class="form-control" placeholder="ex) 010-1234-5678" id="phoneNumber">
-                                <button type="button" id="checkPhoneBtn" class="btn check-btn">
+                                <button type="button" id="checkPhoneBtn" class="btn check-btn" onclick="checkPhoneDuplicate()">
                                     Check Phone
                                 </button>
                             </div>

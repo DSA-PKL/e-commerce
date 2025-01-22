@@ -265,6 +265,13 @@
                     document.getElementById('newPassword').value = '';
                     document.getElementById('confirmPassword').value = '';
                     document.getElementById('passwordMatch').innerHTML = '';
+
+                    // POST 방식으로 로그아웃 요청
+                    fetch('/logout', {
+                        method: 'POST'
+                    }).then(() => {
+                        window.location.href = '/';  // 홈으로 리다이렉트
+                    });
                 })
                 .catch(error => {
                     alert(error.message || 'Failed to update password');
