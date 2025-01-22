@@ -683,50 +683,26 @@
     <hr class="my-4">
 </section>
 
-<!-- Reviews Section -->
-<div class="container px-4 px-lg-5 my-5">
-    <h3 class="mb-4">Reviews</h3>
-
-    <!-- Review Form - 로그인한 경우에만 표시 -->
-    <div class="card mb-4" th:if="${currentMemberId != null}">
+<!-- 리뷰 섹션 -->
+<div class="view-mode">  <!-- 수정 모드에서는 숨김 -->
+    <div class="card mt-4">
+        <div class="card-header bg-white">
+            <h5 class="mb-0">Reviews</h5>
+        </div>
         <div class="card-body">
-            <h5 class="card-title">Write a Review</h5>
-            <form id="reviewForm" enctype="multipart/form-data">
-                <input type="hidden" name="itemId" th:value="${item.itemId}">
-                <div class="mb-3">
-                    <label class="form-label">Rating</label>
-                    <div class="rating">
-                        <input type="radio" name="rating" value="5" id="5" required><label for="5">☆</label>
-                        <input type="radio" name="rating" value="4" id="4"><label for="4">☆</label>
-                        <input type="radio" name="rating" value="3" id="3"><label for="3">☆</label>
-                        <input type="radio" name="rating" value="2" id="2"><label for="2">☆</label>
-                        <input type="radio" name="rating" value="1" id="1"><label for="1">☆</label>
-                    </div>
-                </div>
-                <div class="mb-3">
-                    <label class="form-label">Review</label>
-                    <textarea class="form-control" name="content" rows="3" required></textarea>
-                </div>
-                <div class="mb-3">
-                    <label class="form-label">Images</label>
-                    <input type="file" class="form-control" name="reviewImages" multiple accept="image/*" onchange="previewReviewImages(this)">
-                    <div class="review-image-preview mt-2 d-flex gap-2"></div>
-                </div>
-                <button type="button" class="btn btn-primary" onclick="submitReview()">Submit Review</button>
-            </form>
+            <!-- 리뷰 작성 폼 -->
+            <div class="mb-4" th:if="${currentMemberId != null && currentMemberId != item.memberId}">
+                <!-- ... 기존 리뷰 작성 폼 코드 ... -->
+            </div>
+            
+            <!-- 리뷰 목록 -->
+            <div id="reviewsList">
+                <!-- ... 기존 리뷰 목록 코드 ... -->
+            </div>
         </div>
     </div>
-
-    <!-- 로그인하지 않은 경우 리뷰 작성 안내 -->
-    <div class="alert alert-warning mb-4" th:if="${currentMemberId == null}">
-        Please <a href="/members">log in</a> to write a review.
-    </div>
-
-    <!-- Reviews List - 항상 표시 -->
-    <div id="reviewsList">
-        <!-- Reviews will be loaded here -->
-    </div>
 </div>
+
 <!-- Footer-->
 <footer class="py-5 bg-dark">
     <div class="container">

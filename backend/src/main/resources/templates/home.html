@@ -147,11 +147,11 @@
         <form th:action="@{/}" method="get" class="d-flex gap-2" style="width: 600px;">
             <select class="form-select rounded-pill" name="category" style="width: 200px;">
                 <option value="">All Categories</option>
-                <option value="APPAREL" th:selected="${param.category == 'APPAREL'}">Apparel</option>
-                <option value="ELECTRONICS" th:selected="${param.category == 'ELECTRONICS'}">Electronics</option>
-                <option value="BOOKS" th:selected="${param.category == 'BOOKS'}">Books</option>
-                <option value="HOME_AND_KITCHEN" th:selected="${param.category == 'HOME_AND_KITCHEN'}">Home & Kitchen</option>
-                <option value="HEALTH_AND_BEAUTY" th:selected="${param.category == 'HEALTH_AND_BEAUTY'}">Health & Beauty</option>
+                <option th:each="cat : ${T(com.dsapkl.backend.entity.Category).values()}"
+                        th:value="${cat}"
+                        th:text="${cat}"
+                        th:selected="${cat == selectedCategory}">
+                </option>
             </select>
             <input class="form-control rounded-pill" type="search" placeholder="Search products" 
                    name="query" th:value="${param.query}"/>
@@ -163,16 +163,29 @@
 </div>
 &nbsp
 
+<!-- 검색 시 추천/최신 상품 섹션 숨기기 -->
+<div th:if="${recommendedItems != null and !recommendedItems.isEmpty() and param.query == null and param.category == null}" 
+     class="mb-5">
+    <h3 class="section-title">
+        <!-- ... 기존 코드 ... -->
+    </h3>
+    <!-- ... 기존 코드 ... -->
+</div>
+
+<!-- 섹션 구분선도 검색 시 숨기기 -->
+<div th:if="${recommendedItems != null and !recommendedItems.isEmpty() and param.query == null and param.category == null}" 
+     class="section-divider"></div>
+
 <!-- Section-->
 <section class="py-5">
     <div class="container px-4 px-lg-5 mt-4">
         <div class="row g-4 justify-content-center">
-            <!-- 빈 상품 리스트 -->
+            <!-- 검색 결과 없을 때 메시지 -->
             <div th:if="${#lists.isEmpty(items)}" class="col-12 text-center">
                 <div class="card border-0 shadow-sm h-100 p-4">
                     <div class="card-body">
-                        <i class="bi bi-bag-x display-1 text-muted mb-3"></i>
-                        <h5 class="fw-bold text-muted">No Products Available</h5>
+                        <i class="bi bi-search display-1 text-muted mb-3"></i>
+                        <h5 class="fw-bold text-muted">No products found matching your search criteria.</h5>
                     </div>
                 </div>
             </div>
@@ -212,11 +225,10 @@
                 </div>
             </div>
         </div>
-        <!-- 페이지네이션 추가 -->
+        <!-- 페이지네이션 수정 -->
         <div class="d-flex justify-content-center mt-5">
             <nav aria-label="Page navigation">
                 <ul class="pagination">
-                    <!-- 이전 페이지 그룹으로 이동 -->
                     <li class="page-item" th:classappend="${startPage <= 1} ? 'disabled'">
                         <a class="page-link rounded-pill border-0 shadow-sm mx-1 text-dark" 
                            th:href="@{/(page=${prevGroupPage}, query=${param.query}, category=${param.category})}" 
@@ -234,7 +246,6 @@
                            th:classappend="${page == currentPage} ? 'bg-dark text-white' : 'text-dark'">1</a>
                     </li>
                     
-                    <!-- 다음 페이지 그룹으로 이동 -->
                     <li class="page-item" th:classappend="${endPage >= totalPages} ? 'disabled'">
                         <a class="page-link rounded-pill border-0 shadow-sm mx-1 text-dark" 
                            th:href="@{/(page=${nextGroupPage}, query=${param.query}, category=${param.category})}" 

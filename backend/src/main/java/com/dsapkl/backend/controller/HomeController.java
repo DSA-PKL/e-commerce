@@ -82,6 +82,16 @@ public class HomeController {
         model.addAttribute("query", query);
         model.addAttribute("category", category);
         
+        // 카테고리 선택 상태 유지
+        if (category != null && !category.trim().isEmpty()) {
+            try {
+                Category selectedCategory = Category.valueOf(category.toUpperCase());
+                model.addAttribute("selectedCategory", selectedCategory);
+            } catch (IllegalArgumentException e) {
+                // 잘못된 카테고리 값은 무시
+            }
+        }
+        
         // 로그인한 경우
         if (member != null) {
             // 회원 정보 조회

@@ -21,6 +21,7 @@ import lombok.RequiredArgsConstructor;
 import org.apache.catalina.security.SecurityUtil;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -193,12 +194,12 @@ public class ItemController {
 
     @GetMapping("/items/manage")
     public String manageItems(Model model, 
-                            @RequestParam(defaultValue = "0") int page,
-                            @RequestParam(defaultValue = "10") int size,
-                            @RequestParam(required = false) String query,
-                            @RequestParam(required = false) String category,
-                            @RequestParam(required = false) String status,
-                            HttpServletRequest request) {
+                             @RequestParam(defaultValue = "0") int page,
+                             @RequestParam(defaultValue = "10") int size,
+                             @RequestParam(required = false) String query,
+                             @RequestParam(required = false) String category,
+                             @RequestParam(required = false) String status,
+                             HttpServletRequest request) {
         try {
             // 현재 로그인한 사용자 정보 가져오기
             Member member = getMember(request);
@@ -229,6 +230,20 @@ public class ItemController {
                             .filter(item -> item.getStockQuantity() == 0)
                             .count())
                     .build();
+            
+            // 검색 파라미터 유지를 위한 모델 속성 추가
+            if (category != null && !category.trim().isEmpty()) {
+                try {
+                    Category selectedCategory = Category.valueOf(category.toUpperCase());
+                    model.addAttribute("selectedCategory", selectedCategory);
+                } catch (IllegalArgumentException e) {
+                    // 잘못된 카테고리 값은 무시
+                }
+            }
+            
+            if (status != null && !status.trim().isEmpty()) {
+                model.addAttribute("selectedStatus", status);
+            }
             
             // 페이지네이션된 데이터 조회
             Page<Item> itemPage;

@@ -419,75 +419,40 @@
     <!-- 검색 및 필터 -->
 
     <div class="d-flex flex-wrap align-items-center gap-3 mb-4">
-
         <form th:action="@{/items/manage}" method="get" class="row g-3 flex-grow-1">
-
             <div class="col-md-4">
-
                 <div class="input-group">
-
                     <span class="input-group-text bg-white"><i class="bi bi-search"></i></span>
-
                     <input type="text" class="form-control" name="query" 
-
                            placeholder="Search by product name or code" th:value="${param.query}">
-
                 </div>
-
             </div>
-
             <div class="col-md-2">
-
                 <select class="form-select" name="category">
-
                     <option value="">All Categories</option>
-
-                    <option th:each="category : ${T(com.dsapkl.backend.entity.Category).values()}"
-
-                            th:value="${category}"
-
-                            th:text="${category.name()}"
-
-                            th:selected="${param.category == category.name()}">
-
+                    <option th:each="cat : ${T(com.dsapkl.backend.entity.Category).values()}"
+                            th:value="${cat}"
+                            th:text="${cat}"
+                            th:selected="${cat == selectedCategory}">
                     </option>
-
                 </select>
-
             </div>
-
             <div class="col-md-2">
-
                 <select class="form-select" name="status">
-
                     <option value="">All Status</option>
-
-                    <option value="SELLING" th:selected="${param.status == 'SELLING'}">On Sale</option>
-
-                    <option value="SOLDOUT" th:selected="${param.status == 'SOLDOUT'}">Sold Out</option>
-
-                    <option value="LOW_STOCK" th:selected="${param.status == 'LOW_STOCK'}">Low Stock</option>
-
+                    <option value="IN_STOCK" th:selected="${selectedStatus == 'IN_STOCK'}">On Sale</option>
+                    <option value="LOW_STOCK" th:selected="${selectedStatus == 'LOW_STOCK'}">Low Stock</option>
+                    <option value="SOLD_OUT" th:selected="${selectedStatus == 'SOLD_OUT'}">Sold Out</option>
                 </select>
-
             </div>
-
             <div class="col-md-2">
-
                 <button type="submit" class="btn btn-dark w-100">
-
                     <i class="bi bi-search"></i> Search
-
                 </button>
-
             </div>
-
             <!-- 현재 페이지 크기와 정렬 상태 유지를 위한 hidden 필드들 -->
-
             <input type="hidden" name="page" value="0">
-
             <input type="hidden" name="size" th:value="${param.size}">
-
         </form>
 
         <div class="ms-3">
@@ -617,6 +582,16 @@
 
         </div>
 
+    </div>
+
+
+
+    <!-- 검색 결과 없을 때 메시지 -->
+    <div th:if="${#lists.isEmpty(items)}" class="card mb-4">
+        <div class="card-body text-center py-5">
+            <i class="bi bi-search display-1 text-muted mb-3"></i>
+            <h5 class="text-muted">No products found matching your search criteria.</h5>
+        </div>
     </div>
 
 

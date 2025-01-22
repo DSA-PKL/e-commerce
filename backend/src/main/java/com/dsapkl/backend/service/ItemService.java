@@ -173,25 +173,41 @@ public class ItemService {
             
             // 검색어 조건
             if (query != null && !query.trim().isEmpty()) {
-                String pattern = "%" + query.toLowerCase() + "%";
-                predicates.add(criteriaBuilder.or(
-                    criteriaBuilder.like(criteriaBuilder.lower(root.get("name")), pattern),
-                    criteriaBuilder.like(criteriaBuilder.lower(root.get("description")), pattern)
+                predicates.add(criteriaBuilder.like(
+                    criteriaBuilder.lower(root.get("name")),
+                    "%" + query.toLowerCase() + "%"
                 ));
             }
             
             // 카테고리 조건
             if (category != null && !category.trim().isEmpty()) {
                 try {
-                    Category categoryEnum = Category.valueOf(category.toUpperCase());
+                    Category categoryEnum = Category.valueOf(category);
                     predicates.add(criteriaBuilder.equal(root.get("category"), categoryEnum));
                 } catch (IllegalArgumentException e) {
-                    log.debug("Invalid category value: {}", category);
-                    // 잘못된 카테고리는 무시하고 계속 진행
+                    // 잘못된 카테고리 값은 무시
                 }
             }
             
-            return predicates.isEmpty() ? null : criteriaBuilder.and(predicates.toArray(new Predicate[0]));
+            // 상태 조건
+            if (status != null && !status.trim().isEmpty()) {
+                switch (status) {
+                    case "IN_STOCK":
+                        predicates.add(criteriaBuilder.greaterThan(root.get("stockQuantity"), 10));
+                        break;
+                    case "LOW_STOCK":
+                        predicates.add(criteriaBuilder.and(
+                            criteriaBuilder.greaterThan(root.get("stockQuantity"), 0),
+                            criteriaBuilder.lessThanOrEqualTo(root.get("stockQuantity"), 10)
+                        ));
+                        break;
+                    case "SOLD_OUT":
+                        predicates.add(criteriaBuilder.equal(root.get("stockQuantity"), 0));
+                        break;
+                }
+            }
+            
+            return criteriaBuilder.and(predicates.toArray(new Predicate[0]));
         };
         
         return itemRepository.findAll(spec, pageable);
