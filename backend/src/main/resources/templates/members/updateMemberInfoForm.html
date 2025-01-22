@@ -19,121 +19,77 @@
         <div class="col-md-8">
             <h2 class="text-center mb-4">Manage Member Information</h2>
 
-            <form th:action="@{/api/member-info/update/{memberId}(memberId=${memberInfo.memberId})}"
+            <form th:action="@{/api/member-info/update/{memberId}(memberId=${memberId})}"
                   th:object="${memberInfoCreateDto}"
                   method="post">
 
-                <!-- 기본 정보 카드 -->
-                <div class="card shadow-sm mb-4">
-                    <div class="card-header bg-white py-3">
-                        <h4 class="mb-0">Basic Information</h4>
-                    </div>
-                    <div class="card-body p-4">
-                        <div class="mb-3">
-                            <label for="name" class="form-label">Name</label>
-                            <input type="text" class="form-control" id="name" th:value="${member.name}" readonly>
-                        </div>
+                <!-- 기본 정보 -->
+                <div class="mb-3">
+                    <label for="name" class="form-label">Name</label>
+                    <input type="text" class="form-control" id="name" th:field="*{name}">
+                </div>
 
-                        <div class="row mb-3">
-                            <div class="col-md-6">
-                                <label for="email" class="form-label">Email</label>
-                                <input type="email" class="form-control" id="email" th:value="${member.email}" readonly>
-                            </div>
-                            <div class="col-md-6">
-                                <label for="phone" class="form-label">Phone Number</label>
-                                <input type="text" class="form-control" id="phone" th:value="${member.phoneNumber}" readonly>
-                            </div>
-                        </div>
+                <div class="mb-3">
+                    <label for="email" class="form-label">Email</label>
+                    <input type="email" class="form-control" id="email" th:field="*{email}">
+                </div>
 
-                        <div class="row mb-3">
-                            <div class="col-md-6">
-                                <label for="birthDate" class="form-label">Date of Birth</label>
-                                <input type="text" class="form-control" id="birthDate" th:value="${member.birthDate}" readonly>
-                            </div>
-                            <div class="col-md-6">
-                                <label class="form-label">Gender</label>
-                                <div>
-                                    <div class="form-check form-check-inline">
-                                        <input class="form-check-input" type="radio" name="gender" id="male"
-                                               value="MALE" th:field="*{gender}">
-                                        <label class="form-check-label" for="male">Male</label>
-                                    </div>
-                                    <div class="form-check form-check-inline">
-                                        <input class="form-check-input" type="radio" name="gender" id="female"
-                                               value="FEMALE" th:field="*{gender}">
-                                        <label class="form-check-label" for="female">Female</label>
-                                    </div>
-                                </div>
-                            </div>
+                <div class="mb-3">
+                    <label for="phoneNumber" class="form-label">Phone Number</label>
+                    <input type="text" class="form-control" id="phoneNumber" th:field="*{phoneNumber}">
+                </div>
+
+                <div class="mb-3">
+                    <label for="birthDate" class="form-label">Birth Date</label>
+                    <input type="text" class="form-control" id="birthDate" th:field="*{birthDate}">
+                </div>
+
+                <!-- 주소 정보 -->
+                <div class="mb-3">
+                    <label for="city" class="form-label">City</label>
+                    <input type="text" class="form-control" id="city" th:field="*{city}">
+                </div>
+
+                <div class="mb-3">
+                    <label for="street" class="form-label">Street</label>
+                    <input type="text" class="form-control" id="street" th:field="*{street}">
+                </div>
+
+                <div class="mb-3">
+                    <label for="zipcode" class="form-label">Zipcode</label>
+                    <input type="text" class="form-control" id="zipcode" th:field="*{zipcode}">
+                </div>
+
+                <!-- 추가 정보 -->
+                <div class="mb-3">
+                    <label class="form-label">Gender</label>
+                    <div>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="radio" name="gender" id="male"
+                                   value="MALE" th:field="*{gender}">
+                            <label class="form-check-label" for="male">Male</label>
+                        </div>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="radio" name="gender" id="female"
+                                   value="FEMALE" th:field="*{gender}">
+                            <label class="form-check-label" for="female">Female</label>
                         </div>
                     </div>
                 </div>
 
-                <!-- 주소 정보 카드 -->
-                <div class="card shadow-sm mb-4">
-                    <div class="card-header bg-white py-3">
-                        <h4 class="mb-0">Address Information</h4>
-                    </div>
-                    <div class="card-body p-4">
-                        <div class="row">
-                            <div class="col-md-4">
-                                <label for="city" class="form-label">City</label>
-                                <input type="text" class="form-control" id="city" th:value="${member.address?.city}" readonly>
-                            </div>
-                            <div class="col-md-4">
-                                <label for="street" class="form-label">Street</label>
-                                <input type="text" class="form-control" id="street" th:value="${member.address?.street}" readonly>
-                            </div>
-                            <div class="col-md-4">
-                                <label for="zipcode" class="form-label">Zip Code</label>
-                                <input type="text" class="form-control" id="zipcode" th:value="${member.address?.zipcode}" readonly>
-                            </div>
-                        </div>
-                    </div>
+                <div class="mb-3">
+                    <label class="form-label">Interests</label>
+                    <select class="form-select" th:field="*{interests}">
+                        <option value="SPORTS">Sports</option>
+                        <option value="FASHION">Fashion</option>
+                        <option value="TRAVEL">Travel</option>
+                        <option value="FOOD">Food</option>
+                        <option value="TECHNOLOGY">Technology</option>
+                    </select>
                 </div>
 
-                <!-- 관심사 카드 -->
-                <div class="card shadow-sm mb-4">
-                    <div class="card-header bg-white py-3">
-                        <h4 class="mb-0">Interests</h4>
-                    </div>
-                    <div class="card-body p-4">
-                        <div class="mb-3">
-                            <div class="form-check form-check-inline">
-                                <input class="form-check-input" type="radio" name="interests" id="travel"
-                                       value="SPORTS" th:field="*{interests}">
-                                <label class="form-check-label" for="travel">Sports</label>
-                            </div>
-                            <div class="form-check form-check-inline">
-                                <input class="form-check-input" type="radio" name="interests" id="music"
-                                       value="FASHION" th:field="*{interests}">
-                                <label class="form-check-label" for="music">Fashion</label>
-                            </div>
-                            <div class="form-check form-check-inline">
-                                <input class="form-check-input" type="radio" name="interests" id="movie"
-                                       value="TRAVEL" th:field="*{interests}">
-                                <label class="form-check-label" for="movie">Travel</label>
-                            </div>
-                            <div class="form-check form-check-inline">
-                                <input class="form-check-input" type="radio" name="interests" id="reading"
-                                       value="FOOD" th:field="*{interests}">
-                                <label class="form-check-label" for="reading">Food</label>
-                            </div>
-                            <div class="form-check form-check-inline">
-                                <input class="form-check-input" type="radio" name="interests" id="sports"
-                                       value="TECHNOLOGY" th:field="*{interests}">
-                                <label class="form-check-label" for="sports">Technology</label>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 버튼 -->
-                <div class="d-flex justify-content-end gap-2">
-                    <button type="submit" class="btn btn-dark nav-btn">Save</button>
-                    <button type="button" class="btn btn-outline-dark nav-btn"
-                            th:onclick="|location.href='@{/}'|">Cancel</button>
-                </div>
+                <button type="submit" class="btn btn-primary">Update</button>
+                <a href="/" class="btn btn-secondary">Cancel</a>
             </form>
         </div>
     </div>

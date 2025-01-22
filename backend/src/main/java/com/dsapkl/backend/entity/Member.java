@@ -60,4 +60,16 @@ public class Member {
         this.password = password;
     }
 
+    /**
+     * 회원 정보 업데이트
+     */
+    public void updateMemberInfo(String name, String email, 
+                                 String phoneNumber, String birthDate, Address address) {
+        this.name = name;
+        this.email = email;
+        this.phoneNumber = phoneNumber;
+        this.birthDate = birthDate;
+        this.address = address;
+    }
+
 }
