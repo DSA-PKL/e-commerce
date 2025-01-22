@@ -42,14 +42,14 @@ public class HomeController {
     public String home(@RequestParam(required = false) String query,
                       @RequestParam(required = false) String category,
                       @RequestParam(required = false, defaultValue = "1") int page,
+                      @RequestParam(required = false, defaultValue = "8") int size,
                       Model model,
                       HttpServletRequest request) {
         try {
             Member member = getMember(request);
             
-            // 페이지네이션 설정
-            int pageSize = 8;
-            PageRequest pageRequest = PageRequest.of(page - 1, pageSize);
+            // 페이지네이션 설정 (0-based page index로 변환)
+            PageRequest pageRequest = PageRequest.of(page - 1, size);
             
             // 검색 및 카테고리 필터링
             Page<Item> itemPage;
@@ -64,7 +64,7 @@ public class HomeController {
                         Category categoryEnum = Category.valueOf(category.toUpperCase());
                         model.addAttribute("selectedCategory", categoryEnum);
                     } catch (IllegalArgumentException e) {
-                        category = null; // 잘못된 카테고리는 무시
+                        category = null;
                     }
                 }
                 
@@ -76,10 +76,10 @@ public class HomeController {
             }
             
             // 페이지네이션 정보 추가
-            int totalPages = itemPage.getTotalPages();
             model.addAttribute("currentPage", page);
-            model.addAttribute("totalPages", totalPages > 0 ? totalPages : 1);
+            model.addAttribute("totalPages", Math.max(1, itemPage.getTotalPages()));
             model.addAttribute("totalItems", itemPage.getTotalElements());
+            model.addAttribute("size", size);
             
             // 검색 결과 처리
             if (itemPage.isEmpty()) {

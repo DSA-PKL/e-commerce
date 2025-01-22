@@ -430,33 +430,30 @@
                 </div>
             </div>
         </div>
-        <!-- 페이지네이션 수정 -->
-        <div class="d-flex justify-content-center mt-5">
-            <nav aria-label="Page navigation">
+        <!-- 페이지네이션 -->
+        <div class="d-flex justify-content-center mt-4">
+            <nav th:if="${totalPages > 0}">
                 <ul class="pagination">
-                    <li class="page-item" th:classappend="${startPage <= 1} ? 'disabled'">
-                        <a class="page-link rounded-pill border-0 shadow-sm mx-1 text-dark" 
-                           th:href="@{/(page=${prevGroupPage}, query=${param.query}, category=${param.category})}" 
-                           aria-label="Previous Group">
-                            <span aria-hidden="true">&laquo;</span>
+                    <!-- 이전 페이지 -->
+                    <li class="page-item" th:classappend="${currentPage == 0 ? 'disabled' : ''}">
+                        <a class="page-link" th:href="@{/(page=${currentPage - 1}, size=${size})}">
+                            <i class="bi bi-chevron-left"></i>
                         </a>
                     </li>
-                    
+
                     <!-- 페이지 번호 -->
-                    <li class="page-item" th:each="page : ${#numbers.sequence(startPage, endPage)}"
-                        th:classappend="${page == currentPage} ? 'active'">
-                        <a class="page-link rounded-pill border-0 shadow-sm mx-1" 
-                           th:href="@{/(page=${page}, query=${param.query}, category=${param.category})}" 
-                           th:text="${page}"
-                           th:classappend="${page == currentPage} ? 'bg-dark text-white' : 'text-dark'">1</a>
+                    <li class="page-item" 
+                        th:each="pageNum : ${#numbers.sequence(0, totalPages - 1)}"
+                        th:if="${pageNum >= currentPage - 2 and pageNum <= currentPage + 2}"
+                        th:classappend="${pageNum == currentPage ? 'active' : ''}">
+                        <a class="page-link" th:href="@{/(page=${pageNum}, size=${size})}" 
+                           th:text="${pageNum + 1}">1</a>
                     </li>
-                    
-                    <!-- 다음 페이지 그룹으로 이동 -->
-                    <li class="page-item" th:classappend="${endPage >= totalPages} ? 'disabled'">
-                        <a class="page-link rounded-pill border-0 shadow-sm mx-1 text-dark" 
-                           th:href="@{/(page=${nextGroupPage}, query=${param.query}, category=${param.category})}" 
-                           aria-label="Next Group">
-                            <span aria-hidden="true">&raquo;</span>
+
+                    <!-- 다음 페이지 -->
+                    <li class="page-item" th:classappend="${currentPage >= totalPages - 1 ? 'disabled' : ''}">
+                        <a class="page-link" th:href="@{/(page=${currentPage + 1}, size=${size})}">
+                            <i class="bi bi-chevron-right"></i>
                         </a>
                     </li>
                 </ul>
