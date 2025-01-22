@@ -195,13 +195,13 @@
                 reviewsList.innerHTML = reviews.map(review => `
                     <div class="card mb-3" id="review-${review.reviewId}">
                         <div class="card-body">
-                            <div class="mb-2">
-                                <div class="d-flex justify-content-between align-items-center">
-                                    <h6 class="card-subtitle text-muted">${review.memberName}</h6>
-                                    <div class="star-rating" style="color: #ffd700;">
-                                        ${'★'.repeat(review.rating) + '☆'.repeat(5 - review.rating)}
-                                    </div>
+                            <div class="mb-3">
+                                <!-- 별점을 먼저 표시 -->
+                                <div class="star-rating" style="color: #ffd700; font-size: 1.2rem;">
+                                    ${'★'.repeat(review.rating) + '☆'.repeat(5 - review.rating)}
                                 </div>
+                                <!-- 리뷰어 이름을 그 다음에 표시 -->
+                                <h6 class="card-subtitle text-muted mt-2">${review.memberName}</h6>
                             </div>
                             <p class="card-text">${review.content}</p>
                             ${review.reviewImageList && review.reviewImageList.length > 0 ? `
