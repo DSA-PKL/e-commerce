@@ -751,10 +751,10 @@
 </section>
 
 <!-- Reviews Section -->
-<div class="container px-4 px-lg-5 my-5 view-mode">  <!-- 수정 모드에서만 숨김 -->
+<div class="container px-4 px-lg-5 my-5 view-mode">
     <h3 class="mb-4">Reviews</h3>
 
-    <!-- Review Form - 로그인한 경우에만 표시 -->
+    <!-- Review Form - 로그인했고, 자신의 상품이 아닌 경우에만 표시 -->
     <div class="card mb-4" th:if="${currentMemberId != null && currentMemberId != item.memberId}">
         <div class="card-body">
             <h5 class="card-title">Write a Review</h5>
@@ -787,6 +787,11 @@
     <!-- 로그인하지 않은 경우 리뷰 작성 안내 -->
     <div class="alert alert-warning mb-4" th:if="${currentMemberId == null}">
         Please <a href="/members">log in</a> to write a review.
+    </div>
+
+    <!-- 자신의 상품인 경우 리뷰 작성 불가 메시지 -->
+    <div class="alert alert-info mb-4" th:if="${currentMemberId != null && currentMemberId == item.memberId}">
+        You cannot write a review for your own product.
     </div>
 
     <!-- Reviews List - 항상 표시 -->

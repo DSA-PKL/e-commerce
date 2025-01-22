@@ -37,7 +37,7 @@
         .rounded-pill {
             border-radius: 50rem !important;
         }
-        
+
         /* 상품 카드 스타일 */
         .product-card {
             border: 1px solid rgba(0, 0, 0, 0.15);
@@ -99,30 +99,30 @@
         .bg-gradient {
             background: linear-gradient(to bottom right, #f8f9fa, #e9ecef);
         }
-        
+
         /* 추천 상품 호버 효과 강화 */
         .product-card {
             transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
         }
-        
+
         .product-card:hover {
             transform: translateY(-8px);
             box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15);
         }
-        
+
         /* 추천 뱃지 스타일 */
         .badge {
             font-size: 0.85rem;
             letter-spacing: 0.5px;
         }
-        
+
         /* 추천 상품 섹션 제목 스타일 */
         h3 {
             position: relative;
             display: inline-block;
             padding-bottom: 0.5rem;
         }
-        
+
         h3::after {
             content: '';
             position: absolute;
@@ -138,14 +138,14 @@
         .hover-shadow-lg {
             transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1) !important;
         }
-        
+
         .hover-shadow-lg:hover {
             transform: translateY(-2px) !important;
             box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2) !important;
             background-color: #000 !important;
             color: #fff !important;
         }
-        
+
         /* 일반 상품 버튼 호버 효과 */
         .hover-shadow:hover {
             transform: translateY(-2px);
@@ -153,12 +153,12 @@
             background-color: #343a40;
             color: #fff;
         }
-        
+
         /* 버튼 내부 텍스트 호버 효과 */
         .btn:hover span {
             transform: translateY(-2px);
         }
-        
+
         /* 버튼 활성화 상태 스타일 */
         .btn:active {
             transform: translateY(1px);
@@ -172,7 +172,7 @@
             background: linear-gradient(to right, transparent, #dee2e6, transparent);
             margin: 3rem 0;
         }
-        
+
         .section-divider::before {
             content: '';
             position: absolute;
@@ -188,7 +188,7 @@
             align-items: center;
             justify-content: center;
         }
-        
+
         .section-divider::after {
             content: '•••';
             position: absolute;
@@ -208,7 +208,7 @@
             margin-bottom: 2rem;
             text-align: center;
         }
-        
+
         .section-title::after {
             content: '';
             display: block;
@@ -232,7 +232,7 @@
             <ul class="navbar-nav me-auto mb-2 mb-lg-0 ms-lg-4">
                 <!--                <li class="nav-item"><a class="nav-link" href="#!">About</a></li>-->
                 <li class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle fw-semibold" id="navbarDropdown" href="#" role="button" 
+                    <a class="nav-link dropdown-toggle fw-semibold" id="navbarDropdown" href="#" role="button"
                        data-bs-toggle="dropdown" aria-expanded="false">Product Menu</a>
                     <ul class="dropdown-menu border-0 shadow-sm">
                         <li><a class="dropdown-item" th:href="@{/items/new}">Add Product</a></li>
@@ -247,11 +247,11 @@
 
             <div class="d-flex align-items-center gap-3">
                 <span class="text-dark">Welcome <span class="fw-bold" th:text="${session.loginMember.name}">User</span>!</span>
-                
+
                 <form th:action="@{/cart}" method="get">
                     <button class="btn btn-outline-dark rounded-pill nav-btn">
                         <i class="bi-cart-fill me-1"></i>Cart
-                        <span class="badge bg-dark text-white ms-1 rounded-pill" 
+                        <span class="badge bg-dark text-white ms-1 rounded-pill"
                               th:text="${{cartItemCount != null ? cartItemCount : 0}}">0</span>
                     </button>
                 </form>
@@ -259,7 +259,7 @@
                 <form th:action="@{/orders/success}" method="get">
                     <button class="btn btn-outline-dark rounded-pill nav-btn">
                         <i class="bi-clock-history me-1"></i>Orders
-                        <span class="badge bg-dark text-white ms-1 rounded-pill" 
+                        <span class="badge bg-dark text-white ms-1 rounded-pill"
                               th:text="${orderCount}">0</span>
                     </button>
                 </form>
@@ -300,7 +300,7 @@
                         th:selected="${cat == selectedCategory}">
                 </option>
             </select>
-            <input class="form-control rounded-pill" type="search" placeholder="Search products" 
+            <input class="form-control rounded-pill" type="search" placeholder="Search products"
                    name="query" th:value="${param.query}"/>
             <button class="btn btn-dark rounded-pill px-4 search-btn" type="submit">
                 Search
@@ -314,7 +314,7 @@
 <section class="py-5">
     <div class="container px-4 px-lg-5 mt-4">
         <!-- 검색 시 추천/최신 상품 섹션 숨기기 -->
-        <div th:if="${recommendedItems != null and !recommendedItems.isEmpty() and param.query == null and param.category == null}" 
+        <div th:if="${recommendedItems != null and !recommendedItems.isEmpty() and param.query == null and param.category == null}"
              class="mb-5">
             <h3 class="section-title">
                 <span th:if="${isRecommended}">
@@ -334,12 +334,12 @@
                                 <span th:text="${isRecommended} ? 'RECOMMENDED' : 'NEW'">RECOMMENDED</span>
                             </span>
                         </div>
-                        
+
                         <!-- 상품 이미지 -->
                         <div class="product-image bg-gradient">
                             <img th:if="${item.getItemImageList() != null and !item.getItemImageList().isEmpty()}"
-                                 th:src="${#strings.startsWith(item.getItemImageList().get(0).getStoreName(), 'http')} ? 
-                                         ${item.getItemImageList().get(0).getStoreName()} : 
+                                 th:src="${#strings.startsWith(item.getItemImageList().get(0).getStoreName(), 'http')} ?
+                                         ${item.getItemImageList().get(0).getStoreName()} :
                                          |/images/${item.getItemImageList().get(0).getStoreName()}|"
                                  alt="Product Image"/>
                             <div th:if="${item.getItemImageList() == null or item.getItemImageList().isEmpty()}"
@@ -373,7 +373,7 @@
         </div>
 
         <!-- 섹션 구분선도 검색 시 숨기기 -->
-        <div th:if="${recommendedItems != null and !recommendedItems.isEmpty() and param.query == null and param.category == null}" 
+        <div th:if="${recommendedItems != null and !recommendedItems.isEmpty() and param.query == null and param.category == null}"
              class="section-divider"></div>
 
         <!-- 일반 상품 섹션 -->
@@ -401,8 +401,8 @@
                     <!-- 상품 이미지 -->
                     <div class="product-image">
                         <img th:if="${item.getItemImageList() != null and !item.getItemImageList().isEmpty()}"
-                             th:src="${#strings.startsWith(item.getItemImageList().get(0).getStoreName(), 'http')} ? 
-                                     ${item.getItemImageList().get(0).getStoreName()} : 
+                             th:src="${#strings.startsWith(item.getItemImageList().get(0).getStoreName(), 'http')} ?
+                                     ${item.getItemImageList().get(0).getStoreName()} :
                                      |/images/${item.getItemImageList().get(0).getStoreName()}|"
                              alt="Product Image"/>
                         <div th:if="${item.getItemImageList() == null or item.getItemImageList().isEmpty()}"
@@ -430,30 +430,33 @@
                 </div>
             </div>
         </div>
-        <!-- 페이지네이션 -->
-        <div class="d-flex justify-content-center mt-4">
-            <nav th:if="${totalPages > 0}">
+        <!-- 페이지네이션 수정 -->
+        <div class="d-flex justify-content-center mt-5">
+            <nav aria-label="Page navigation">
                 <ul class="pagination">
-                    <!-- 이전 페이지 -->
-                    <li class="page-item" th:classappend="${currentPage == 0 ? 'disabled' : ''}">
-                        <a class="page-link" th:href="@{/(page=${currentPage - 1}, size=${size})}">
-                            <i class="bi bi-chevron-left"></i>
+                    <li class="page-item" th:classappend="${startPage <= 1} ? 'disabled'">
+                        <a class="page-link rounded-pill border-0 shadow-sm mx-1 text-dark"
+                           th:href="@{/(page=${prevGroupPage}, query=${param.query}, category=${param.category})}"
+                           aria-label="Previous Group">
+                            <span aria-hidden="true">&laquo;</span>
                         </a>
                     </li>
 
                     <!-- 페이지 번호 -->
-                    <li class="page-item" 
-                        th:each="pageNum : ${#numbers.sequence(0, totalPages - 1)}"
-                        th:if="${pageNum >= currentPage - 2 and pageNum <= currentPage + 2}"
-                        th:classappend="${pageNum == currentPage ? 'active' : ''}">
-                        <a class="page-link" th:href="@{/(page=${pageNum}, size=${size})}" 
-                           th:text="${pageNum + 1}">1</a>
+                    <li class="page-item" th:each="page : ${#numbers.sequence(startPage, endPage)}"
+                        th:classappend="${page == currentPage} ? 'active'">
+                        <a class="page-link rounded-pill border-0 shadow-sm mx-1"
+                           th:href="@{/(page=${page}, query=${param.query}, category=${param.category})}"
+                           th:text="${page}"
+                           th:classappend="${page == currentPage} ? 'bg-dark text-white' : 'text-dark'">1</a>
                     </li>
 
-                    <!-- 다음 페이지 -->
-                    <li class="page-item" th:classappend="${currentPage >= totalPages - 1 ? 'disabled' : ''}">
-                        <a class="page-link" th:href="@{/(page=${currentPage + 1}, size=${size})}">
-                            <i class="bi bi-chevron-right"></i>
+                    <!-- 다음 페이지 그룹으로 이동 -->
+                    <li class="page-item" th:classappend="${endPage >= totalPages} ? 'disabled'">
+                        <a class="page-link rounded-pill border-0 shadow-sm mx-1 text-dark"
+                           th:href="@{/(page=${nextGroupPage}, query=${param.query}, category=${param.category})}"
+                           aria-label="Next Group">
+                            <span aria-hidden="true">&raquo;</span>
                         </a>
                     </li>
                 </ul>

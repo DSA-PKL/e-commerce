@@ -23,7 +23,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.List;
 import java.util.stream.Collectors;
-import java.util.ArrayList;
 
 import static com.dsapkl.backend.controller.CartController.getMember;
 import com.dsapkl.backend.entity.Category;
@@ -40,77 +39,102 @@ public class HomeController {
 
     @GetMapping("/")
     public String home(@RequestParam(required = false) String query,
-                      @RequestParam(required = false) String category,
-                      @RequestParam(required = false, defaultValue = "1") int page,
-                      @RequestParam(required = false, defaultValue = "8") int size,
-                      Model model,
-                      HttpServletRequest request) {
-        try {
-            Member member = getMember(request);
-            
-            // 페이지네이션 설정 (0-based page index로 변환)
-            PageRequest pageRequest = PageRequest.of(page - 1, size);
-            
-            // 검색 및 카테고리 필터링
-            Page<Item> itemPage;
-            
-            // 검색어나 카테고리가 있는 경우
-            if ((query != null && !query.trim().isEmpty()) || 
+                       @RequestParam(required = false) String category,
+                       @RequestParam(required = false, defaultValue = "1") int page,
+                       Model model,
+                       HttpServletRequest request) {
+
+        Member member = getMember(request);
+
+        // 페이지는 0부터 시작하므로 1을 빼줍니다
+        Pageable pageable = PageRequest.of(page - 1, 12);
+        Page<Item> items;
+
+        // 검색 조건이 있는 경우
+        if ((query != null && !query.trim().isEmpty()) ||
                 (category != null && !category.trim().isEmpty())) {
-                
-                // 카테고리 처리
-                if (category != null && !category.trim().isEmpty()) {
-                    try {
-                        Category categoryEnum = Category.valueOf(category.toUpperCase());
-                        model.addAttribute("selectedCategory", categoryEnum);
-                    } catch (IllegalArgumentException e) {
-                        category = null;
-                    }
-                }
-                
-                // 검색 실행
-                itemPage = itemService.searchItems(query, category, null, pageRequest);
-            } else {
-                // 일반 목록 조회
-                itemPage = itemService.findItemsPage(pageRequest);
-            }
-            
-            // 페이지네이션 정보 추가
-            model.addAttribute("currentPage", page);
-            model.addAttribute("totalPages", Math.max(1, itemPage.getTotalPages()));
-            model.addAttribute("totalItems", itemPage.getTotalElements());
-            model.addAttribute("size", size);
-            
-            // 검색 결과 처리
-            if (itemPage.isEmpty()) {
-                model.addAttribute("noResults", true);
-                model.addAttribute("items", new ArrayList<>());
-            } else {
-                model.addAttribute("items", itemPage.getContent());
-            }
-            
-            // 검색 파라미터 유지
-            model.addAttribute("query", query);
-            model.addAttribute("category", category);
-            
-            // 로그인한 경우 추가 정보
-            if (member != null) {
-                List<CartQueryDto> cartItems = cartService.findCartItems(member.getId());
-                model.addAttribute("cartItemCount", cartItems.size());
-                
-                List<OrderDto> orders = orderService.findOrdersDetail(member.getId(), OrderStatus.ORDER);
-                model.addAttribute("orderCount", orders.size());
-                
-                return "index";
-            }
-            
-            return "home";
-            
-        } catch (Exception e) {
-            log.error("Error in home: ", e);
-            model.addAttribute("error", "An error occurred while processing your request.");
-            return "home";
+            items = itemService.searchItems(query, category, null, pageable);
+        } else {
+            items = itemService.findItemsPage(pageable);
         }
+
+        // 페이지네이션을 위한 변수들 계산
+        int totalPages = items.getTotalPages();
+        int currentPage = page;
+        int pageGroup = (currentPage - 1) / 10;
+        int startPage = pageGroup * 10 + 1;
+        int endPage = Math.min(startPage + 9, totalPages);
+
+        // 이전/다음 그룹의 첫 페이지 계산
+        int prevGroupPage = startPage - 10;
+        int nextGroupPage = startPage + 10;
+
+        // 페이지네이션 관련 모델 속성 추가
+        model.addAttribute("currentPage", currentPage);
+        model.addAttribute("startPage", startPage);
+        model.addAttribute("endPage", endPage);
+        model.addAttribute("totalPages", totalPages);
+        model.addAttribute("prevGroupPage", prevGroupPage);
+        model.addAttribute("nextGroupPage", nextGroupPage);
+
+        // 기존 모델 속성들
+        model.addAttribute("items", items.getContent());
+        model.addAttribute("query", query);
+        model.addAttribute("category", category);
+
+        // 카테고리 선택 상태 유지
+        if (category != null && !category.trim().isEmpty()) {
+            try {
+                Category selectedCategory = Category.valueOf(category.toUpperCase());
+                model.addAttribute("selectedCategory", selectedCategory);
+            } catch (IllegalArgumentException e) {
+                // 잘못된 카테고리 값은 무시
+            }
+        }
+
+        // 로그인한 경우
+        if (member != null) {
+            // 회원 정보 조회
+            MemberInfo memberInfo = memberInfoRepository.findByMemberId(member.getId())
+                    .orElse(null);
+
+            // 선호도 기반 추천 상품 가져오기
+            List<Item> recommendedItems;
+            if (memberInfo != null && memberInfo.getCluster_id() != null) {
+                // 클러스터의 선호도 높은 상품 4개 조회
+                List<ClusterItemPreference> preferences = clusterItemPreferenceRepository
+                        .findByClusterIdOrderByPreferenceScoreDesc(memberInfo.getCluster_id().getId());
+
+                if (!preferences.isEmpty()) {
+                    recommendedItems = preferences.stream()
+                            .map(ClusterItemPreference::getItem)
+                            .limit(4)
+                            .collect(Collectors.toList());
+                    model.addAttribute("isRecommended", true);
+                } else {
+                    recommendedItems = itemService.findLatestItems(4);
+                    model.addAttribute("isRecommended", false);
+                }
+            } else {
+                recommendedItems = itemService.findLatestItems(4);
+                model.addAttribute("isRecommended", false);
+            }
+
+            model.addAttribute("recommendedItems", recommendedItems);
+
+            // 장바구니 아이템 카운트
+            List<CartQueryDto> cartItems = cartService.findCartItems(member.getId());
+            model.addAttribute("cartItemCount", cartItems.size());
+
+            // 주문 개수
+            List<OrderDto> orders = orderService.findOrdersDetail(member.getId(), OrderStatus.ORDER);
+            model.addAttribute("orderCount", orders.size());
+
+            return "index";
+        }
+
+        // 로그인하지 않은 경우
+        return "home";
     }
 
     // 아이템의 선호도 점수를 조회하는 메서드
@@ -121,3 +145,4 @@ public class HomeController {
     }
 
 }
+
