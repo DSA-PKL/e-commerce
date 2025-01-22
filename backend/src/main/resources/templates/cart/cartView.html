@@ -184,12 +184,18 @@
 
     // 주문 버튼 클릭 시 Stripe Checkout 시작
     function initiateCheckout() {
+        // 선택된 상품이 있는지 확인
+        var checkedItems = $("input[name=cartItemCheck]:checked");
+        if (checkedItems.length === 0) {
+            alert("Please select items to order.");
+            return;
+        }
 
         const stripe = Stripe('pk_test_51QclmbPPwZvRdRPft9sFx9zsufQlSONBFumadXCRUH00AnFSd05QYS1jcjUczdO5u0IR10pgjM36COA7DvmI6iSR00KsLTQ9s2');
 
         var list = new Array();
 
-        $("input[name=cartItemCheck]:checked").each(function() {
+        checkedItems.each(function() {
             var id = $(this).val();          //cart_item_id
             var itemId = $(this).data("item-id");
             var count = $("#count_" + id).val();
@@ -203,10 +209,16 @@
             obj.price = price;
             obj.itemName = itemName;
             list.push(obj);
-        })
-            var dataDto = new Object();
-            dataDto.cartQueryDto = list;
-            console.log("JSON.stringify(dataDto):", JSON.stringify(dataDto));
+        });
+
+        // 장바구니가 비어있는 경우
+        if (list.length === 0) {
+            alert("Your cart is empty. Please add items to cart.");
+            return;
+        }
+
+        var dataDto = new Object();
+        dataDto.cartQueryDto = list;
 
         fetch('http://localhost:8888/api/checkout/create-checkout-session-multi', {
             method: 'POST',
