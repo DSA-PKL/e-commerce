@@ -2,6 +2,7 @@ package com.dsapkl.backend.controller;
 
 import com.dsapkl.backend.dto.MemberInfoCreateDto;
 import com.dsapkl.backend.dto.MemberInfoResponseDto;
+import com.dsapkl.backend.dto.PasswordUpdateDto;
 import com.dsapkl.backend.entity.Address;
 import com.dsapkl.backend.entity.MemberInfo;
 import com.dsapkl.backend.entity.Member;
@@ -11,11 +12,14 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import lombok.extern.slf4j.Slf4j;
+
+import java.util.Map;
 
 @Controller
 @RequestMapping("api/member-info")
@@ -28,6 +32,7 @@ public class MemberInfoController {
 
     @GetMapping("/update/{memberId}")
     public String updateMemberInfoForm(@PathVariable Long memberId, Model model) {
+
         log.info("Accessing update form for member ID: {}", memberId);
         
         try {
@@ -35,6 +40,7 @@ public class MemberInfoController {
             log.info("Found MemberInfo: {}", memberInfo);
             
             Member member = memberInfo.getMember();
+            model.addAttribute("member", member);
             log.info("Found Member: {}", member);
             
             // DTO 생성 및 현재 정보로 초기화
@@ -42,6 +48,7 @@ public class MemberInfoController {
             log.info("Created DTO: {}", memberInfoCreateDto);
             
             model.addAttribute("memberInfoCreateDto", memberInfoCreateDto);
+
             model.addAttribute("memberId", memberId);
             
             return "members/updateMemberInfoForm";
@@ -97,4 +104,21 @@ public class MemberInfoController {
             return "members/updateMemberInfoForm";
         }
     }
+
+    @PostMapping("/update-password/{memberId}")
+    @ResponseBody
+    public ResponseEntity<?> udpatePassword(@PathVariable Long memberId, @RequestBody PasswordUpdateDto passwordUpdateDto) {
+
+        try {
+            memberInfoService.updatePassword(memberId, passwordUpdateDto.getCurrentPassword(), passwordUpdateDto.getNewPassword());
+
+            return ResponseEntity.ok().body(Map.of("message", "Password updated successfully"));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
+        }
+    }
+
+
+
+
 } 

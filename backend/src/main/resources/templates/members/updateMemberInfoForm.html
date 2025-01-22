@@ -143,6 +143,32 @@
                     </div>
                 </div>
 
+                <!-- 기존 카드들 다음에 추가 -->
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header bg-white py-3">
+                        <h4 class="mb-0">Password Reset</h4>
+                    </div>
+                    <div class="card-body p-4">
+                        <div class="mb-3">
+                            <label for="currentPassword" class="form-label">Current Password</label>
+                            <input type="password" class="form-control" id="currentPassword" name="currentPassword"
+                                   placeholder="Enter current password">
+                        </div>
+                        <div class="mb-3">
+                            <label for="newPassword" class="form-label">New Password</label>
+                            <input type="password" class="form-control" id="newPassword" name="newPassword"
+                                   placeholder="Enter new password">
+                        </div>
+                        <div class="mb-3">
+                            <label for="confirmPassword" class="form-label">Confirm New Password</label>
+                            <input type="password" class="form-control" id="confirmPassword" name="confirmPassword"
+                                   placeholder="Confirm new password">
+                            <div id="passwordMatch" class="form-text"></div>
+                        </div>
+                        <button type="button" class="btn btn-primary" onclick="updatePassword()">Update Password</button>
+                    </div>
+                </div>
+
                 <!-- 버튼 -->
                 <div class="text-center">
                     <button type="submit" class="btn btn-primary px-4">수정하기</button>
@@ -176,6 +202,78 @@
                     }, false)
                 })
         })()
+
+        function validatePassword() {
+            const newPassword = document.getElementById('newPassword').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+            const passwordMatch = document.getElementById('passwordMatch');
+
+            if (newPassword !== confirmPassword) {
+                passwordMatch.innerHTML = '<span class="text-danger">Passwords do not match!</span>';
+                return false;
+            } else if (newPassword.length > 0) {
+                passwordMatch.innerHTML = '<span class="text-success">Passwords match!</span>';
+                return true;
+            } else {
+                passwordMatch.innerHTML = '';
+                return false;
+            }
+        }
+
+        function updatePassword() {
+            const currentPassword = document.getElementById('currentPassword').value;
+            const newPassword = document.getElementById('newPassword').value;
+
+            if (!currentPassword) {
+                alert('Please enter your current password');
+                return;
+            }
+
+            if (!newPassword) {
+                alert('Please enter a new password');
+                return;
+            }
+
+            if (!validatePassword()) {
+                alert('New passwords do not match');
+                return;
+            }
+
+            const memberId = [[${member.id}]];
+
+            fetch(`/api/member-info/update-password/${memberId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    currentPassword: currentPassword,
+                    newPassword: newPassword
+                })
+            })
+                .then(response => {
+                    if (!response.ok) {
+                        return response.text().then(text => { throw new Error(text) });
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    alert('Password has been updated successfully');
+                    // 입력 필드 초기화
+                    document.getElementById('currentPassword').value = '';
+                    document.getElementById('newPassword').value = '';
+                    document.getElementById('confirmPassword').value = '';
+                    document.getElementById('passwordMatch').innerHTML = '';
+                })
+                .catch(error => {
+                    alert(error.message || 'Failed to update password');
+                });
+        }
+
+        // 비밀번호 일치 여부 실시간 확인
+        document.getElementById('newPassword').addEventListener('input', validatePassword);
+        document.getElementById('confirmPassword').addEventListener('input', validatePassword);
+
     </script>
 </th:block>
 </html> 
