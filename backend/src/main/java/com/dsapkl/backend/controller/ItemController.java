@@ -303,4 +303,28 @@ public class ItemController {
         }
     }
 
+    @DeleteMapping("/api/items/{itemId}")
+    @ResponseBody
+    public ResponseEntity<?> deleteItemApi(@PathVariable Long itemId, HttpServletRequest request) {
+        try {
+            // 현재 로그인한 사용자 정보 가져오기
+            Member member = getMember(request);
+            if (member == null) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Login is required.");
+            }
+            
+            // 권한 체크
+            itemService.checkItemOwner(itemId, member.getId());
+            
+            // 상품 삭제
+            itemService.deleteItem(itemId);
+            
+            return ResponseEntity.ok().body(Map.of("message", "Item deleted successfully"));
+        } catch (IllegalStateException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Failed to delete item");
+        }
+    }
+
 }
