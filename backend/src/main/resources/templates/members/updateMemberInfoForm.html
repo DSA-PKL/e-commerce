@@ -9,122 +9,144 @@
 <div layout:fragment="content" class="container py-5">
     <div class="row justify-content-center">
         <div class="col-md-8">
-            <h2 class="mb-4">기본 정보</h2>
-
             <form th:action="@{/api/member-info/update/{memberId}(memberId=${memberId})}"
                   th:object="${memberInfoCreateDto}"
                   method="post"
                   class="needs-validation"
                   novalidate>
 
-                <!-- 기본 정보 -->
-                <div class="mb-3 row">
-                    <label for="name" class="col-sm-2 col-form-label">이름</label>
-                    <div class="col-sm-10">
-                        <input type="text" class="form-control" id="name" th:field="*{name}" required>
-                        <div class="invalid-feedback">이름을 입력해주세요.</div>
+                <!-- 기본 정보 카드 -->
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header bg-white">
+                        <h4 class="mb-0">기본 정보</h4>
                     </div>
-                </div>
-
-                <div class="mb-3 row">
-                    <label for="email" class="col-sm-2 col-form-label">이메일</label>
-                    <div class="col-sm-10">
-                        <input type="email" class="form-control" id="email" th:field="*{email}" required>
-                        <div class="invalid-feedback">올바른 이메일 형식을 입력해주세요.</div>
-                    </div>
-                </div>
-
-                <div class="mb-3 row">
-                    <label for="phoneNumber" class="col-sm-2 col-form-label">휴대전화</label>
-                    <div class="col-sm-10">
-                        <input type="text" class="form-control" id="phoneNumber" th:field="*{phoneNumber}" 
-                               pattern="[0-9]{3}-[0-9]{4}-[0-9]{4}" required>
-                        <div class="invalid-feedback">올바른 전화번호 형식(000-0000-0000)으로 입력해주세요.</div>
-                    </div>
-                </div>
-
-                <div class="mb-3 row">
-                    <label class="col-sm-2 col-form-label">생년월일</label>
-                    <div class="col-sm-4">
-                        <input type="text" class="form-control" th:field="*{birthDate}" 
-                               placeholder="YYYYMMDD" pattern="[0-9]{8}" required>
-                        <div class="invalid-feedback">생년월일 8자리를 입력해주세요.</div>
-                    </div>
-                    <label class="col-sm-2 col-form-label">성별</label>
-                    <div class="col-sm-4">
-                        <div class="form-check form-check-inline">
-                            <input class="form-check-input" type="radio" name="gender" id="male"
-                                   value="MALE" th:field="*{gender}" required>
-                            <label class="form-check-label" for="male">남성</label>
+                    <div class="card-body">
+                        <div class="mb-3 row">
+                            <label for="name" class="col-sm-2 col-form-label">이름</label>
+                            <div class="col-sm-10">
+                                <input type="text" class="form-control" id="name" th:field="*{name}" required>
+                                <div class="invalid-feedback">이름을 입력해주세요.</div>
+                            </div>
                         </div>
-                        <div class="form-check form-check-inline">
-                            <input class="form-check-input" type="radio" name="gender" id="female"
-                                   value="FEMALE" th:field="*{gender}" required>
-                            <label class="form-check-label" for="female">여성</label>
+
+                        <div class="mb-3 row">
+                            <label for="email" class="col-sm-2 col-form-label">이메일</label>
+                            <div class="col-sm-10">
+                                <input type="email" class="form-control" id="email" th:field="*{email}" required>
+                                <div class="invalid-feedback">올바른 이메일 형식을 입력해주세요.</div>
+                            </div>
                         </div>
-                        <div class="invalid-feedback">성별을 선택해주세요.</div>
+
+                        <div class="mb-3 row">
+                            <label for="phoneNumber" class="col-sm-2 col-form-label">휴대전화</label>
+                            <div class="col-sm-10">
+                                <input type="text" class="form-control" id="phoneNumber" th:field="*{phoneNumber}" 
+                                       pattern="[0-9]{3}-[0-9]{4}-[0-9]{4}" required>
+                                <div class="invalid-feedback">올바른 전화번호 형식(000-0000-0000)으로 입력해주세요.</div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3 row">
+                            <label class="col-sm-2 col-form-label">생년월일</label>
+                            <div class="col-sm-4">
+                                <input type="text" class="form-control" th:field="*{birthDate}" 
+                                       placeholder="YYYYMMDD" pattern="[0-9]{8}" required>
+                                <div class="invalid-feedback">생년월일 8자리를 입력해주세요.</div>
+                            </div>
+                            <label class="col-sm-2 col-form-label">성별</label>
+                            <div class="col-sm-4">
+                                <div class="form-check form-check-inline">
+                                    <input class="form-check-input" type="radio" name="gender" id="male"
+                                           value="MALE" th:field="*{gender}" required>
+                                    <label class="form-check-label" for="male">남성</label>
+                                </div>
+                                <div class="form-check form-check-inline">
+                                    <input class="form-check-input" type="radio" name="gender" id="female"
+                                           value="FEMALE" th:field="*{gender}" required>
+                                    <label class="form-check-label" for="female">여성</label>
+                                </div>
+                                <div class="invalid-feedback">성별을 선택해주세요.</div>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
-                <!-- 주소 정보 -->
-                <h2 class="mb-4 mt-5">주소 정보</h2>
-                <div class="mb-3 row">
-                    <label for="city" class="col-sm-2 col-form-label">도시</label>
-                    <div class="col-sm-10">
-                        <input type="text" class="form-control" id="city" th:field="*{city}" required>
-                        <div class="invalid-feedback">도시를 입력해주세요.</div>
+                <!-- 주소 정보 카드 -->
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header bg-white">
+                        <h4 class="mb-0">주소 정보</h4>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3 row">
+                            <label for="city" class="col-sm-2 col-form-label">도시</label>
+                            <div class="col-sm-10">
+                                <input type="text" class="form-control" id="city" th:field="*{city}" required>
+                                <div class="invalid-feedback">도시를 입력해주세요.</div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3 row">
+                            <label for="street" class="col-sm-2 col-form-label">거리</label>
+                            <div class="col-sm-10">
+                                <input type="text" class="form-control" id="street" th:field="*{street}" required>
+                                <div class="invalid-feedback">거리명을 입력해주세요.</div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3 row">
+                            <label for="zipcode" class="col-sm-2 col-form-label">우편번호</label>
+                            <div class="col-sm-10">
+                                <input type="text" class="form-control" id="zipcode" th:field="*{zipcode}" 
+                                       pattern="[0-9]{5}" required>
+                                <div class="invalid-feedback">5자리 우편번호를 입력해주세요.</div>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
-                <div class="mb-3 row">
-                    <label for="street" class="col-sm-2 col-form-label">거리</label>
-                    <div class="col-sm-10">
-                        <input type="text" class="form-control" id="street" th:field="*{street}" required>
-                        <div class="invalid-feedback">거리명을 입력해주세요.</div>
+                <!-- 관심사 카드 -->
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header bg-white">
+                        <h4 class="mb-0">관심사</h4>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3 row">
+                            <div class="col-12">
+                                <div class="form-check form-check-inline">
+                                    <input class="form-check-input" type="radio" th:field="*{interests}" 
+                                           value="SPORTS" required>
+                                    <label class="form-check-label">여행</label>
+                                </div>
+                                <div class="form-check form-check-inline">
+                                    <input class="form-check-input" type="radio" th:field="*{interests}" 
+                                           value="FASHION" required>
+                                    <label class="form-check-label">음악</label>
+                                </div>
+                                <div class="form-check form-check-inline">
+                                    <input class="form-check-input" type="radio" th:field="*{interests}" 
+                                           value="TRAVEL" required>
+                                    <label class="form-check-label">영화</label>
+                                </div>
+                                <div class="form-check form-check-inline">
+                                    <input class="form-check-input" type="radio" th:field="*{interests}" 
+                                           value="FOOD" required>
+                                    <label class="form-check-label">독서</label>
+                                </div>
+                                <div class="form-check form-check-inline">
+                                    <input class="form-check-input" type="radio" th:field="*{interests}" 
+                                           value="TECHNOLOGY" required>
+                                    <label class="form-check-label">스포츠</label>
+                                </div>
+                                <div class="invalid-feedback">관심사를 선택해주세요.</div>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
-                <div class="mb-3 row">
-                    <label for="zipcode" class="col-sm-2 col-form-label">우편번호</label>
-                    <div class="col-sm-10">
-                        <input type="text" class="form-control" id="zipcode" th:field="*{zipcode}" 
-                               pattern="[0-9]{5}" required>
-                        <div class="invalid-feedback">5자리 우편번호를 입력해주세요.</div>
-                    </div>
-                </div>
-
-                <!-- 관심사 -->
-                <h2 class="mb-4 mt-5">관심사</h2>
-                <div class="mb-3 row">
-                    <div class="col-12">
-                        <div class="form-check form-check-inline">
-                            <input class="form-check-input" type="radio" th:field="*{interests}" 
-                                   value="SPORTS" required>
-                            <label class="form-check-label">여행</label>
-                        </div>
-                        <div class="form-check form-check-inline">
-                            <input class="form-check-input" type="radio" th:field="*{interests}" value="FASHION">
-                            <label class="form-check-label">음악</label>
-                        </div>
-                        <div class="form-check form-check-inline">
-                            <input class="form-check-input" type="radio" th:field="*{interests}" value="TRAVEL">
-                            <label class="form-check-label">영화</label>
-                        </div>
-                        <div class="form-check form-check-inline">
-                            <input class="form-check-input" type="radio" th:field="*{interests}" value="FOOD">
-                            <label class="form-check-label">독서</label>
-                        </div>
-                        <div class="form-check form-check-inline">
-                            <input class="form-check-input" type="radio" th:field="*{interests}" value="TECHNOLOGY">
-                            <label class="form-check-label">스포츠</label>
-                        </div>
-                        <div class="invalid-feedback">관심사를 선택해주세요.</div>
-                    </div>
-                </div>
-
-                <div class="mt-4 text-center">
-                    <button type="submit" class="btn btn-primary">수정하기</button>
-                    <a href="/" class="btn btn-secondary">취소</a>
+                <!-- 버튼 -->
+                <div class="text-center">
+                    <button type="submit" class="btn btn-primary px-4">수정하기</button>
+                    <a href="/" class="btn btn-secondary px-4">취소</a>
                 </div>
             </form>
         </div>

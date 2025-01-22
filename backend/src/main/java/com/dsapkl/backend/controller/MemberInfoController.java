@@ -7,6 +7,8 @@ import com.dsapkl.backend.entity.MemberInfo;
 import com.dsapkl.backend.entity.Member;
 import com.dsapkl.backend.service.MemberInfoService;
 import com.dsapkl.backend.service.MemberService;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
@@ -54,7 +56,8 @@ public class MemberInfoController {
     public String updateMemberInfo(@PathVariable Long memberId, 
                                  @Valid @ModelAttribute MemberInfoCreateDto memberInfoCreateDto,
                                  BindingResult result,
-                                 Model model) {
+                                 Model model,
+                                 HttpServletRequest request) {
         log.info("Updating member info for ID: {}", memberId);
         log.info("Received DTO: {}", memberInfoCreateDto);
         
@@ -64,14 +67,13 @@ public class MemberInfoController {
                 return "members/updateMemberInfoForm";
             }
 
-            // 주소 객체 생성
+            // Member 정보 업데이트
             Address address = new Address(
                 memberInfoCreateDto.getCity(),
                 memberInfoCreateDto.getStreet(),
                 memberInfoCreateDto.getZipcode()
             );
 
-            // Member 정보 업데이트
             memberService.updateMember(memberId, 
                 memberInfoCreateDto.getName(),
                 memberInfoCreateDto.getEmail(),
@@ -82,6 +84,11 @@ public class MemberInfoController {
 
             // MemberInfo 정보 업데이트
             memberInfoService.updateMemberInfo(memberId, memberInfoCreateDto);
+
+            // 세션의 회원 정보 업데이트
+            HttpSession session = request.getSession();
+            Member updatedMember = memberService.findMember(memberId);
+            session.setAttribute(SessionConst.LOGIN_MEMBER, updatedMember);
 
             return "redirect:/";
         } catch (Exception e) {
