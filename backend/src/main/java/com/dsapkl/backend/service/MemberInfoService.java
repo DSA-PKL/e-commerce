@@ -2,6 +2,7 @@ package com.dsapkl.backend.service;
 
 import com.dsapkl.backend.dto.MemberInfoCreateDto;
 import com.dsapkl.backend.entity.Category;
+import com.dsapkl.backend.entity.Member;
 import com.dsapkl.backend.entity.MemberInfo;
 import com.dsapkl.backend.repository.MemberInfoRepository;
 import com.dsapkl.backend.repository.MemberRepository;
@@ -108,4 +109,18 @@ public class MemberInfoService {
         
         memberInfoRepository.save(memberInfo);
     }
+
+    @Transactional
+    public void updatePassword(Long memberId, String currentPassword, String newPassword) {
+        Member member = memberRepository.findById(memberId)
+                .orElseThrow(() -> new IllegalArgumentException("Member not found"));
+
+        if (!currentPassword.equals(member.getPassword())) {
+            throw new IllegalArgumentException("Current password is incorrect");
+        }
+
+        member.updatePassword(newPassword);
+        memberRepository.save(member);
+    }
+
 } 

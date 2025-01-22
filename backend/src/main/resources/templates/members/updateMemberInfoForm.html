@@ -4,66 +4,68 @@
       layout:decorate="~{layout/base}">
 <head>
     <th:block th:replace="members/common-styles :: memberStyles"></th:block>
-    <th:block layout:fragment="script">
-        <script th:inline="javascript">
-            var error = [[${errorMessage}]];
-            if(error != null){
-                alert(error);
-            }
-        </script>
-    </th:block>
 </head>
 
 <div layout:fragment="content" class="container py-5">
     <div class="row justify-content-center">
         <div class="col-md-8">
-            <h2 class="text-center mb-4">Manage Member Information</h2>
-
-            <form th:action="@{/api/member-info/update/{memberId}(memberId=${memberInfo.memberId})}"
+            <form th:action="@{/api/member-info/update/{memberId}(memberId=${memberId})}"
                   th:object="${memberInfoCreateDto}"
-                  method="post">
+                  method="post"
+                  class="needs-validation"
+                  novalidate>
 
                 <!-- 기본 정보 카드 -->
                 <div class="card shadow-sm mb-4">
-                    <div class="card-header bg-white py-3">
-                        <h4 class="mb-0">Basic Information</h4>
+                    <div class="card-header bg-white">
+                        <h4 class="mb-0">기본 정보</h4>
                     </div>
-                    <div class="card-body p-4">
-                        <div class="mb-3">
-                            <label for="name" class="form-label">Name</label>
-                            <input type="text" class="form-control" id="name" th:value="${member.name}" readonly>
-                        </div>
-
-                        <div class="row mb-3">
-                            <div class="col-md-6">
-                                <label for="email" class="form-label">Email</label>
-                                <input type="email" class="form-control" id="email" th:value="${member.email}" readonly>
-                            </div>
-                            <div class="col-md-6">
-                                <label for="phone" class="form-label">Phone Number</label>
-                                <input type="text" class="form-control" id="phone" th:value="${member.phoneNumber}" readonly>
+                    <div class="card-body">
+                        <div class="mb-3 row">
+                            <label for="name" class="col-sm-2 col-form-label">이름</label>
+                            <div class="col-sm-10">
+                                <input type="text" class="form-control" id="name" th:field="*{name}" required>
+                                <div class="invalid-feedback">이름을 입력해주세요.</div>
                             </div>
                         </div>
 
-                        <div class="row mb-3">
-                            <div class="col-md-6">
-                                <label for="birthDate" class="form-label">Date of Birth</label>
-                                <input type="text" class="form-control" id="birthDate" th:value="${member.birthDate}" readonly>
+                        <div class="mb-3 row">
+                            <label for="email" class="col-sm-2 col-form-label">이메일</label>
+                            <div class="col-sm-10">
+                                <input type="email" class="form-control" id="email" th:field="*{email}" required>
+                                <div class="invalid-feedback">올바른 이메일 형식을 입력해주세요.</div>
                             </div>
-                            <div class="col-md-6">
-                                <label class="form-label">Gender</label>
-                                <div>
-                                    <div class="form-check form-check-inline">
-                                        <input class="form-check-input" type="radio" name="gender" id="male"
-                                               value="MALE" th:field="*{gender}">
-                                        <label class="form-check-label" for="male">Male</label>
-                                    </div>
-                                    <div class="form-check form-check-inline">
-                                        <input class="form-check-input" type="radio" name="gender" id="female"
-                                               value="FEMALE" th:field="*{gender}">
-                                        <label class="form-check-label" for="female">Female</label>
-                                    </div>
+                        </div>
+
+                        <div class="mb-3 row">
+                            <label for="phoneNumber" class="col-sm-2 col-form-label">휴대전화</label>
+                            <div class="col-sm-10">
+                                <input type="text" class="form-control" id="phoneNumber" th:field="*{phoneNumber}" 
+                                       pattern="[0-9]{3}-[0-9]{4}-[0-9]{4}" required>
+                                <div class="invalid-feedback">올바른 전화번호 형식(000-0000-0000)으로 입력해주세요.</div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3 row">
+                            <label class="col-sm-2 col-form-label">생년월일</label>
+                            <div class="col-sm-4">
+                                <input type="text" class="form-control" th:field="*{birthDate}" 
+                                       placeholder="YYYYMMDD" pattern="[0-9]{8}" required>
+                                <div class="invalid-feedback">생년월일 8자리를 입력해주세요.</div>
+                            </div>
+                            <label class="col-sm-2 col-form-label">성별</label>
+                            <div class="col-sm-4">
+                                <div class="form-check form-check-inline">
+                                    <input class="form-check-input" type="radio" name="gender" id="male"
+                                           value="MALE" th:field="*{gender}" required>
+                                    <label class="form-check-label" for="male">남성</label>
                                 </div>
+                                <div class="form-check form-check-inline">
+                                    <input class="form-check-input" type="radio" name="gender" id="female"
+                                           value="FEMALE" th:field="*{gender}" required>
+                                    <label class="form-check-label" for="female">여성</label>
+                                </div>
+                                <div class="invalid-feedback">성별을 선택해주세요.</div>
                             </div>
                         </div>
                     </div>
@@ -71,22 +73,32 @@
 
                 <!-- 주소 정보 카드 -->
                 <div class="card shadow-sm mb-4">
-                    <div class="card-header bg-white py-3">
-                        <h4 class="mb-0">Address Information</h4>
+                    <div class="card-header bg-white">
+                        <h4 class="mb-0">주소 정보</h4>
                     </div>
-                    <div class="card-body p-4">
-                        <div class="row">
-                            <div class="col-md-4">
-                                <label for="city" class="form-label">City</label>
-                                <input type="text" class="form-control" id="city" th:value="${member.address?.city}" readonly>
+                    <div class="card-body">
+                        <div class="mb-3 row">
+                            <label for="city" class="col-sm-2 col-form-label">도시</label>
+                            <div class="col-sm-10">
+                                <input type="text" class="form-control" id="city" th:field="*{city}" required>
+                                <div class="invalid-feedback">도시를 입력해주세요.</div>
                             </div>
-                            <div class="col-md-4">
-                                <label for="street" class="form-label">Street</label>
-                                <input type="text" class="form-control" id="street" th:value="${member.address?.street}" readonly>
+                        </div>
+
+                        <div class="mb-3 row">
+                            <label for="street" class="col-sm-2 col-form-label">거리</label>
+                            <div class="col-sm-10">
+                                <input type="text" class="form-control" id="street" th:field="*{street}" required>
+                                <div class="invalid-feedback">거리명을 입력해주세요.</div>
                             </div>
-                            <div class="col-md-4">
-                                <label for="zipcode" class="form-label">Zip Code</label>
-                                <input type="text" class="form-control" id="zipcode" th:value="${member.address?.zipcode}" readonly>
+                        </div>
+
+                        <div class="mb-3 row">
+                            <label for="zipcode" class="col-sm-2 col-form-label">우편번호</label>
+                            <div class="col-sm-10">
+                                <input type="text" class="form-control" id="zipcode" th:field="*{zipcode}" 
+                                       pattern="[0-9]{5}" required>
+                                <div class="invalid-feedback">5자리 우편번호를 입력해주세요.</div>
                             </div>
                         </div>
                     </div>
@@ -94,48 +106,174 @@
 
                 <!-- 관심사 카드 -->
                 <div class="card shadow-sm mb-4">
-                    <div class="card-header bg-white py-3">
-                        <h4 class="mb-0">Interests</h4>
+                    <div class="card-header bg-white">
+                        <h4 class="mb-0">관심사</h4>
                     </div>
-                    <div class="card-body p-4">
-                        <div class="mb-3">
-                            <div class="form-check form-check-inline">
-                                <input class="form-check-input" type="radio" name="interests" id="travel"
-                                       value="SPORTS" th:field="*{interests}">
-                                <label class="form-check-label" for="travel">Sports</label>
-                            </div>
-                            <div class="form-check form-check-inline">
-                                <input class="form-check-input" type="radio" name="interests" id="music"
-                                       value="FASHION" th:field="*{interests}">
-                                <label class="form-check-label" for="music">Fashion</label>
-                            </div>
-                            <div class="form-check form-check-inline">
-                                <input class="form-check-input" type="radio" name="interests" id="movie"
-                                       value="TRAVEL" th:field="*{interests}">
-                                <label class="form-check-label" for="movie">Travel</label>
-                            </div>
-                            <div class="form-check form-check-inline">
-                                <input class="form-check-input" type="radio" name="interests" id="reading"
-                                       value="FOOD" th:field="*{interests}">
-                                <label class="form-check-label" for="reading">Food</label>
-                            </div>
-                            <div class="form-check form-check-inline">
-                                <input class="form-check-input" type="radio" name="interests" id="sports"
-                                       value="TECHNOLOGY" th:field="*{interests}">
-                                <label class="form-check-label" for="sports">Technology</label>
+                    <div class="card-body">
+                        <div class="mb-3 row">
+                            <div class="col-12">
+                                <div class="form-check form-check-inline">
+                                    <input class="form-check-input" type="radio" th:field="*{interests}" 
+                                           value="SPORTS" required>
+                                    <label class="form-check-label">여행</label>
+                                </div>
+                                <div class="form-check form-check-inline">
+                                    <input class="form-check-input" type="radio" th:field="*{interests}" 
+                                           value="FASHION" required>
+                                    <label class="form-check-label">음악</label>
+                                </div>
+                                <div class="form-check form-check-inline">
+                                    <input class="form-check-input" type="radio" th:field="*{interests}" 
+                                           value="TRAVEL" required>
+                                    <label class="form-check-label">영화</label>
+                                </div>
+                                <div class="form-check form-check-inline">
+                                    <input class="form-check-input" type="radio" th:field="*{interests}" 
+                                           value="FOOD" required>
+                                    <label class="form-check-label">독서</label>
+                                </div>
+                                <div class="form-check form-check-inline">
+                                    <input class="form-check-input" type="radio" th:field="*{interests}" 
+                                           value="TECHNOLOGY" required>
+                                    <label class="form-check-label">스포츠</label>
+                                </div>
+                                <div class="invalid-feedback">관심사를 선택해주세요.</div>
                             </div>
                         </div>
                     </div>
                 </div>
 
+                <!-- 기존 카드들 다음에 추가 -->
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header bg-white py-3">
+                        <h4 class="mb-0">Password Reset</h4>
+                    </div>
+                    <div class="card-body p-4">
+                        <div class="mb-3">
+                            <label for="currentPassword" class="form-label">Current Password</label>
+                            <input type="password" class="form-control" id="currentPassword" name="currentPassword"
+                                   placeholder="Enter current password">
+                        </div>
+                        <div class="mb-3">
+                            <label for="newPassword" class="form-label">New Password</label>
+                            <input type="password" class="form-control" id="newPassword" name="newPassword"
+                                   placeholder="Enter new password">
+                        </div>
+                        <div class="mb-3">
+                            <label for="confirmPassword" class="form-label">Confirm New Password</label>
+                            <input type="password" class="form-control" id="confirmPassword" name="confirmPassword"
+                                   placeholder="Confirm new password">
+                            <div id="passwordMatch" class="form-text"></div>
+                        </div>
+                        <button type="button" class="btn btn-primary" onclick="updatePassword()">Update Password</button>
+                    </div>
+                </div>
+
                 <!-- 버튼 -->
-                <div class="d-flex justify-content-end gap-2">
-                    <button type="submit" class="btn btn-dark nav-btn">Save</button>
-                    <button type="button" class="btn btn-outline-dark nav-btn"
-                            th:onclick="|location.href='@{/}'|">Cancel</button>
+                <div class="text-center">
+                    <button type="submit" class="btn btn-primary px-4">수정하기</button>
+                    <a href="/" class="btn btn-secondary px-4">취소</a>
                 </div>
             </form>
         </div>
     </div>
 </div>
+
+<th:block layout:fragment="script">
+    <script th:inline="javascript">
+        // 에러 메시지 처리
+        var error = [[${errorMessage}]];
+        if(error != null){
+            alert(error);
+        }
+
+        // 폼 검증
+        (function () {
+            'use strict'
+            var forms = document.querySelectorAll('.needs-validation')
+            Array.prototype.slice.call(forms)
+                .forEach(function (form) {
+                    form.addEventListener('submit', function (event) {
+                        if (!form.checkValidity()) {
+                            event.preventDefault()
+                            event.stopPropagation()
+                        }
+                        form.classList.add('was-validated')
+                    }, false)
+                })
+        })()
+
+        function validatePassword() {
+            const newPassword = document.getElementById('newPassword').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+            const passwordMatch = document.getElementById('passwordMatch');
+
+            if (newPassword !== confirmPassword) {
+                passwordMatch.innerHTML = '<span class="text-danger">Passwords do not match!</span>';
+                return false;
+            } else if (newPassword.length > 0) {
+                passwordMatch.innerHTML = '<span class="text-success">Passwords match!</span>';
+                return true;
+            } else {
+                passwordMatch.innerHTML = '';
+                return false;
+            }
+        }
+
+        function updatePassword() {
+            const currentPassword = document.getElementById('currentPassword').value;
+            const newPassword = document.getElementById('newPassword').value;
+
+            if (!currentPassword) {
+                alert('Please enter your current password');
+                return;
+            }
+
+            if (!newPassword) {
+                alert('Please enter a new password');
+                return;
+            }
+
+            if (!validatePassword()) {
+                alert('New passwords do not match');
+                return;
+            }
+
+            const memberId = [[${member.id}]];
+
+            fetch(`/api/member-info/update-password/${memberId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    currentPassword: currentPassword,
+                    newPassword: newPassword
+                })
+            })
+                .then(response => {
+                    if (!response.ok) {
+                        return response.text().then(text => { throw new Error(text) });
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    alert('Password has been updated successfully');
+                    // 입력 필드 초기화
+                    document.getElementById('currentPassword').value = '';
+                    document.getElementById('newPassword').value = '';
+                    document.getElementById('confirmPassword').value = '';
+                    document.getElementById('passwordMatch').innerHTML = '';
+                })
+                .catch(error => {
+                    alert(error.message || 'Failed to update password');
+                });
+        }
+
+        // 비밀번호 일치 여부 실시간 확인
+        document.getElementById('newPassword').addEventListener('input', validatePassword);
+        document.getElementById('confirmPassword').addEventListener('input', validatePassword);
+
+    </script>
+</th:block>
 </html> 

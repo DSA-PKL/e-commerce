@@ -80,21 +80,21 @@
                 }
                 
                 // 장바구니에 없으면 추가
-                $.ajax({
-                    url: "/cart",
+        $.ajax({
+            url: "/cart",
                     data: JSON.stringify(cartForm),
-                    type: 'POST',
+            type: 'POST',
                     contentType: 'application/json',
-                    success: function (response) {
-                        alert("Item added to cart.");
-                        $(".badge.bg-dark.text-white.ms-1.rounded-pill").text(response.count);
-                    },
-                    error: function (jqXHR) {
-                        if (jqXHR.status === 401) {
-                            alert("Login is required.");
-                            location.href = "/members";
-                        } else {
-                            alert(jqXHR.responseText);
+            success: function (response) {
+                alert("Item added to cart.");
+                $(".badge.bg-dark.text-white.ms-1.rounded-pill").text(response.count);
+            },
+            error: function (jqXHR) {
+                if (jqXHR.status === 401) {
+                    alert("Login is required.");
+                    location.href = "/members";
+                } else {
+                    alert(jqXHR.responseText);
                         }
                     }
                 });
@@ -148,7 +148,7 @@
             }
             return response.json();
         })
-        .then(data => {
+            .then(data => {
             // Stripe 객체 초기화 및 결제 페이지로 리디렉션
             const stripe = Stripe([[${stripePublicKey}]]);
             return stripe.redirectToCheckout({ sessionId: data.sessionId });
@@ -500,7 +500,7 @@
 <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm">
     <div class="container px-4 px-lg-5">
         <a class="navbar-brand fw-bold" th:href="@{/}">PKLshop</a>
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" 
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent"
                 aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
             <span class="navbar-toggler-icon"></span>
         </button>
@@ -525,17 +525,17 @@
                 <div th:if="${currentMemberId != null}" class="d-flex gap-2">
                     <form th:action="@{/cart}">
                         <button class="btn btn-outline-dark rounded-pill nav-btn">
-                            <i class="bi-cart-fill me-1"></i>
-                            Cart
-                            <span class="badge bg-dark text-white ms-1 rounded-pill" th:text="${cartItemCount}">0</span>
-                        </button>
-                    </form>
+                    <i class="bi-cart-fill me-1"></i>
+                    Cart
+                    <span class="badge bg-dark text-white ms-1 rounded-pill" th:text="${cartItemCount}">0</span>
+                </button>
+            </form>
                     <form th:action="@{/orders}">
                         <button class="btn btn-outline-dark rounded-pill nav-btn">Orders</button>
                     </form>
                     <form th:action="@{/logout}" method="post">
                         <button class="btn btn-dark rounded-pill nav-btn">Logout</button>
-                    </form>
+            </form>
                 </div>
             </div>
         </div>
@@ -565,46 +565,46 @@
             <!-- 왼쪽 이미지 영역 - 메인 뷰와 수정 모드에서 공유 -->
             <div class="col-md-6">
                 <div class="image-container">
-                    <!-- 메인 이미지 슬라이더 -->
+                <!-- 메인 이미지 슬라이더 -->
                     <div id="productImageSlider" class="carousel slide mb-3">
-                        <div class="carousel-inner">
-                            <!-- 이미지가 없을 경우 기본 이미지 표시 -->
-                            <div th:if="${item.getItemImageListDto().isEmpty()}" class="carousel-item active">
-                                <img src="/images/default-image.jpg" class="d-block w-100"
+                    <div class="carousel-inner">
+                        <!-- 이미지가 없을 경우 기본 이미지 표시 -->
+                        <div th:if="${item.getItemImageListDto().isEmpty()}" class="carousel-item active">
+                            <img src="/images/default-image.jpg" class="d-block w-100"
                                      style="width: 100%; height: 400px; object-fit: contain; background-color: #f8f9fa;" alt="Default Image">
-                            </div>
-                            <!-- 이미지 리스트 순회 -->
-                            <div th:each="image, iterStat : ${item.getItemImageListDto()}"
-                                 th:class="${iterStat.first} ? 'carousel-item active' : 'carousel-item'">
+                        </div>
+                        <!-- 이미지 리스트 순회 -->
+                        <div th:each="image, iterStat : ${item.getItemImageListDto()}"
+                             th:class="${iterStat.first} ? 'carousel-item active' : 'carousel-item'">
                                 <img th:src="${image.getImageUrl()}" 
                                      class="d-block w-100"
                                      style="width: 100%; height: 400px; object-fit: contain; background-color: #f8f9fa;"
-                                     th:alt="${item.getName()}">
-                            </div>
+                                 th:alt="${item.getName()}">
                         </div>
-                        <!-- 이미지가 2개 이상일 때만 컨트롤 버튼 표시 -->
-                        <th:block th:if="${item.getItemImageListDto().size() > 1}">
-                            <button class="carousel-control-prev" type="button" data-bs-target="#productImageSlider" data-bs-slide="prev">
-                                <span class="carousel-control-prev-icon" aria-hidden="true"></span>
-                                <span class="visually-hidden">Previous</span>
-                            </button>
-                            <button class="carousel-control-next" type="button" data-bs-target="#productImageSlider" data-bs-slide="next">
-                                <span class="carousel-control-next-icon" aria-hidden="true"></span>
-                                <span class="visually-hidden">Next</span>
-                            </button>
-                        </th:block>
                     </div>
-                    
+                    <!-- 이미지가 2개 이상일 때만 컨트롤 버튼 표시 -->
+                    <th:block th:if="${item.getItemImageListDto().size() > 1}">
+                        <button class="carousel-control-prev" type="button" data-bs-target="#productImageSlider" data-bs-slide="prev">
+                            <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                            <span class="visually-hidden">Previous</span>
+                        </button>
+                        <button class="carousel-control-next" type="button" data-bs-target="#productImageSlider" data-bs-slide="next">
+                            <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                            <span class="visually-hidden">Next</span>
+                        </button>
+                    </th:block>
+                </div>
+
                     <!-- 썸네일 미리보기 -->
                     <div class="thumbnail-preview" th:if="${!item.getItemImageListDto().isEmpty()}">
                         <div class="d-flex flex-wrap gap-2 justify-content-center">
-                            <div th:each="image, iterStat : ${item.getItemImageListDto()}"
-                                 class="thumbnail-item"
-                                 th:data-slide-index="${iterStat.index}">
+                        <div th:each="image, iterStat : ${item.getItemImageListDto()}"
+                             class="thumbnail-item"
+                             th:data-slide-index="${iterStat.index}">
                                 <img th:src="${image.getImageUrl()}"
-                                     th:class="${iterStat.first} ? 'active' : ''"
-                                     style="width: 60px; height: 60px; object-fit: contain; cursor: pointer;"
-                                     th:alt="${item.getName()}">
+                                 th:class="${iterStat.first} ? 'active' : ''"
+                                 style="width: 60px; height: 60px; object-fit: contain; cursor: pointer;"
+                                 th:alt="${item.getName()}">
                             </div>
                         </div>
                     </div>
@@ -622,7 +622,7 @@
                     </div>
                     
                     <div class="fs-4 fw-bold mb-3">
-                        <input type="hidden" th:value="${item.itemId}" id="orderItemId" name="orderItemId">
+                    <input type="hidden" th:value="${item.itemId}" id="orderItemId" name="orderItemId">
                         <input type="hidden" th:value="${item.price}" id="orderPrice" name="orderPrice">
                         <input type="hidden" th:value="${item.stockQuantity}" id="orderStockQuantity" name="orderStockQuantity">
                         <span th:text="${#numbers.formatInteger(item.price, 0, 'COMMA')}"></span> KRW
@@ -640,13 +640,13 @@
                             <input class="form-control text-center" type="text" 
                                    th:value="${#numbers.formatInteger(item.stockQuantity, 0, 'COMMA')}" 
                                    readonly style="background-color: #f8f9fa;"/>
-                        </div>
+                    </div>
                     </div>
                     
                     <div class="bg-light p-3 rounded mb-3">
                         <div class="fw-bold mb-1">Total Price</div>
                         <div class="fs-4 fw-bold" id="totalPrice" th:text="${#numbers.formatInteger(item.price, 0, 'COMMA')} + ' KRW'"></div>
-                    </div>
+                </div>
 
                     <!-- 버튼 그룹 수정 -->
                     <div class="d-flex gap-2">
@@ -674,22 +674,22 @@
                 <div class="edit-mode" style="display: none;">
                     <form th:action="@{/items/{itemId}/edit(itemId=${item.itemId})}" method="post" enctype="multipart/form-data">
                         <!-- 기본 정보 필드들 -->
-                        <div class="mb-3">
+                    <div class="mb-3">
                             <label class="form-label">Product Name</label>
                             <input type="text" class="form-control" name="name" th:value="${item.name}" required>
-                            </div>
+                    </div>
                         
-                        <div class="mb-3">
+                    <div class="mb-3">
                             <label class="form-label">Price</label>
                             <input type="number" class="form-control" name="price" th:value="${item.price}" required>
-                        </div>
+                    </div>
                         
-                        <div class="mb-3">
+                    <div class="mb-3">
                             <label class="form-label">Stock Quantity</label>
                             <input type="number" class="form-control" name="stockQuantity" th:value="${item.stockQuantity}" required>
                     </div>
                         
-                        <div class="mb-3">
+                    <div class="mb-3">
                             <label class="form-label">Category</label>
                             <select class="form-select" name="category" required>
                                 <option value="APPAREL" th:selected="${item.category.name() == 'APPAREL'}">Apparel</option>
@@ -697,24 +697,24 @@
                                 <option value="BOOKS" th:selected="${item.category.name() == 'BOOKS'}">Books</option>
                                 <option value="HOME_AND_KITCHEN" th:selected="${item.category.name() == 'HOME_AND_KITCHEN'}">Home & Kitchen</option>
                                 <option value="HEALTH_AND_BEAUTY" th:selected="${item.category.name() == 'HEALTH_AND_BEAUTY'}">Health & Beauty</option>
-                            </select>
-                </div>
+                        </select>
+                    </div>
                         
-                        <div class="mb-3">
+                    <div class="mb-3">
                             <label class="form-label">Description</label>
                             <textarea class="form-control" name="description" rows="5" required th:text="${item.description}"></textarea>
-            </div>
+                    </div>
 
                         <!-- 새 이미지 업로드 -->
-                        <div class="mb-3">
+                    <div class="mb-3">
                             <label class="form-label">Add New Images</label>
                             <input type="file" class="form-control" name="itemImages" multiple accept="image/*" onchange="previewImages(this)">
-                            <div class="preview-images mt-2 d-flex flex-wrap gap-2"></div>
-                        </div>
+                        <div class="preview-images mt-2 d-flex flex-wrap gap-2"></div>
+                    </div>
 
                         <div class="d-flex gap-2">
                             <button type="submit" class="btn btn-primary">Save Changes</button>
-                            <button type="button" class="btn btn-secondary" onclick="toggleEditMode()">Cancel</button>
+                    <button type="button" class="btn btn-secondary" onclick="toggleEditMode()">Cancel</button>
                         </div>
                     </form>
                 </div>

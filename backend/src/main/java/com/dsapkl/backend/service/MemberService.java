@@ -1,5 +1,6 @@
 package com.dsapkl.backend.service;
 
+import com.dsapkl.backend.entity.Address;
 import com.dsapkl.backend.entity.Cart;
 import com.dsapkl.backend.entity.Member;
 import com.dsapkl.backend.entity.MemberInfo;
@@ -97,4 +98,28 @@ public class MemberService {
         return UUID.randomUUID().toString().substring(0, 8);
     }
 
+    /**
+     * 회원 정보 업데이트
+     */
+    @Transactional
+    public void updateMember(Long memberId, String name, String email, 
+                           String phoneNumber, String birthDate, Address address) {
+        Member member = memberRepository.findById(memberId)
+                .orElseThrow(() -> new IllegalStateException("Member not found"));
+
+        // 이메일과 전화번호 중복 체크 (자신의 것은 제외)
+        Member existingMemberByEmail = memberRepository.findByEmail(email).orElse(null);
+        if (existingMemberByEmail != null && !existingMemberByEmail.getId().equals(memberId)) {
+            throw new IllegalStateException("Email is already in use");
+        }
+
+        if (!member.getPhoneNumber().equals(phoneNumber) && 
+            memberRepository.existsByPhoneNumber(phoneNumber)) {
+            throw new IllegalStateException("Phone number is already in use");
+        }
+
+        // Member 엔티티에 updateMemberInfo 메서드 추가 필요
+        member.updateMemberInfo(name, email, phoneNumber, birthDate, address);
+        memberRepository.save(member);
+    }
 }
