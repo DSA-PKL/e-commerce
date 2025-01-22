@@ -24,9 +24,9 @@
                     const resultDiv = document.querySelector('#emailResult');
                     //if response true -> email exist so can't use
                     if (!data.isAvailable) {
-                        resultDiv.innerHTML = '<span class="text-success">사용 가능한 이메일입니다.</span>';
+                        resultDiv.innerHTML = '<span class="text-success">Please enter your email.</span>';
                     } else {
-                        resultDiv.innerHTML = '<span class="text-danger">이미 사용중인 이메일입니다.</span>';
+                        resultDiv.innerHTML = '<span class="text-danger">This email is already in use.</span>';
                     }
                 });
         }
@@ -43,9 +43,9 @@
                 .then(data => {
                     const resultDiv = document.querySelector('#phoneResult');
                     if (!data.isAvailable) {
-                        resultDiv.innerHTML = '<span class="text-success">사용 가능한 번호입니다.</span>';
+                        resultDiv.innerHTML = '<span class="text-success">This number is available.</span>';
                     } else {
-                        resultDiv.innerHTML = '<span class="text-danger">이미 사용중인 번호입니다.</span>';
+                        resultDiv.innerHTML = '<span class="text-danger">This number is already in use.</span>';
                     }
                 });
         }
