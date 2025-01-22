@@ -239,10 +239,10 @@ public class ItemService {
 
     public void checkItemOwner(Long itemId, Long memberId) {
         Item item = itemRepository.findById(itemId)
-                .orElseThrow(() -> new IllegalArgumentException("상품이 존재하지 않습니다."));
+                .orElseThrow(() -> new IllegalArgumentException("The product does not exist."));
         
         if (!item.getMemberId().equals(memberId)) {
-            throw new IllegalStateException("해당 상품의 수정/삭제 권한이 없습니다.");
+            throw new IllegalStateException("do not have permission to edit/delete this product.");
         }
     }
 
