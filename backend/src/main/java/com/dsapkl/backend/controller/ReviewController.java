@@ -59,7 +59,13 @@ public class ReviewController {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Login is required.");
             }
 
-            Review updatedReview = reviewService.updateReview(reviewId, rating, content, reviewImages, member.getId());
+            ReviewRequestDto requestDto = ReviewRequestDto.builder()
+                .rating(rating)
+                .content(content)
+                .build();
+
+            reviewService.updateReview(reviewId, requestDto, member.getId(), reviewImages);
+            Review updatedReview = reviewService.findById(reviewId);
             
             Map<String, Object> response = new HashMap<>();
             response.put("reviewId", updatedReview.getId());
@@ -90,11 +96,20 @@ public class ReviewController {
 
     @DeleteMapping("/api/reviews/{reviewId}")
     @ResponseBody
-    public ResponseEntity<Void> deleteReview(@PathVariable Long reviewId,
-                                           HttpServletRequest request) {
-        Member member = getMember(request);
-        reviewService.deleteReview(reviewId, member.getId());
-        return ResponseEntity.ok().build();
+    public ResponseEntity<?> deleteReview(@PathVariable Long reviewId,
+                                        HttpServletRequest request) {
+        try {
+            Member member = getMember(request);
+            if (member == null) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("message", "Login required"));
+            }
+            
+            reviewService.deleteReview(reviewId, member.getId());
+            return ResponseEntity.ok(Map.of("message", "Review deleted successfully"));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(Map.of("message", "Failed to delete review"));
+        }
     }
 
     @GetMapping("/api/items/{itemId}/reviews")
