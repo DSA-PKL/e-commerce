@@ -227,7 +227,7 @@
         </div>
         <!-- 페이지네이션 수정 -->
         <div class="d-flex justify-content-center mt-5">
-            <nav aria-label="Page navigation">
+            <nav aria-label="Page navigation" th:if="${!#lists.isEmpty(items)}">
                 <ul class="pagination">
                     <li class="page-item" th:classappend="${startPage <= 1} ? 'disabled'">
                         <a class="page-link rounded-pill border-0 shadow-sm mx-1 text-dark"
