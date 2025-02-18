@@ -1,6 +1,7 @@
 package com.dsapkl.backend.dto;
 
 import com.dsapkl.backend.entity.Review;
+import com.dsapkl.backend.entity.ReviewImage;
 import lombok.Builder;
 import lombok.Getter;
 import com.fasterxml.jackson.annotation.JsonFormat;
@@ -26,7 +27,7 @@ public class ReviewResponseDto {
     private boolean isOwner;
 
     public static ReviewResponseDto from(Review review, Long currentMemberId) {
-        ReviewResponseDto dto = ReviewResponseDto.builder()
+        return ReviewResponseDto.builder()
                 .reviewId(review.getId())
                 .itemId(review.getItem().getId())
                 .memberId(review.getMember().getId())
@@ -34,12 +35,21 @@ public class ReviewResponseDto {
                 .content(review.getContent())
                 .rating(review.getRating())
                 .createdDate(review.getCreatedDate())
+                .modifiedDate(review.getModifiedDate())
                 .reviewImages(review.getReviewImages().stream()
+                        .filter(image -> image.getStoreFileName() != null)
                         .map(ReviewImageDto::new)
                         .collect(Collectors.toList()))
                 .isOwner(review.getMember().getId().equals(currentMemberId))
                 .build();
-        dto.modifiedDate = review.getModifiedDate();
-        return dto;
+    }
+}
+
+@Getter
+class ReviewImageDto {
+    private String storeFileName;
+
+    public ReviewImageDto(ReviewImage reviewImage) {
+        this.storeFileName = reviewImage.getStoreFileName();
     }
 } 

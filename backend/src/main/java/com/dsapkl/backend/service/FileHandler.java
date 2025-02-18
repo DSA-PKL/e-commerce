@@ -18,7 +18,7 @@ import java.util.UUID;
 public class FileHandler {
 
     @Value("${file.dir}")
-    private String fileDir;
+    private String fileDir;  // "C:/pkl/images/"
 
     //파일 경로명
     public String getFullPath(String filename) {
@@ -94,6 +94,35 @@ public class FileHandler {
                         .build());
             }
         }
+        return reviewImages;
+    }
+
+    public List<ReviewImage> parseFileInfo(List<MultipartFile> multipartFiles) throws Exception {
+        List<ReviewImage> reviewImages = new ArrayList<>();
+        
+        File dir = new File(fileDir);
+        if (!dir.exists()) {
+            dir.mkdirs();
+        }
+        
+        for (MultipartFile file : multipartFiles) {
+            if (!file.isEmpty()) {
+                String originalFilename = file.getOriginalFilename();
+                String storeFileName = createStoreImageName(originalFilename);
+                
+                // 파일 저장
+                file.transferTo(new File(getFullPath(storeFileName)));
+                
+                // ReviewImage 객체 생성 및 추가
+                ReviewImage reviewImage = ReviewImage.builder()
+                    .originalFileName(originalFilename)
+                    .storeFileName(storeFileName)
+                    .build();
+                    
+                reviewImages.add(reviewImage);
+            }
+        }
+        
         return reviewImages;
     }
 }

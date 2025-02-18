@@ -29,7 +29,7 @@
         const orderCountInput = document.getElementById('orderCount');
         if (orderCountInput) {
             orderCountInput.addEventListener('change', calculateTotalPrice);
-        calculateTotalPrice();
+            calculateTotalPrice();
         }
 
         // 썸네일 이미지 초기화
@@ -41,11 +41,12 @@
                     const carousel = new bootstrap.Carousel(document.getElementById('productImageSlider'));
                     carousel.to(parseInt(slideIndex));
                 }
+            });
         });
-    });
 
-        // 리뷰 로드
-                loadReviews();
+        // 리뷰 로드 및 평점 업데이트
+        loadReviews();
+        updateItemRating(itemId);  // itemId는 전역 변수로 설정되어 있음
     });
 
     // 2. 상품 관련 함수들
@@ -181,6 +182,7 @@
         fetch(`/api/items/${itemId}/reviews`)
             .then(response => response.json())
             .then(reviews => {
+                console.log('Reviews data:', reviews); // 데이터 구조 확인
                 const reviewsList = document.getElementById('reviewsList');
                 if (reviews.length === 0) {
                     reviewsList.innerHTML = `
@@ -196,18 +198,20 @@
                     <div class="card mb-3" id="review-${review.reviewId}">
                         <div class="card-body">
                             <div class="mb-3">
-                                <!-- 별점을 먼저 표시 -->
                                 <div class="star-rating" style="color: #ffd700; font-size: 1.2rem;">
                                     ${'★'.repeat(review.rating) + '☆'.repeat(5 - review.rating)}
                                 </div>
-                                <!-- 리뷰어 이름을 그 다음에 표시 -->
                                 <h6 class="card-subtitle text-muted mt-2">${review.memberName}</h6>
                             </div>
                             <p class="card-text">${review.content}</p>
-                            ${review.reviewImageList && review.reviewImageList.length > 0 ? `
-                                <div class="review-images d-flex gap-2 flex-wrap">
-                                    ${review.reviewImageList.map(image => `
-                                        <img src="${image.imageUrl}" alt="Review Image" class="img-fluid">
+                            ${review.reviewImages && review.reviewImages.length > 0 ? `
+                                <div class="review-images d-flex gap-2 flex-wrap mb-3">
+                                    ${review.reviewImages.filter(image => image && image.storeFileName).map(image => `
+                                        <img src="/images/${image.storeFileName}" 
+                                             alt="Review Image" 
+                                             class="img-fluid" 
+                                             style="width: 200px; height: 200px; object-fit: contain;"
+                                             onerror="this.style.display='none'">
                                     `).join('')}
                                 </div>
                             ` : ''}
@@ -262,9 +266,10 @@
                                     <label class="form-label">Current Images</label>
                                     <div class="review-images d-flex flex-wrap gap-2 mb-3">
                                         ${review.reviewImages.map(img => `
-                                            <div class="review-image-container" style="width: 100px; height: 100px; overflow: hidden; border-radius: 4px; border: 1px solid #dee2e6;">
-                                                <img src="${img.imageUrl}" alt="Review image" 
-                                                    style="width: 100%; height: 100%; object-fit: contain;">
+                                            <div class="review-image-container">
+                                                <img src="/images/${img.storeFileName}" 
+                                                     alt="Review image" 
+                                                     style="width: 200px; height: 200px; object-fit: contain;">
                                             </div>
                                         `).join('')}
                                     </div>
@@ -291,10 +296,18 @@
         
         fetch(`/api/reviews/${reviewId}`, {
             method: 'PUT',
-            body: formData
+            body: formData,
+            credentials: 'include'  // 쿠키와 인증 정보를 포함
         })
         .then(response => {
-            if (!response.ok) throw new Error('Failed to update review');
+            if (!response.ok) {
+                if (response.status === 401) {
+                    alert('Login is required. Please log in again.');
+                    window.location.href = '/members';
+                    return;
+                }
+                throw new Error('Failed to update review');
+            }
             return response.json();
         })
         .then(data => {
@@ -306,7 +319,7 @@
         })
         .catch(error => {
             console.error('Error:', error);
-            alert('Failed to update review.');
+            alert(error.message);
         });
     }
 
@@ -343,15 +356,17 @@
             .then(response => response.json())
             .then(data => {
                 // 상품 상세 페이지의 평점 표시 업데이트
-                const starRating = '★'.repeat(Math.round(data.averageRating)) + '☆'.repeat(5 - Math.round(data.averageRating));
-                document.querySelector('.star-rating').textContent = starRating;
-                document.querySelector('.text-muted').textContent = 
-                    `(${data.averageRating.toFixed(1)}) (${data.reviewCount} reviews)`;
+                const starRating = document.querySelector('.star-rating');
+                const ratingText = document.querySelector('.text-muted');
                 
                 // 평점이 0인 경우 (리뷰가 없는 경우) 처리
                 if (data.reviewCount === 0) {
-                    document.querySelector('.star-rating').textContent = '☆☆☆☆☆';
-                    document.querySelector('.text-muted').textContent = '(0.0) (0 reviews)';
+                    starRating.textContent = '☆☆☆☆☆';
+                    ratingText.textContent = '(0.0) (0 reviews)';
+                } else {
+                    starRating.textContent = '★'.repeat(Math.round(data.averageRating)) + 
+                                           '☆'.repeat(5 - Math.round(data.averageRating));
+                    ratingText.textContent = `(${data.averageRating.toFixed(1)}) (${data.reviewCount} reviews)`;
                 }
             })
             .catch(error => console.error('Error updating rating:', error));
@@ -404,29 +419,38 @@
         const formData = new FormData(form);
         const itemId = document.querySelector('input[name="itemId"]').value;
         
+        // 별점과 내용 검증
+        if (!formData.get('rating')) {
+            alert('Please select a rating');
+            return;
+        }
+        
+        if (!formData.get('content')) {
+            alert('Please enter review content');
+            return;
+        }
+        
         fetch(`/api/items/${itemId}/reviews`, {
             method: 'POST',
             body: formData,
-            credentials: 'same-origin'
+            credentials: 'include'
         })
         .then(response => {
             if (!response.ok) {
-                throw new Error(response.statusText);
+                return response.text().then(text => { throw new Error(text) });
             }
             return response.json();
         })
         .then(data => {
             alert('Review has been registered.');
-            loadReviews();
             form.reset();
             document.querySelector('.review-image-preview').innerHTML = '';
-            
-            // 평균 평점 업데이트
+            loadReviews();
             updateItemRating(itemId);
         })
         .catch(error => {
             console.error('Error:', error);
-            alert('already written a review.');
+            alert(error.message || 'Failed to submit review');
         });
     }
 
@@ -448,26 +472,6 @@
             };
             reader.readAsDataURL(file);
         });
-    }
-
-    // 평균 평점 업데이트 함수 추가
-    function updateItemRating(itemId) {
-        fetch(`/api/items/${itemId}/rating`)
-            .then(response => response.json())
-            .then(data => {
-                // 상품 상세 페이지의 평점 표시 업데이트
-                const starRating = '★'.repeat(Math.round(data.averageRating)) + '☆'.repeat(5 - Math.round(data.averageRating));
-                document.querySelector('.star-rating').textContent = starRating;
-                document.querySelector('.text-muted').textContent = 
-                    `(${data.averageRating.toFixed(1)}) (${data.reviewCount} reviews)`;
-                
-                // 평점이 0인 경우 (리뷰가 없는 경우) 처리
-                if (data.reviewCount === 0) {
-                    document.querySelector('.star-rating').textContent = '☆☆☆☆☆';
-                    document.querySelector('.text-muted').textContent = '(0.0) (0 reviews)';
-                }
-            })
-            .catch(error => console.error('Error updating rating:', error));
     }
 
     // 상품 삭제 함수 수정

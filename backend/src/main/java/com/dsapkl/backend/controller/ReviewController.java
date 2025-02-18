@@ -13,6 +13,11 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+//import org.springframework.security.core.annotation.AuthenticationPrincipal;
+//import org.springframework.security.core.userdetails.UserDetails;
+//import org.springframework.security.core.userdetails.User;
+//import org.springframework.security.core.userdetails.UsernameNotFoundException;
+//import org.springframework.security.core.userdetails.principalDetails;
 
 import java.io.IOException;
 import java.util.List;
@@ -114,11 +119,10 @@ public class ReviewController {
 
     @GetMapping("/api/items/{itemId}/reviews")
     @ResponseBody
-    public ResponseEntity<List<ReviewResponseDto>> getItemReviews(@PathVariable Long itemId, HttpServletRequest request) {
+    public List<ReviewResponseDto> getItemReviews(@PathVariable Long itemId, HttpServletRequest request) {
         Member member = getMember(request);
         Long currentMemberId = member != null ? member.getId() : null;
-        List<ReviewResponseDto> reviews = reviewService.getItemReviews(itemId, currentMemberId);
-        return ResponseEntity.ok(reviews);
+        return reviewService.getItemReviews(itemId, currentMemberId);
     }
 
     @GetMapping("/api/reviews/{reviewId}")
