@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+    <meta name="description" content="" />
+    <meta name="author" content="" />
+    <title>PKLshop</title>
+    <!-- Favicon-->
+    <link rel="icon" type="image/x-icon" href="assets/favicon.ico" />
+    <!-- Bootstrap icons-->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.5.0/font/bootstrap-icons.css" rel="stylesheet" />
+    <!-- Core theme CSS (includes Bootstrap)-->
+    <link href="css/styles.css" rel="stylesheet" />
+    <style>
+        .hover-shadow {
+            transition: all 0.3s ease;
+        }
+        .hover-shadow:hover {
+            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+        }
+        .hover-shadow-lg {
+            transition: all 0.3s ease;
+        }
+        .hover-shadow-lg:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 1rem 3rem rgba(0, 0, 0, 0.175);
+        }
+        .transition-all {
+            transition: all 0.3s ease;
+        }
+        .letter-spacing {
+            letter-spacing: 0.1em;
+        }
+        .object-fit-cover {
+            object-fit: cover;
+        }
+        .rounded-pill {
+            border-radius: 50rem !important;
+        }
+
+        /* 상품 카드 스타일 강화 */
+        .product-card {
+            border: 1px solid rgba(0, 0, 0, 0.15);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            transition: all 0.4s ease;
+        }
+        
+        .product-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15);
+        }
+
+        /* 상품 이미지 스타일 수정 */
+        .product-image {
+            height: 300px;
+            background-color: #f8f9fa;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+            padding: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .product-image img {
+            max-width: 100%;
+            max-height: 100%;
+            width: auto;
+            height: auto;
+            object-fit: contain;
+        }
+
+        .product-title {
+            color: #343a40;
+            font-size: 1.1rem;
+            transition: color 0.3s ease;
+        }
+
+        .product-card:hover .product-title {
+            color: #000;
+        }
+
+        .product-price {
+            font-size: 1.15rem;
+            font-weight: 600;
+        }
+
+        /* 버튼 호버 효과 추가 */
+        .nav-btn {
+            padding: 0.5rem 1rem;
+            transition: all 0.3s ease;
+        }
+        .nav-btn:hover {
+            transform: translateY(-2px);
+        }
+        
+        .search-btn {
+            transition: all 0.3s ease;
+        }
+        .search-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+    </style>
+</head>
+<body>
+
+<!-- Navigation-->
+<nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm">
+    <div class="container px-4 px-lg-5">
+        <a class="navbar-brand fw-bold" th:href="@{/}">PKLshop</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation"><span class="navbar-toggler-icon"></span></button>
+        <div class="collapse navbar-collapse" id="navbarSupportedContent">
+
+            <ul class="navbar-nav me-auto mb-2 mb-lg-0 ms-lg-4">
+            </ul>
+
+            <div class="d-flex gap-2">
+                <form th:action="@{/members}">
+                    <button class="btn btn-outline-dark px-4 rounded-pill nav-btn">
+                        Login
+                    </button>
+                </form>
+                <form th:action="@{/members/new}">
+                    <button class="btn btn-dark px-4 rounded-pill nav-btn">
+                        Sign Up
+                    </button>
+                </form>
+            </div>
+
+        </div>
+    </div>
+</nav>
+<!-- Header-->
+<header class="bg-dark py-5">
+    <div class="container px-4 px-lg-5 my-5">
+        <div class="text-center text-white">
+            <h1 class="display-4 fw-bold mb-3">PKLshop</h1>
+            <p class="lead fw-normal text-white-50 mb-0 letter-spacing">Welcome to PKLshop</p>
+        </div>
+    </div>
+</header>
+
+<!-- 검색 -->
+<div class="container px-4 px-lg-5 mt-4">
+    <div class="d-flex justify-content-end">
+        <form th:action="@{/}" method="get" class="d-flex gap-2" style="width: 600px;">
+            <select class="form-select rounded-pill" name="category" style="width: 200px;">
+                <option value="">All Categories</option>
+                <option th:each="cat : ${T(com.dsapkl.backend.entity.Category).values()}"
+                        th:value="${cat}"
+                        th:text="${cat}"
+                        th:selected="${cat == selectedCategory}">
+                </option>
+            </select>
+            <input class="form-control rounded-pill" type="search" placeholder="Search products" 
+                   name="query" th:value="${param.query}"/>
+            <button class="btn btn-dark rounded-pill px-4 search-btn" type="submit">
+                Search
+            </button>
+        </form>
+    </div>
+</div>
+&nbsp
+
+<!-- 검색 시 추천/최신 상품 섹션 숨기기 -->
+<div th:if="${recommendedItems != null and !recommendedItems.isEmpty() and param.query == null and param.category == null}" 
+     class="mb-5">
+    <h3 class="section-title">
+        <!-- ... 기존 코드 ... -->
+    </h3>
+    <!-- ... 기존 코드 ... -->
+</div>
+
+<!-- 섹션 구분선도 검색 시 숨기기 -->
+<div th:if="${recommendedItems != null and !recommendedItems.isEmpty() and param.query == null and param.category == null}" 
+     class="section-divider"></div>
+
+<!-- Section-->
+<section class="py-5">
+    <div class="container px-4 px-lg-5 mt-4">
+        <div class="row g-4 justify-content-center">
+            <!-- 검색 결과 없을 때 메시지 -->
+            <div th:if="${#lists.isEmpty(items)}" class="col-12 text-center">
+                <div class="card border-0 shadow-sm h-100 p-4">
+                    <div class="card-body">
+                        <i class="bi bi-search display-1 text-muted mb-3"></i>
+                        <h5 class="fw-bold text-muted">No products found matching your search criteria.</h5>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 상품 카드 -->
+            <div class="col-sm-6 col-lg-4 col-xl-3" th:each="item : ${items}">
+                <div class="card h-100 product-card border-0">
+                    <!-- 상품 이미지 -->
+                    <div class="product-image">
+                        <img th:if="${item.getItemImageList() != null and !item.getItemImageList().isEmpty()}"
+                             th:src="${#strings.startsWith(item.getItemImageList().get(0).getStoreName(), 'http')} ? 
+                                     ${item.getItemImageList().get(0).getStoreName()} : 
+                                     |/images/${item.getItemImageList().get(0).getStoreName()}|"
+                             alt="Product Image"/>
+                        <div th:if="${item.getItemImageList() == null or item.getItemImageList().isEmpty()}"
+                             class="d-flex align-items-center justify-content-center">
+                            <i class="bi bi-image text-muted" style="font-size: 3rem;"></i>
+                        </div>
+                    </div>
+
+                    <!-- 상품 정보 -->
+                    <div class="card-body p-4 text-center">
+                        <h5 class="product-title mb-3" th:text="${item.getName()}">Product</h5>
+                        <p class="product-price mb-0">
+                            <span th:text="${#numbers.formatInteger(item.price, 0, 'COMMA')}">price</span>
+                            <span class="text-muted fs-6">KRW</span>
+                        </p>
+                    </div>
+
+                    <!-- 버튼 -->
+                    <div class="card-footer bg-transparent border-0 p-4 text-center">
+                        <a class="btn btn-outline-dark w-100 rounded-pill hover-shadow"
+                           th:href="@{/items/{id}(id=${item.id})}">
+                            View Details
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- 페이지네이션 수정 -->
+        <div class="d-flex justify-content-center mt-5">
+            <nav aria-label="Page navigation">
+                <ul class="pagination">
+                    <li class="page-item" th:classappend="${startPage <= 1} ? 'disabled'">
+                        <a class="page-link rounded-pill border-0 shadow-sm mx-1 text-dark" 
+                           th:href="@{/(page=${prevGroupPage}, query=${param.query}, category=${param.category})}" 
+                           aria-label="Previous Group">
+                            <span aria-hidden="true">&laquo;</span>
+                        </a>
+                    </li>
+                    
+                    <!-- 페이지 번호 -->
+                    <li class="page-item" th:each="page : ${#numbers.sequence(startPage, endPage)}"
+                        th:classappend="${page == currentPage} ? 'active'">
+                        <a class="page-link rounded-pill border-0 shadow-sm mx-1" 
+                           th:href="@{/(page=${page}, query=${param.query}, category=${param.category})}" 
+                           th:text="${page}"
+                           th:classappend="${page == currentPage} ? 'bg-dark text-white' : 'text-dark'">1</a>
+                    </li>
+                    
+                    <li class="page-item" th:classappend="${endPage >= totalPages} ? 'disabled'">
+                        <a class="page-link rounded-pill border-0 shadow-sm mx-1 text-dark" 
+                           th:href="@{/(page=${nextGroupPage}, query=${param.query}, category=${param.category})}" 
+                           aria-label="Next Group">
+                            <span aria-hidden="true">&raquo;</span>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+    </div>
+</section>
+<!-- Footer-->
+<footer class="py-5 bg-dark">
+    <div class="container"><p class="m-0 text-center text-white">Copyright &copy; PKLshop</p></div>
+</footer>
+<!-- Bootstrap core JS-->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+<!-- Core theme JS-->
+<!--<script src="js/scripts.js"></script>-->
+</body>
+</html>
