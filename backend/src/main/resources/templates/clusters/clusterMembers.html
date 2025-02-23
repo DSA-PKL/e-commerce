@@ -1,0 +1,151 @@
+<!DOCTYPE HTML>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/base}">
+
+<head>
+    <!-- Chart.js를 head에 추가 -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+<div layout:fragment="content" class="container py-5">
+    <h2 class="mb-4" th:text="'Members in Cluster ' + ${clusterId}"></h2>
+    
+    <!-- 통계 요약 카드 추가 -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card shadow-sm">
+                <div class="card-body text-center">
+                    <h6 class="card-title">Average Age</h6>
+                    <h3 class="mb-0" th:text="${#numbers.formatDecimal(avgAge, 1, 1)}">0</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card shadow-sm">
+                <div class="card-body text-center">
+                    <h6 class="card-title">Average Purchase Frequency</h6>
+                    <h3 class="mb-0" th:text="${#numbers.formatDecimal(avgPurchase, 1, 1)}">0</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 차트 -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">Gender Distribution</h5>
+                    <canvas id="genderChart"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">Location Distribution</h5>
+                    <canvas id="locationChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Age</th>
+                                    <th>Gender</th>
+                                    <th>Location</th>
+                                    <th>Purchase Frequency</th>
+                                    <th>Average Order Value</th>
+                                    <th>Total Spending</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr th:each="member : ${members}">
+                                    <td th:text="${member.age}"></td>
+                                    <td th:text="${member.gender}"></td>
+                                    <td th:text="${member.location}"></td>
+                                    <td th:text="${member.purchaseFrequency}"></td>
+                                    <td th:text="${#numbers.formatCurrency(member.averageOrderValue)}"></td>
+                                    <td th:text="${#numbers.formatCurrency(member.totalSpending)}"></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <div class="mt-3">
+                <a href="/clusters" class="btn btn-outline-dark">Back to Clusters</a>
+            </div>
+        </div>
+    </div>
+
+    <script th:inline="javascript">
+        // 서버에서 데이터 가져오기
+        const members = /*[[${members}]]*/ [];
+        
+        // 성별 분포 차트
+        const genderData = {
+            labels: ['Male', 'Female'],
+            datasets: [{
+                data: [
+                    members.filter(m => m.gender === 'MALE').length,
+                    members.filter(m => m.gender === 'FEMALE').length
+                ],
+                backgroundColor: [
+                    'rgba(54, 162, 235, 0.5)',
+                    'rgba(255, 99, 132, 0.5)'
+                ]
+            }]
+        };
+
+        new Chart(document.getElementById('genderChart'), {
+            type: 'doughnut',
+            data: genderData,
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'bottom'
+                    }
+                }
+            }
+        });
+
+        // 지역 분포 차트
+        const locationData = {
+            labels: ['Urban', 'Rural'],
+            datasets: [{
+                data: [
+                    members.filter(m => m.location === 'Urban').length,
+                    members.filter(m => m.location === 'Rural').length
+                ],
+                backgroundColor: [
+                    'rgba(75, 192, 192, 0.5)',
+                    'rgba(153, 102, 255, 0.5)'
+                ]
+            }]
+        };
+
+        new Chart(document.getElementById('locationChart'), {
+            type: 'pie',
+            data: locationData,
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'bottom'
+                    }
+                }
+            }
+        });
+    </script>
+</div>
+</html> 

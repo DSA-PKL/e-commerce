@@ -1,0 +1,38 @@
+<!DOCTYPE HTML>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/base}">
+
+<div layout:fragment="content" class="container py-5">
+    <h2 class="mb-4">Cluster List</h2>
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Cluster Number</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr th:each="clusterNumber : ${clusterNumbers}">
+                                    <td th:text="'Cluster ' + ${clusterNumber}"></td>
+                                    <td>
+                                        <a th:href="@{/clusters/{id}/members(id=${clusterNumber})}" 
+                                           class="btn btn-sm btn-outline-dark">
+                                            View Members
+                                        </a>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</html> 
