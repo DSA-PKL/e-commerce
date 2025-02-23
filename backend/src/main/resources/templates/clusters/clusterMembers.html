@@ -4,8 +4,12 @@
       layout:decorate="~{layout/base}">
 
 <head>
-    <!-- Chart.js를 head에 추가 -->
+    <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Chart.js BoxPlot 플러그인 -->
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-chart-box-and-violin-plot@4.0.0/build/index.umd.min.js"></script>
+    <!-- Chart.js 통계 플러그인 -->
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@2.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
 </head>
 
 <div layout:fragment="content" class="container py-5">
@@ -33,7 +37,7 @@
 
     <!-- 차트 -->
     <div class="row mb-4">
-        <div class="col-md-6">
+        <div class="col-md-6 mb-4">
             <div class="card shadow-sm">
                 <div class="card-body">
                     <h5 class="card-title">Gender Distribution</h5>
@@ -41,11 +45,43 @@
                 </div>
             </div>
         </div>
-        <div class="col-md-6">
+        <div class="col-md-6 mb-4">
             <div class="card shadow-sm">
                 <div class="card-body">
                     <h5 class="card-title">Location Distribution</h5>
                     <canvas id="locationChart"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6 mb-4">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">Age Distribution</h5>
+                    <canvas id="ageChart"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6 mb-4">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">Newsletter Subscription</h5>
+                    <canvas id="newsletterChart"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6 mb-4">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">Interests Distribution</h5>
+                    <canvas id="interestsChart"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6 mb-4">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">Category Preferences</h5>
+                    <canvas id="categoryChart"></canvas>
                 </div>
             </div>
         </div>
@@ -62,9 +98,16 @@
                                     <th>Age</th>
                                     <th>Gender</th>
                                     <th>Location</th>
+                                    <th>Income</th>
+                                    <th>Last Login Days</th>
                                     <th>Purchase Frequency</th>
                                     <th>Average Order Value</th>
                                     <th>Total Spending</th>
+                                    <th>Time Spent (min)</th>
+                                    <th>Pages Viewed</th>
+                                    <th>Newsletter</th>
+                                    <th>Interests</th>
+                                    <th>Category Preference</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -72,9 +115,16 @@
                                     <td th:text="${member.age}"></td>
                                     <td th:text="${member.gender}"></td>
                                     <td th:text="${member.location}"></td>
+                                    <td th:text="${#numbers.formatCurrency(member.income)}"></td>
+                                    <td th:text="${member.lastLoginDays}"></td>
                                     <td th:text="${member.purchaseFrequency}"></td>
                                     <td th:text="${#numbers.formatCurrency(member.averageOrderValue)}"></td>
                                     <td th:text="${#numbers.formatCurrency(member.totalSpending)}"></td>
+                                    <td th:text="${member.timeSpentOnSiteMinutes}"></td>
+                                    <td th:text="${member.pagesViewed}"></td>
+                                    <td th:text="${member.newsletterSubscription == 1 ? 'Yes' : 'No'}"></td>
+                                    <td th:text="${member.interests}"></td>
+                                    <td th:text="${member.productCategoryPreference}"></td>
                                 </tr>
                             </tbody>
                         </table>
@@ -137,6 +187,138 @@
         new Chart(document.getElementById('locationChart'), {
             type: 'pie',
             data: locationData,
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'bottom'
+                    }
+                }
+            }
+        });
+
+        // 나이 분포 차트
+        const ages = members.map(m => m.age);
+        const ageData = {
+            labels: ['10-20', '21-30', '31-40', '41-50', '51-60', '61+'],
+            datasets: [{
+                label: 'Number of Members',
+                data: [
+                    members.filter(m => m.age >= 10 && m.age <= 20).length,
+                    members.filter(m => m.age >= 21 && m.age <= 30).length,
+                    members.filter(m => m.age >= 31 && m.age <= 40).length,
+                    members.filter(m => m.age >= 41 && m.age <= 50).length,
+                    members.filter(m => m.age >= 51 && m.age <= 60).length,
+                    members.filter(m => m.age >= 61).length
+                ],
+                backgroundColor: 'rgba(75, 192, 192, 0.5)',
+                borderColor: 'rgba(75, 192, 192, 1)',
+                borderWidth: 1
+            }]
+        };
+
+        new Chart(document.getElementById('ageChart'), {
+            type: 'bar',
+            data: ageData,
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Number of Members'
+                        }
+                    }
+                }
+            }
+        });
+
+        // 관심사 분포 차트
+        const interests = [...new Set(members.map(m => m.interests))];
+        const interestsData = {
+            labels: interests,
+            datasets: [{
+                data: interests.map(interest => 
+                    members.filter(m => m.interests === interest).length
+                ),
+                backgroundColor: [
+                    'rgba(255, 99, 132, 0.5)',
+                    'rgba(54, 162, 235, 0.5)',
+                    'rgba(255, 206, 86, 0.5)',
+                    'rgba(75, 192, 192, 0.5)',
+                    'rgba(153, 102, 255, 0.5)'
+                ]
+            }]
+        };
+
+        new Chart(document.getElementById('interestsChart'), {
+            type: 'pie',
+            data: interestsData,
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'bottom'
+                    }
+                }
+            }
+        });
+
+        // 카테고리 선호도 차트
+        const categories = [...new Set(members.map(m => m.productCategoryPreference))];
+        const categoryData = {
+            labels: categories,
+            datasets: [{
+                data: categories.map(category => 
+                    members.filter(m => m.productCategoryPreference === category).length
+                ),
+                backgroundColor: [
+                    'rgba(255, 99, 132, 0.5)',
+                    'rgba(54, 162, 235, 0.5)',
+                    'rgba(255, 206, 86, 0.5)',
+                    'rgba(75, 192, 192, 0.5)',
+                    'rgba(153, 102, 255, 0.5)'
+                ]
+            }]
+        };
+
+        new Chart(document.getElementById('categoryChart'), {
+            type: 'doughnut',
+            data: categoryData,
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'bottom'
+                    }
+                }
+            }
+        });
+
+        // Newsletter 차트 추가
+        const newsletterData = {
+            labels: ['Subscribed', 'Not Subscribed'],
+            datasets: [{
+                data: [
+                    members.filter(m => m.newsletterSubscription === 1).length,
+                    members.filter(m => m.newsletterSubscription === 0).length
+                ],
+                backgroundColor: [
+                    'rgba(75, 192, 192, 0.5)',  // 구독
+                    'rgba(255, 99, 132, 0.5)'   // 미구독
+                ]
+            }]
+        };
+
+        new Chart(document.getElementById('newsletterChart'), {
+            type: 'pie',
+            data: newsletterData,
             options: {
                 responsive: true,
                 plugins: {

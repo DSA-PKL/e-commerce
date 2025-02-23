@@ -3,25 +3,51 @@
       xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
       layout:decorate="~{layout/base}">
 
-<div layout:fragment="content" class="container py-5">
+<div layout:fragment="content" class="container-fluid py-5">
     <h2 class="mb-4">Cluster List</h2>
     <div class="row">
-        <div class="col-md-8">
+        <div class="col-md-11 mx-auto">
             <div class="card shadow-sm">
                 <div class="card-body">
                     <div class="table-responsive">
-                        <table class="table">
-                            <thead>
+                        <table class="table table-hover table-striped">
+                            <thead class="table-dark">
                                 <tr>
-                                    <th>Cluster Number</th>
-                                    <th>Action</th>
+                                    <th style="width: 8%">Cluster Number</th>
+                                    <th style="width: 6%">Average Age</th>
+                                    <th style="width: 7%">Dominant Gender</th>
+                                    <th style="width: 7%">Dominant Location</th>
+                                    <th style="width: 8%">Avg Income</th>
+                                    <th style="width: 7%">Avg Login Days</th>
+                                    <th style="width: 7%">Avg Purchase</th>
+                                    <th style="width: 8%">Avg Order Value</th>
+                                    <th style="width: 8%">Avg Spending</th>
+                                    <th style="width: 7%">Avg Time</th>
+                                    <th style="width: 7%">Avg Pages</th>
+                                    <th style="width: 7%">Newsletter</th>
+                                    <th style="width: 7%">Interest</th>
+                                    <th style="width: 7%">Category</th>
+                                    <th style="width: 6%">Action</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                <tr th:each="clusterNumber : ${clusterNumbers}">
-                                    <td th:text="'Cluster ' + ${clusterNumber}"></td>
+                                <tr th:each="stat : ${clusterStats}">
+                                    <td th:text="'Cluster ' + ${stat.clusterNumber}"></td>
+                                    <td th:text="${#numbers.formatDecimal(stat.avgAge, 1, 1)}"></td>
+                                    <td th:text="${stat.dominantGender}"></td>
+                                    <td th:text="${stat.dominantLocation}"></td>
+                                    <td th:text="${#numbers.formatCurrency(stat.avgIncome)}"></td>
+                                    <td th:text="${#numbers.formatDecimal(stat.avgLastLoginDays, 1, 1)}"></td>
+                                    <td th:text="${#numbers.formatDecimal(stat.avgPurchaseFreq, 1, 1)}"></td>
+                                    <td th:text="${#numbers.formatCurrency(stat.avgOrderValue)}"></td>
+                                    <td th:text="${#numbers.formatCurrency(stat.avgTotalSpending)}"></td>
+                                    <td th:text="${#numbers.formatDecimal(stat.avgTimeSpent, 1, 1)}"></td>
+                                    <td th:text="${#numbers.formatDecimal(stat.avgPagesViewed, 1, 1)}"></td>
+                                    <td th:text="${#numbers.formatPercent(stat.newsletterRatio, 1, 1)}"></td>
+                                    <td th:text="${stat.dominantInterest}"></td>
+                                    <td th:text="${stat.dominantCategory}"></td>
                                     <td>
-                                        <a th:href="@{/clusters/{id}/members(id=${clusterNumber})}" 
+                                        <a th:href="@{/clusters/{id}/members(id=${stat.clusterNumber})}" 
                                            class="btn btn-sm btn-outline-dark">
                                             View Members
                                         </a>
@@ -35,4 +61,22 @@
         </div>
     </div>
 </div>
+
+<style>
+    .table th, .table td {
+        white-space: nowrap;
+        padding: 0.5rem;
+        font-size: 0.9rem;
+        text-align: center;
+    }
+    
+    .table-responsive {
+        margin: 0 1rem;
+    }
+    
+    .btn-sm {
+        padding: 0.2rem 0.5rem;
+        font-size: 0.8rem;
+    }
+</style>
 </html> 
