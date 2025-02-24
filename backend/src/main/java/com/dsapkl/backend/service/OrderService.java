@@ -196,17 +196,30 @@ public class OrderService {
 
     private void updateClusterItemPreference(Long memberId, Item item) {
         try {
-            // MemberInfo에서 cluster_id 가져오기
-            MemberInfo memberInfo = memberInfoRepository.findById(memberId)
+            // 입력 파라미터 로깅
+            System.out.println("\n[클러스터 선호도 업데이트 시작] ============================");
+            System.out.println("► 회원 ID: " + memberId);
+            System.out.println("► 상품명: " + item.getName() + " (상품 ID: " + item.getId() + ")");
+
+            // 회원의 클러스터 정보 조회
+            MemberInfo memberInfo = memberInfoRepository.findById(memberId+1000)
                     .orElseThrow(() -> new IllegalArgumentException("Member information not found."));
 
             Cluster cluster = memberInfo.getCluster_id();
-            if (cluster == null) return;  // 클러스터가 없으면 무시
+            if (cluster == null) {
+                System.out.println("\n[주의] 회원 " + memberId + "번은 아직 클러스터가 할당되지 않았습니다.");
+                return;
+            }
+            
+            System.out.println("\n[클러스터 정보 확인]");
+            System.out.println("► 회원 " + memberId + "번은 클러스터 " + cluster.getClusterNumber() + "번에 속해있습니다.");
 
-            // ClusterItemPreference 조회 또는 생성
+            // 클러스터-상품 선호도 조회 또는 생성
             ClusterItemPreference preference = clusterItemPreferenceRepository
                     .findByClusterAndItem(cluster, item)
                     .orElseGet(() -> {
+                        System.out.println("\n[신규 선호도 생성]");
+                        System.out.println("► 클러스터 " + cluster.getClusterNumber() + "번의 상품 '" + item.getName() + "' 선호도를 새로 생성합니다.");
                         ClusterItemPreference newPreference = new ClusterItemPreference(cluster, item);
                         return clusterItemPreferenceRepository.save(newPreference);
                     });
@@ -214,9 +227,19 @@ public class OrderService {
             // 선호도 점수 증가
             preference.increasePreferenceScore();
             clusterItemPreferenceRepository.save(preference);
+            
+            System.out.println("\n[선호도 업데이트 완료]");
+            System.out.println("► 클러스터: " + cluster.getClusterNumber() + "번");
+            System.out.println("► 상품명: " + item.getName());
+            System.out.println("► 최종 선호도 점수: " + preference.getPreferenceScore());
+            System.out.println("================================================\n");
+
         } catch (Exception e) {
-            // Log error and continue
-            System.err.println("Error occurred while updating cluster item preference: " + e.getMessage());
+            System.err.println("\n[에러 발생] ========================================");
+            System.err.println("► 회원 ID: " + memberId);
+            System.err.println("► 상품 ID: " + item.getId());
+            System.err.println("► 에러 내용: " + e.getMessage());
+            System.err.println("================================================\n");
         }
     }
 }
