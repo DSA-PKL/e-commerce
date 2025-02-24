@@ -60,7 +60,7 @@ public class MemberInfo {
         this.age = age;
         this.gender = gender;
         this.location = "Urban";
-        this.income = 113458800;
+        this.income = 81042;
         this.interests = interests;
         this.lastLoginDay = lastLoginDay;
         this.loginDay = loginDay;
