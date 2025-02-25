@@ -4,6 +4,7 @@ import com.dsapkl.backend.entity.Address;
 import com.dsapkl.backend.entity.Cart;
 import com.dsapkl.backend.entity.Member;
 import com.dsapkl.backend.entity.MemberInfo;
+import com.dsapkl.backend.entity.Role;
 import com.dsapkl.backend.repository.CartRepository;
 import com.dsapkl.backend.repository.MemberInfoRepository;
 import com.dsapkl.backend.repository.MemberRepository;
@@ -11,6 +12,7 @@ import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.Pattern;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -20,23 +22,41 @@ import java.util.UUID;
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
+@Slf4j
 public class MemberService {
     private final MemberRepository memberRepository;
     private final CartRepository cartRepository;
     private final EmailService emailService;
     private final MemberInfoRepository memberInfoRepository;
+    private final UserActivityLogService logService;
 
-    //회원가입
-    @Transactional(readOnly = false)
+    @Transactional
     public Long join(Member member) {
         validateDuplicateMember(member);
+        
+        boolean isFirstMember = memberRepository.count() == 0;
+        if (isFirstMember) {
+            member.changeRole(Role.ADMIN.name());
+        } else {
+            member.changeRole(Role.USER.name());
+        }
+        
         Member savedMember = memberRepository.save(member);
-
+        
+        // 장바구니와 회원정보 생성은 회원 저장 후에
         Cart cart = Cart.createCart(savedMember);
         cartRepository.save(cart);
 
         MemberInfo memberInfo = MemberInfo.createMemberInfo(savedMember);
         memberInfoRepository.save(memberInfo);
+
+        // 회원가입 로그는 모든 저장이 완료된 후에
+        try {
+            logService.logEvent(savedMember.getId(), "MEMBER_REGISTER", 
+                String.format("New member registered: %s", savedMember.getEmail()));
+        } catch (Exception e) {
+            // 로그 저장 실패는 회원가입에 영향을 주지 않도록
+        }
 
         return savedMember.getId();
     }
@@ -54,10 +74,22 @@ public class MemberService {
     }
 
     //로그인 체크
+    @Transactional
     public Member login(String email, String password) {
-        return memberRepository.findByEmail(email)
-                .filter(m -> m.getPassword().equals(password))
-                .orElse(null);
+        Member member = memberRepository.findByEmail(email)
+            .filter(m -> m.getPassword().equals(password))
+            .orElse(null);
+            
+        if (member != null && member.getRole() != Role.ADMIN) {
+            try {
+                logService.logEvent(member.getId(), "MEMBER_LOGIN", 
+                    String.format("Member logged in: %s", email));
+            } catch (Exception e) {
+                // 로그 저장 실패는 로그인에 영향을 주지 않도록
+            }
+        }
+        
+        return member;
     }
 
     public Member findMember(Long id) {
@@ -121,5 +153,25 @@ public class MemberService {
         // Member 엔티티에 updateMemberInfo 메서드 추가 필요
         member.updateMemberInfo(name, email, phoneNumber, birthDate, address);
         memberRepository.save(member);
+        
+        // 회원정보 수정 로그
+        logService.logEvent(memberId, "MEMBER_UPDATE", 
+            String.format("Member information updated: %s", email));
+    }
+
+    public boolean isAdmin(Long memberId) {
+        Member member = memberRepository.findById(memberId)
+                .orElseThrow(() -> new IllegalArgumentException("Member not found"));
+        log.info("Checking admin status for member: {}, role: {}", memberId, member.getRole());
+        return member.getRole() == Role.ADMIN;
+    }
+
+    @Transactional
+    public void logout(Long memberId) {
+        try {
+            logService.logEvent(memberId, "MEMBER_LOGOUT", "Member logged out");
+        } catch (Exception e) {
+            // 로그 저장 실패는 로그아웃에 영향을 주지 않도록
+        }
     }
 }

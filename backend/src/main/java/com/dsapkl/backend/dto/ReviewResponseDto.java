@@ -45,11 +45,3 @@ public class ReviewResponseDto {
     }
 }
 
-@Getter
-class ReviewImageDto {
-    private String storeFileName;
-
-    public ReviewImageDto(ReviewImage reviewImage) {
-        this.storeFileName = reviewImage.getStoreFileName();
-    }
-} 

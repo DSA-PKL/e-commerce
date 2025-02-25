@@ -7,9 +7,11 @@ import lombok.Getter;
 public class ReviewImageDto {
     private Long id;
     private String imageUrl;
+    private String storeFileName;
 
     public ReviewImageDto(ReviewImage reviewImage) {
         this.id = reviewImage.getId();
         this.imageUrl = reviewImage.getImageUrl();
+        this.storeFileName = reviewImage.getStoreFileName();
     }
 } 

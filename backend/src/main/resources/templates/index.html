@@ -235,19 +235,30 @@
                     <a class="nav-link dropdown-toggle fw-semibold" id="navbarDropdown" href="#" role="button"
                        data-bs-toggle="dropdown" aria-expanded="false">Product Menu</a>
                     <ul class="dropdown-menu border-0 shadow-sm">
+                        <!-- 모든 사용자에게 보이는 메뉴 -->
                         <li><a class="dropdown-item" th:href="@{/items/new}">Add Product</a></li>
                         <li><hr class="dropdown-divider" /></li>
                         <li><a class="dropdown-item" th:href="@{/items/manage}">Manage Products</a></li>
+                        
+                        <!-- 관리자에게만 보이는 대시보드 메뉴 -->
+                        <th:block th:if="${session.loginMember != null && session.loginMember.role == T(com.dsapkl.backend.entity.Role).ADMIN}">
+                            <li><hr class="dropdown-divider" /></li>
+                            <li>
+                                <a class="dropdown-item" th:href="@{/admin/analytics(memberId=${session.loginMember.id})}">
+                                    <i class="bi-graph-up me-2"></i>Dashboard
+                                </a>
+                            </li>
+                        </th:block>
                     </ul>
                 </li>
             </ul>
             &nbsp
 
-            <!-- 사용자 환영 메시지 추가 -->
-
+            <!-- 사용자 환영 메시지와 버튼들 -->
             <div class="d-flex align-items-center gap-3">
                 <span class="text-dark">Welcome <span class="fw-bold" th:text="${session.loginMember.name}">User</span>!</span>
 
+                <!-- 모든 사용자에게 보이는 버튼들 -->
                 <form th:action="@{/cart}" method="get">
                     <button class="btn btn-outline-dark rounded-pill nav-btn">
                         <i class="bi-cart-fill me-1"></i>Cart

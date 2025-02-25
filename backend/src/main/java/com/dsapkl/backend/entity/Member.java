@@ -5,11 +5,13 @@ import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 import org.springframework.boot.autoconfigure.amqp.RabbitConnectionDetails;
 
 @Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
+@Setter
 public class Member {
 
     @Id
@@ -49,7 +51,7 @@ public class Member {
     }
 
     public void changeRole(String role) {
-        if (role.equals("admin")) {
+        if (role.equalsIgnoreCase("admin")) {
             this.role = Role.ADMIN;
         } else {
             this.role = Role.USER;

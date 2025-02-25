@@ -29,6 +29,7 @@ public class ReviewService {
     private final MemberRepository memberRepository;
     private final FileHandler fileHandler;
     private final ReviewImageRepository reviewImageRepository;
+    private final UserActivityLogService logService;
 
     // 리뷰 작성
     @Transactional
@@ -58,6 +59,10 @@ public class ReviewService {
                 review.addReviewImage(image);
             }
         }
+
+        // 리뷰 작성 로그
+        logService.logEvent(member.getId(), "REVIEW_CREATE", 
+            String.format("Review created for product: %d", item.getId()));
 
         return reviewRepository.save(review).getId();
     }
@@ -90,9 +95,14 @@ public class ReviewService {
         }
 
         review.update(requestDto.getContent(), requestDto.getRating());
+
+        // 리뷰 수정 로그
+        logService.logEvent(review.getMember().getId(), "REVIEW_UPDATE", 
+            String.format("Review updated for product: %d", review.getItem().getId()));
     }
 
     // 리뷰 삭제
+    @Transactional
     public void deleteReview(Long reviewId, Long memberId) {
         Review review = reviewRepository.findById(reviewId)
                 .orElseThrow(() -> new IllegalArgumentException("Review does not exist."));
@@ -102,6 +112,10 @@ public class ReviewService {
         }
 
         reviewRepository.delete(review);
+
+        // 리뷰 삭제 로그
+        logService.logEvent(review.getMember().getId(), "REVIEW_DELETE", 
+            String.format("Review deleted for product: %d", review.getItem().getId()));
     }
 
     // 상품의 모든 리뷰 조회

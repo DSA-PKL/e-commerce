@@ -5,9 +5,11 @@ import com.dsapkl.backend.dto.CartOrderDto;
 import com.dsapkl.backend.dto.CheckoutRequest;
 import com.dsapkl.backend.repository.OrderDto;
 import com.dsapkl.backend.entity.Member;
+import com.dsapkl.backend.entity.Order;
 import com.dsapkl.backend.entity.OrderStatus;
 import com.dsapkl.backend.exception.NotEnoughStockException;
 import com.dsapkl.backend.service.OrderService;
+import com.dsapkl.backend.service.UserActivityLogService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.stripe.Stripe;
@@ -25,12 +27,14 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Controller
 @RequiredArgsConstructor
 public class OrderController {
 
     private final OrderService orderService;
+    private final UserActivityLogService logService;
 
     /**
      * 단일 상품 바로 주문
@@ -134,25 +138,24 @@ public class OrderController {
     @PostMapping("/orders")
     @ResponseBody
     public ResponseEntity<String> orders(@RequestBody CartOrderDto cartOrderDto, HttpServletRequest request, String paymentIntentId) {
-
-        //장바구니에서 아무 상품도 체크하지 않을 경우
         if (cartOrderDto.getCartOrderDtoList().isEmpty()) {
             return new ResponseEntity<>("Please select at least one product to order.", HttpStatus.FORBIDDEN);
         }
 
-        //CartController 에 작성해둔 세션 정보 조회하는 기능 공용으로 사용
         Member member = CartController.getMember(request);
         if (member == null) {
-            return new ResponseEntity<>("Login required for this service.", HttpStatus.UNAUTHORIZED);
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Login required for this service.");
         }
 
         try {
             orderService.orders(member.getId(), cartOrderDto);
+            // 주문 성공 후 로그 남기기
+            logService.logEvent(member.getId(), "ORDER_COMPLETE", 
+                String.format("Order completed with %d items", cartOrderDto.getCartOrderDtoList().size()));
+            return ResponseEntity.ok("Cart Order Success");
         } catch (NotEnoughStockException e) {
-            return new ResponseEntity<String>(e.getMessage(), HttpStatus.BAD_REQUEST);
+            return ResponseEntity.badRequest().body(e.getMessage());
         }
-
-        return ResponseEntity.ok("Cart Order Success");
     }
 
     /**
@@ -162,7 +165,13 @@ public class OrderController {
     @ResponseBody
     public ResponseEntity<String> cancelOrder(@PathVariable Long orderId) {
         try {
-            orderService.cancelOrder(orderId);
+            // 주문 취소 실행 (Order 반환)
+            Order order = orderService.cancelOrder(orderId);
+            
+            // 주문 취소 로그 남기기
+            logService.logEvent(order.getMember().getId(), "ORDER_CANCEL", 
+                String.format("Order %d cancelled", orderId));
+            
             return ResponseEntity.ok("Order cancelled successfully");
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(e.getMessage());

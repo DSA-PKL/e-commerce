@@ -159,20 +159,10 @@ public class OrderService {
      * 주문 취소
      */
     @Transactional
-    public void cancelOrder(Long orderId) {
-        Order order = orderRepository.findById(orderId)
-                .orElseThrow(() -> new IllegalArgumentException("Order not found"));
-                
-        // 이미 취소된 주문인지 확인
-        if (order.getStatus() == OrderStatus.CANCEL) {
-            throw new IllegalStateException("Already cancelled order");
-        }
-        
-        // 주문 취소 처리
+    public Order cancelOrder(Long orderId) {
+        Order order = findOrder(orderId);
         order.cancelOrder();
-        
-        // 재고 원복
-        order.getOrderItems().forEach(OrderItem::cancel);
+        return order;
     }
 
     public List<LineItem> retrieveLineItems(String sessionId) throws StripeException {
@@ -218,5 +208,11 @@ public class OrderService {
             // Log error and continue
             System.err.println("Error occurred while updating cluster item preference: " + e.getMessage());
         }
+    }
+
+    @Transactional(readOnly = true)
+    public Order findOrder(Long orderId) {
+        return orderRepository.findById(orderId)
+            .orElseThrow(() -> new IllegalArgumentException("Order not found"));
     }
 }

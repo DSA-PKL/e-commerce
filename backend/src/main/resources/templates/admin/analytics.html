@@ -1,0 +1,727 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Admin Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.6.1/sockjs.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+    <style>
+        .navbar {
+            background-color: #fff !important;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            transition: all 0.3s ease;
+            margin-bottom: 2rem;
+        }
+        .navbar-brand {
+            font-weight: 600;
+            letter-spacing: 0.05em;
+            color: #212529 !important;
+            transition: all 0.3s ease;
+        }
+        .navbar-brand:hover {
+            transform: translateY(-1px);
+        }
+        .nav-link {
+            color: #6c757d !important;
+            transition: all 0.3s ease;
+        }
+        .nav-link:hover {
+            color: #212529 !important;
+        }
+        .nav-link.active {
+            color: #0d6efd !important;
+            font-weight: 500;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .date-range {
+            margin: 20px 0;
+            display: flex;
+            gap: 10px;
+        }
+        
+        .charts {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+            margin: 20px 0;
+        }
+        
+        .chart-container {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .log-container {
+            margin-top: 30px;
+        }
+        
+        .log-entry {
+            background: #fff;
+            border: 1px solid #ddd;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+        }
+        
+        h1, h2 {
+            color: #333;
+            margin-bottom: 15px;
+        }
+        
+        button {
+            padding: 8px 16px;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        
+        button:hover {
+            background: #0056b3;
+        }
+        
+        input[type="datetime-local"] {
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        
+        .notification {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: #4CAF50;
+            color: white;
+            padding: 15px 20px;
+            border-radius: 4px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            animation: slideIn 0.5s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        .form-select {
+            padding: 0.375rem 2.25rem 0.375rem 0.75rem;
+            font-size: 1rem;
+            font-weight: 400;
+            line-height: 1.5;
+            color: #212529;
+            background-color: #fff;
+            border: 1px solid #ced4da;
+            border-radius: 0.25rem;
+            transition: border-color .15s ease-in-out,box-shadow .15s ease-in-out;
+        }
+
+        .form-select:focus {
+            border-color: #86b7fe;
+            outline: 0;
+            box-shadow: 0 0 0 0.25rem rgba(13,110,253,.25);
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation Bar -->
+    <nav class="navbar navbar-expand-lg navbar-light bg-white">
+        <div class="container">
+            <a class="navbar-brand" th:href="@{/}">PKLshop</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <h1>Admin Dashboard</h1>
+        
+        <!-- 기간 선택 -->
+        <div class="date-range">
+            <input type="datetime-local" id="startDate">
+            <input type="datetime-local" id="endDate">
+            <button onclick="fetchData()">Search</button>
+        </div>
+
+        <!-- 차트 영역 -->
+        <div class="charts">
+            <div class="chart-container">
+                <h2>Page Views by URL</h2>
+                <canvas id="pageViewChart"></canvas>
+            </div>
+            <div class="chart-container">
+                <h2>Hourly Session Count</h2>
+                <canvas id="hourlySessionChart"></canvas>
+            </div>
+            <div class="chart-container">
+                <h2>Activity Type Distribution</h2>
+                <canvas id="activityTypeChart"></canvas>
+            </div>
+            <div class="chart-container">
+                <h2>Event Occurrence</h2>
+                <canvas id="eventChart"></canvas>
+            </div>
+        </div>
+
+        <!-- 로그 데이터 표시 영역 -->
+        <div class="log-container">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h2>Activity Logs</h2>
+                <select id="userFilter" class="form-select" style="width: auto;">
+                    <option value="">All Users</option>
+                </select>
+            </div>
+            <div id="logData"></div>
+        </div>
+    </div>
+
+    <script th:inline="javascript">
+        const memberId = /*[[${memberId}]]*/ 'default';
+        let pageViewChart, hourlySessionChart, activityTypeChart, eventChart;
+        let stompClient = null;
+        let currentLogs = [];
+
+        // 공통 색상 정의
+        const chartColors = {
+            pageView: 'rgba(255, 206, 86, 0.5)',    // 노랑 - 페이지 조회
+            cart: 'rgba(75, 192, 192, 0.5)',        // 청록 - 구매 관련
+            member: 'rgba(255, 99, 132, 0.5)',      // 빨강 - 회원 관련
+            review: 'rgba(54, 162, 235, 0.5)',      // 파랑 - 리뷰 관련
+            other: 'rgba(153, 102, 255, 0.5)'       // 보라 - 기타
+        };
+
+        function connect() {
+            const socket = new SockJS('/ws-analytics');
+            stompClient = Stomp.over(socket);
+            stompClient.connect({}, function(frame) {
+                console.log('Connected: ' + frame);
+                stompClient.subscribe('/topic/logs', function(message) {
+                    const newLog = JSON.parse(message.body);
+                    updateRealtime(newLog);
+                });
+            });
+        }
+
+        function updateRealtime(newLog) {
+            // 현재 로그 목록에 추가
+            currentLogs.push(newLog);
+            
+            // 최근 100개만 유지
+            if (currentLogs.length > 100) {
+                currentLogs.shift();
+            }
+
+            // 사용자 필터 업데이트
+            updateUserFilter(currentLogs);
+            
+            // 로그 표시 업데이트
+            displayLogs(currentLogs);
+            
+            // 차트 업데이트
+            updateCharts(currentLogs);
+
+            // 새 로그 알림
+            showNotification(newLog);
+        }
+
+        function showNotification(log) {
+            const notification = document.createElement('div');
+            notification.className = 'notification';
+            notification.textContent = `New ${log.activityType} activity recorded`;
+            document.body.appendChild(notification);
+            setTimeout(() => notification.remove(), 3000);
+        }
+
+        async function fetchData() {
+            const start = document.getElementById('startDate').value;
+            const end = document.getElementById('endDate').value;
+            
+            try {
+                // 검색 이벤트 로깅 제거
+                const response = await fetch(`/api/admin/analytics/logs?start=${start}&end=${end}&memberId=${memberId}`, {
+                    headers: {
+                        'Accept': 'application/json'
+                    }
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                console.log('Received data:', data);  // 데이터 확인
+                
+                currentLogs = data.logs;  // data 대신 data.logs 사용
+                displayLogs(currentLogs);
+                updateCharts(currentLogs);
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        }
+
+        function displayLogs(logs) {
+            const container = document.getElementById('logData');
+            const selectedUserId = document.getElementById('userFilter').value;
+            
+            // 사용자 필터 업데이트
+            updateUserFilter(logs);
+            
+            // 선택된 사용자의 로그만 필터링 (문자열 비교로 수정)
+            const filteredLogs = selectedUserId 
+                ? logs.filter(log => String(log.userId) === selectedUserId)
+                : logs;
+            
+            if (!filteredLogs || filteredLogs.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-4">
+                        <p class="text-muted mb-0">No activity logs found for the selected period${selectedUserId ? ' and user' : ''}.</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            container.innerHTML = filteredLogs.map(log => {
+                // 활동 타입 상세 정보 추출
+                let activityDetail = log.activityType;
+                let icon = '📝';
+                let details = log.additionalData;
+
+                if (log.activityType === 'EVENT' && log.additionalData) {
+                    try {
+                        const eventData = JSON.parse(log.additionalData);
+                        if (eventData.eventType) {
+                            // 아이콘 선택
+                            icon = eventData.eventType.includes('MEMBER') ? '👤' :
+                                  eventData.eventType.includes('REVIEW') ? '⭐' :  // 리뷰는 별표로
+                                  eventData.eventType.includes('PRODUCT') ? '📦' :
+                                  eventData.eventType.includes('CART') ? '🛒' :
+                                  eventData.eventType.includes('SEARCH') ? '🔍' :
+                                  eventData.eventType.includes('PURCHASE') ? '💳' : '📝';
+
+                            // 이벤트 타입 포맷팅
+                            activityDetail = eventData.eventType
+                                .replace('MEMBER_', 'Member ')
+                                .replace('REVIEW_', 'Review ')
+                                .replace('PRODUCT_', 'Product ')
+                                .replace('CART', 'Cart')
+                                .replace('SEARCH', 'Search')
+                                .replace('PURCHASE', 'Purchase')
+                                .replace('PAGE_VIEW', 'Page View')
+                                .replace('SESSION', 'Session')
+                                .replace('CLICK', 'Click')
+                                .replace('CREATE', 'Created')
+                                .replace('UPDATE', 'Updated')
+                                .replace('DELETE', 'Deleted')
+                                .replace('_', ' ');
+
+                            // 리뷰 관련 특별 처리
+                            if (eventData.eventType === 'REVIEW_CREATE') {
+                                details = `New review created: ${eventData.eventData}`;
+                            } else if (eventData.eventType === 'REVIEW_UPDATE') {
+                                details = `Review updated: ${eventData.eventData}`;
+                            } else if (eventData.eventType === 'REVIEW_DELETE') {
+                                details = `Review deleted: ${eventData.eventData}`;
+                            }
+                        }
+                    } catch (e) {
+                        console.error('Error parsing event data:', e);
+                    }
+                }
+
+                return `
+                    <div class="log-entry" onclick="logEntryClick('${log.id}')">
+                        <p><strong>${icon} Activity:</strong> ${activityDetail}</p>
+                        <p><strong>👤 User:</strong> ${log.userName} (${log.userEmail})</p>
+                        <p><strong>🕒 Time:</strong> ${formatDateTime(log.timestamp)}</p>
+                        <p><strong>🔗 URL:</strong> ${log.url || 'N/A'}</p>
+                        ${details ? `<p><strong>ℹ️ Details:</strong> ${details}</p>` : ''}
+                    </div>
+                `;
+            }).join('');
+        }
+
+        async function logEntryClick(logId) {
+            try {
+                await fetch(`/api/admin/analytics/log/entry-click`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        userId: memberId,
+                        logId: logId
+                    })
+                });
+            } catch (error) {
+                console.error('Error logging entry click:', error);
+            }
+        }
+
+        function updateCharts(logs) {
+            updatePageViewChart(logs);
+            updateHourlySessionChart(logs);
+            updateActivityTypeChart(logs);
+            updateEventChart(logs);
+        }
+
+        function updatePageViewChart(logs) {
+            console.log('Updating page view chart with logs:', logs);
+            
+            const pageViews = {};
+            const pageViewLogs = logs.filter(log => log.activityType === 'PAGE_VIEW');
+            
+            pageViewLogs.forEach(log => {
+                // URL 가공
+                let url = log.url || 'Unknown';
+                
+                // URL 정리
+                url = url
+                    .replace('/admin/', '⚙️ Admin/')  // 관리자 페이지
+                    .replace('/products/', '📦 Product/')  // 상품 페이지
+                    .replace('/cart', '🛒 Cart')  // 장바구니
+                    .replace('/orders', '📋 Orders')  // 주문
+                    .replace('/members', '👤 Members')  // 회원
+                    .replace('/reviews', '⭐ Reviews')  // 리뷰
+                    .replace('/search', '🔍 Search')  // 검색
+                    .replace('/', '🏠 Home');  // 홈
+                
+                // 너무 긴 URL은 축약
+                if (url.length > 30) {
+                    url = url.substring(0, 27) + '...';
+                }
+                
+                pageViews[url] = (pageViews[url] || 0) + 1;
+            });
+            
+            // URL별 조회수 정렬 (내림차순)
+            const sortedUrls = Object.entries(pageViews)
+                .sort(([,a], [,b]) => b - a)
+                .reduce((r, [k, v]) => ({ ...r, [k]: v }), {});
+            
+            console.log('Page views data:', sortedUrls);
+
+            const data = {
+                labels: Object.keys(sortedUrls),
+                datasets: [{
+                    label: 'Page Views',
+                    data: Object.values(sortedUrls),
+                    backgroundColor: chartColors.pageView,
+                    borderColor: 'rgba(255, 206, 86, 1)',
+                    borderWidth: 1
+                }]
+            };
+
+            if (pageViewChart) pageViewChart.destroy();
+            pageViewChart = new Chart(document.getElementById('pageViewChart'), {
+                type: 'bar',
+                data: data,
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                stepSize: 1
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    }
+                }
+            });
+        }
+
+        function updateHourlySessionChart(logs) {
+            const hourlyData = Array(24).fill(0);
+            
+            logs.forEach(log => {
+                const hour = new Date(log.timestamp).getHours();
+                hourlyData[hour]++;
+            });
+
+            const data = {
+                labels: Array.from({length: 24}, (_, i) => 
+                    `${i === 0 ? '12' : i > 12 ? i-12 : i}${i < 12 ? 'AM' : 'PM'}`
+                ),
+                datasets: [{
+                    label: 'Hourly Activity Count',
+                    data: hourlyData,
+                    borderColor: 'rgb(54, 162, 235)',      // 밝은 파랑
+                    backgroundColor: 'rgba(54, 162, 235, 0.2)',  // 연한 파랑
+                    tension: 0.1,
+                    fill: true,
+                    pointBackgroundColor: 'rgb(54, 162, 235)',  // 포인트 색상
+                    pointRadius: 4,  // 포인트 크기
+                    pointHoverRadius: 6  // 마우스 오버시 포인트 크기
+                }]
+            };
+
+            if (hourlySessionChart) hourlySessionChart.destroy();
+            hourlySessionChart = new Chart(document.getElementById('hourlySessionChart'), {
+                type: 'line',
+                data: data,
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                stepSize: 1
+                            }
+                        }
+                    },
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Hourly Activity Distribution'
+                        }
+                    }
+                }
+            });
+        }
+
+        function updateActivityTypeChart(logs) {
+            const activityTypes = {};
+            const colorMap = {};
+            
+            logs.forEach(log => {
+                let displayType = log.activityType;
+                
+                if (log.activityType === 'EVENT' && log.additionalData) {
+                    try {
+                        const eventData = JSON.parse(log.additionalData);
+                        displayType = eventData.eventType || displayType;
+                    } catch (e) {
+                        console.error('Error parsing event data:', e);
+                    }
+                }
+                
+                const displayName = displayType
+                    .replace('REVIEW_CREATE', '⭐ New Review')
+                    .replace('REVIEW_UPDATE', '✏️ Update Review')
+                    .replace('REVIEW_DELETE', '🗑️ Delete Review')
+                    .replace('MEMBER_REGISTER', '👤 New Member')
+                    .replace('MEMBER_LOGIN', '🔑 Member Login')
+                    .replace('MEMBER_LOGOUT', '👋 Member Logout')
+                    .replace('CART_ADD', '🛒 Add to Cart')
+                    .replace('CART_REMOVE', '🗑️ Remove from Cart')
+                    .replace('PRODUCT_VIEW', '📦 View Product')
+                    .replace('PAGE_VIEW', '👀 Page View')
+                    .replace('SESSION', '🔑 Session')
+                    .replace('CLICK', '🖱️ Click')
+                    .replace('SEARCH', '🔍 Search')
+                    .replace('PURCHASE', '💳 Purchase')
+                    .replace('_', ' ');
+                
+                activityTypes[displayName] = (activityTypes[displayName] || 0) + 1;
+                
+                if (displayType.includes('REVIEW')) {
+                    colorMap[displayName] = chartColors.review;
+                } else if (displayType.includes('MEMBER')) {
+                    colorMap[displayName] = chartColors.member;
+                } else if (displayType.includes('CART')) {
+                    colorMap[displayName] = chartColors.cart;
+                } else if (displayType.includes('PRODUCT') || displayType === 'PAGE_VIEW') {
+                    colorMap[displayName] = chartColors.pageView;
+                } else {
+                    colorMap[displayName] = chartColors.other;
+                }
+            });
+
+            const data = {
+                labels: Object.keys(activityTypes),
+                datasets: [{
+                    data: Object.values(activityTypes),
+                    backgroundColor: Object.keys(activityTypes).map(key => colorMap[key])
+                }]
+            };
+
+            if (activityTypeChart) activityTypeChart.destroy();
+            activityTypeChart = new Chart(document.getElementById('activityTypeChart'), {
+                type: 'doughnut',
+                data: data,
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                        }
+                    }
+                }
+            });
+        }
+
+        function updateEventChart(logs) {
+            const events = {};
+            const colorMap = {};
+            
+            logs.forEach(log => {
+                try {
+                    let eventType = log.activityType;
+                    let eventData = log.additionalData;
+                    
+                    if (eventType === 'EVENT') {
+                        const parsedData = typeof eventData === 'string' 
+                            ? JSON.parse(eventData) 
+                            : eventData;
+                        eventType = parsedData.eventType;
+                    }
+                    
+                    const displayName = eventType
+                        .replace('REVIEW_CREATE', '⭐ New Review')
+                        .replace('REVIEW_UPDATE', '✏️ Update Review')
+                        .replace('REVIEW_DELETE', '🗑️ Delete Review')
+                        .replace('MEMBER_REGISTER', '👤 New Member')
+                        .replace('MEMBER_LOGIN', '🔑 Member Login')
+                        .replace('MEMBER_LOGOUT', '👋 Member Logout')
+                        .replace('CART_ADD', '🛒 Add to Cart')
+                        .replace('CART_REMOVE', '🗑️ Remove from Cart')
+                        .replace('PRODUCT_VIEW', '📦 View Product')
+                        .replace('PAGE_VIEW', '👀 Page View')
+                        .replace('SESSION', '🔑 Session')
+                        .replace('CLICK', '🖱️ Click')
+                        .replace('SEARCH', '🔍 Search')
+                        .replace('PURCHASE', '💳 Purchase')
+                        .replace('_', ' ');
+                    
+                    events[displayName] = (events[displayName] || 0) + 1;
+                    
+                    if (eventType.includes('REVIEW')) {
+                        colorMap[displayName] = chartColors.review;
+                    } else if (eventType.includes('MEMBER')) {
+                        colorMap[displayName] = chartColors.member;
+                    } else if (eventType.includes('CART')) {
+                        colorMap[displayName] = chartColors.cart;
+                    } else if (eventType.includes('PRODUCT') || eventType === 'PAGE_VIEW') {
+                        colorMap[displayName] = chartColors.pageView;
+                    } else {
+                        colorMap[displayName] = chartColors.other;
+                    }
+                } catch (e) {
+                    console.error('Error processing event:', e);
+                }
+            });
+
+            const data = {
+                labels: Object.keys(events),
+                datasets: [{
+                    label: 'Event Occurrence',
+                    data: Object.values(events),
+                    backgroundColor: Object.keys(events).map(key => colorMap[key])
+                }]
+            };
+
+            if (eventChart) eventChart.destroy();
+            eventChart = new Chart(document.getElementById('eventChart'), {
+                type: 'bar',
+                data: data,
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                stepSize: 1
+                            }
+                        }
+                    },
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Event Occurrence'
+                        }
+                    }
+                }
+            });
+        }
+
+        function formatDateTime(timestamp) {
+            const date = new Date(timestamp);
+            return date.toLocaleString('en-US', {
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+                hour12: true
+            });
+        }
+
+        // 페이지 로드 시 자동으로 데이터 조회
+        document.addEventListener('DOMContentLoaded', () => {
+            const now = new Date();
+            const yesterday = new Date(now);
+            yesterday.setDate(yesterday.getDate() - 1);
+            
+            // 날짜 형식을 로컬 시간대로 변환
+            const startStr = yesterday.toISOString().slice(0, 16);
+            const endStr = now.toISOString().slice(0, 16);
+            
+            document.getElementById('startDate').value = startStr;
+            document.getElementById('endDate').value = endStr;
+            
+            console.log('Initial date range:', startStr, 'to', endStr);  // 날짜 범위 로깅
+            
+            connect();
+            fetchData();
+        });
+
+        // 사용자 필터 업데이트
+        function updateUserFilter(logs) {
+            const userFilter = document.getElementById('userFilter');
+            const users = new Set();
+            const currentValue = userFilter.value;
+            
+            // 현재 선택된 옵션 저장
+            const selectedOption = userFilter.options[userFilter.selectedIndex];
+            const selectedText = selectedOption ? selectedOption.text : '';
+            
+            logs.forEach(log => {
+                if (log.userId) {
+                    users.add(JSON.stringify({
+                        id: log.userId,
+                        name: log.userName || `User ${log.userId}`,
+                        email: log.userEmail || ''
+                    }));
+                }
+            });
+            
+            // 필터 업데이트
+            userFilter.innerHTML = '<option value="">All Users</option>' + 
+                Array.from(users).map(userJson => {
+                    const user = JSON.parse(userJson);
+                    const optionText = `👤 ${user.name}${user.email ? ` (${user.email})` : ''}`;
+                    return `<option value="${user.id}"${optionText === selectedText ? ' selected' : ''}>${optionText}</option>`;
+                }).join('');
+        }
+
+        // 필터 변경 이벤트 리스너
+        document.getElementById('userFilter').addEventListener('change', () => {
+            displayLogs(currentLogs);
+        });
+    </script>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html> 

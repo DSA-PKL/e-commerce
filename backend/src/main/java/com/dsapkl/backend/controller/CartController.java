@@ -8,6 +8,7 @@ import com.dsapkl.backend.entity.Member;
 import com.dsapkl.backend.repository.query.CartQueryDto;
 import com.dsapkl.backend.service.CartService;
 import com.dsapkl.backend.service.OrderService;
+import com.dsapkl.backend.service.UserActivityLogService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -37,6 +38,7 @@ public class CartController {
 
     private final CartService cartService;
     private final OrderService orderService;
+    private final UserActivityLogService logService;
 
     /**
      *  장바구니 조회
@@ -112,16 +114,18 @@ public class CartController {
     public ResponseEntity<?> addCart(@RequestBody CartItemDto cartItemDto, HttpServletRequest request) {
         Member member = getMember(request);
         
-        // 비로그인 회원 체크
         if (member == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                .body("Login is required.");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Login is required.");
         }
 
-        // 장바구니 추가 로직
+        // 장바구니 추가
         cartService.addCart(cartItemDto, member.getEmail());
-        int totalCount = cartService.getCartItemCount(member.getEmail());
         
+        // 성공 후 로그 남기기
+        logService.logEvent(member.getId(), "CART_ADD", 
+            String.format("Added %d items to cart", cartItemDto.getCount()));
+        
+        int totalCount = cartService.getCartItemCount(member.getEmail());
         return ResponseEntity.ok(Collections.singletonMap("count", totalCount));
     }
 
