@@ -65,9 +65,17 @@
 
     function addCart() {
         const itemId = parseInt($("#orderItemId").val());
+        const count = parseInt($("#orderCount").val());
+        const stockQuantity = parseInt($("#orderStockQuantity").val());
+
+        if (count > stockQuantity) {
+            alert("Cannot add more items than available stock.");
+            return;
+        }
+
         const cartForm = {
             itemId: itemId,
-            count: 1
+            count: count
         };
 
         // 먼저 장바구니에 이미 있는지 확인
@@ -81,21 +89,21 @@
                 }
                 
                 // 장바구니에 없으면 추가
-        $.ajax({
-            url: "/cart",
+                $.ajax({
+                    url: "/cart",
                     data: JSON.stringify(cartForm),
-            type: 'POST',
+                    type: 'POST',
                     contentType: 'application/json',
-            success: function (response) {
-                alert("Item added to cart.");
-                $(".badge.bg-dark.text-white.ms-1.rounded-pill").text(response.count);
-            },
-            error: function (jqXHR) {
-                if (jqXHR.status === 401) {
-                    alert("Login is required.");
-                    location.href = "/members";
-                } else {
-                    alert(jqXHR.responseText);
+                    success: function (response) {
+                        alert("Item added to cart.");
+                        $(".badge.bg-dark.text-white.ms-1.rounded-pill").text(response.count);
+                    },
+                    error: function (jqXHR) {
+                        if (jqXHR.status === 401) {
+                            alert("Login is required.");
+                            location.href = "/members";
+                        } else {
+                            alert(jqXHR.responseText);
                         }
                     }
                 });

@@ -20,8 +20,9 @@ public class PageViewLoggingInterceptor implements HandlerInterceptor {
                               Object handler, Exception ex) {
         var member = CartController.getMember(request);
         if (member != null) {
-            log.info("Intercepting page view - userId: {}, uri: {}", member.getId(), request.getRequestURI());
-            logService.logPageView(member.getId(), request.getRequestURI());
+            String uri = request.getRequestURI();
+            log.debug("Recording page view - URI: {}, Member: {}", uri, member.getId());
+            logService.logPageView(member.getId(), uri);
         }
     }
 } 

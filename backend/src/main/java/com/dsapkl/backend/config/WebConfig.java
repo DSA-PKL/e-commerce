@@ -35,7 +35,8 @@ public class WebConfig implements WebMvcConfigurer {
                     "/js/**", 
                     "/images/**", 
                     "/error",
-                    "/ws-analytics/**"
+                    "/ws-analytics/**",
+                    "/api/**"
                 );
     }
 }
