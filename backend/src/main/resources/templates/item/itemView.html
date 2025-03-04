@@ -38,11 +38,38 @@
             item.addEventListener('click', function() {
                 const slideIndex = this.getAttribute('data-slide-index');
                 if (slideIndex) {
+                    // 모든 썸네일에서 active 클래스 제거
+                    thumbnailItems.forEach(thumb => {
+                        thumb.querySelector('img').classList.remove('active');
+                    });
+                    // 클릭된 썸네일에 active 클래스 추가
+                    this.querySelector('img').classList.add('active');
+                    
                     const carousel = new bootstrap.Carousel(document.getElementById('productImageSlider'));
                     carousel.to(parseInt(slideIndex));
                 }
             });
         });
+
+        // 슬라이드 이벤트 리스너 추가
+        const productSlider = document.getElementById('productImageSlider');
+        if (productSlider) {
+            productSlider.addEventListener('slid.bs.carousel', function(event) {
+                // 현재 활성화된 슬라이드 인덱스
+                const activeIndex = event.to;
+                
+                // 모든 썸네일에서 active 클래스 제거
+                thumbnailItems.forEach(thumb => {
+                    thumb.querySelector('img').classList.remove('active');
+                });
+                
+                // 현재 슬라이드에 해당하는 썸네일에 active 클래스 추가
+                const activeThumb = document.querySelector(`.thumbnail-item[data-slide-index="${activeIndex}"]`);
+                if (activeThumb) {
+                    activeThumb.querySelector('img').classList.add('active');
+                }
+            });
+        }
 
         // 리뷰 로드 및 평점 업데이트
         loadReviews();
@@ -57,7 +84,7 @@
         if (!orderCountInput || !totalPriceElement) return;
         
         const quantity = parseInt(orderCountInput.value) || 1;
-        const price = [[${item.price}]];
+        const price = /*[[${item.price}]]*/ 0;
         const totalPrice = quantity * price;
         
         totalPriceElement.textContent = totalPrice.toLocaleString() + ' KRW';
@@ -121,7 +148,7 @@
 
     function initiateCheckout() {
         // 로그인 체크
-        const currentMemberId = [[${currentMemberId}]];
+        const currentMemberId = /*[[${currentMemberId}]]*/ null;
         if (!currentMemberId) {
             alert("Login is required.");
             window.location.href = "/members";
@@ -129,7 +156,7 @@
         }
 
         const count = document.getElementById('orderCount').value;
-        const stockQuantity = [[${item.stockQuantity}]];
+        const stockQuantity = /*[[${item.stockQuantity}]]*/ 0;
         
         if (count > stockQuantity) {
             alert("Out of stock. Current inventory: " + stockQuantity + " units");
@@ -137,10 +164,10 @@
         }
 
         const checkoutData = {
-            itemId: [[${item.itemId}]],
+            itemId: /*[[${item.itemId}]]*/ 0,
             count: parseInt(count),
-            price: [[${item.price}]],
-            itemName: [[${item.name}]]
+            price: /*[[${item.price}]]*/ 0,
+            itemName: /*[[${item.name}]]*/ ''
         };
 
         // Stripe 결제 세션 생성 요청
@@ -159,7 +186,7 @@
         })
             .then(data => {
             // Stripe 객체 초기화 및 결제 페이지로 리디렉션
-            const stripe = Stripe([[${stripePublicKey}]]);
+            const stripe = Stripe(/*[[${stripePublicKey}]]*/ '');
             return stripe.redirectToCheckout({ sessionId: data.sessionId });
         })
         .catch(error => {
