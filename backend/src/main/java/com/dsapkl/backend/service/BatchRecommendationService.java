@@ -32,12 +32,12 @@ public class BatchRecommendationService {
     private final ObjectMapper objectMapper;
     private static final String FLASK_URL = "http://localhost:5000/api/data";
 
-    @Scheduled(fixedRate = 60000)
+    @Scheduled(fixedRate = 60000000, initialDelay = 60000000)
     public void processBatchPredictions() {
         log.info("Starting batch prediction process...");
         try {
             List<MemberInfo> allMembers = memberInfoRepository.findAll();
-            
+
             for (MemberInfo memberInfo : allMembers) {
                 try {
                     getClusterPrediction(memberInfo.getId());
@@ -46,7 +46,7 @@ public class BatchRecommendationService {
                     log.error("Error processing member ID: {}", memberInfo.getId(), e);
                 }
             }
-            
+
             log.info("Batch prediction process completed successfully");
         } catch (Exception e) {
             log.error("Error in batch prediction process", e);
@@ -63,7 +63,7 @@ public class BatchRecommendationService {
         String response = sendDataToFlask(memberData);
 
         Integer prediction = processFlaskResponse(response);
-        
+
         Cluster cluster = new Cluster(prediction, prediction);
         clusterRepository.save(cluster);
 
@@ -88,7 +88,7 @@ public class BatchRecommendationService {
         data.put("newsletterSubscription", memberInfo.getNewsletterSubscription());
         data.put("interests", memberInfo.getInterests().toString());
         data.put("productCategoryPreference", memberInfo.getProductCategoryPreference().toString());
-        
+
         return data;
     }
 
@@ -117,4 +117,4 @@ public class BatchRecommendationService {
             throw new RuntimeException("Error processing Flask server response", e);
         }
     }
-} 
+}

@@ -18,14 +18,14 @@
                                     <th>No.</th>
                                     <th>Age</th>
                                     <th>Gender</th>
-                                    <th>Location</th>
-                                    <th>Income</th>
+<!--                                    <th>Location</th>-->
+<!--                                    <th>Income</th>-->
                                     <th>Login</th>
                                     <th>Purchase</th>
                                     <th>Order</th>
                                     <th>Spending</th>
-                                    <th>Time</th>
-                                    <th>Pages</th>
+<!--                                    <th>Time</th>-->
+<!--                                    <th>Pages</th>-->
                                     <th>Newsletter</th>
                                     <th>Interest</th>
                                     <th>Category</th>
@@ -37,14 +37,14 @@
                                     <td th:text="${iterStat.count}"></td>
                                     <td th:text="${#numbers.formatDecimal(stat.avgAge, 1, 1)}"></td>
                                     <td th:text="${stat.dominantGender}"></td>
-                                    <td th:text="${stat.dominantLocation}"></td>
-                                    <td th:text="${#numbers.formatCurrency(stat.avgIncome)}"></td>
+<!--                                    <td th:text="${stat.dominantLocation}"></td>-->
+<!--                                    <td th:text="${#numbers.formatCurrency(stat.avgIncome)}"></td>-->
                                     <td th:text="${#numbers.formatDecimal(stat.avgLastLoginDays, 1, 1)}"></td>
                                     <td th:text="${#numbers.formatDecimal(stat.avgPurchaseFreq, 1, 1)}"></td>
-                                    <td th:text="${#numbers.formatCurrency(stat.avgOrderValue)}"></td>
-                                    <td th:text="${#numbers.formatCurrency(stat.avgTotalSpending)}"></td>
-                                    <td th:text="${#numbers.formatDecimal(stat.avgTimeSpent, 1, 1)}"></td>
-                                    <td th:text="${#numbers.formatDecimal(stat.avgPagesViewed, 1, 1)}"></td>
+                                    <td th:text="${'$' + #numbers.formatDecimal(stat.avgOrderValue, 1, 0)}"></td>
+                                    <td th:text="${'$' + #numbers.formatDecimal(stat.avgTotalSpending, 1, 0)}"></td>
+<!--                                    <td th:text="${#numbers.formatDecimal(stat.avgTimeSpent, 1, 1)}"></td>-->
+<!--                                    <td th:text="${#numbers.formatDecimal(stat.avgPagesViewed, 1, 1)}"></td>-->
                                     <td th:text="${#numbers.formatPercent(stat.newsletterRatio, 1, 1)}"></td>
                                     <td th:text="${stat.dominantInterest}"></td>
                                     <td th:text="${stat.dominantCategory}"></td>

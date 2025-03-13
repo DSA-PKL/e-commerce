@@ -13,23 +13,56 @@
 </head>
 
 <div layout:fragment="content" class="container py-5">
-    <h2 class="mb-4" th:text="'Members in Cluster ' + ${clusterId}"></h2>
+    <h2 class="mb-4" th:text="'Members in Cluster '"></h2>
     
     <!-- 통계 요약 카드 추가 -->
     <div class="row mb-4">
-        <div class="col-md-3">
+        <div class="col-md-12">
             <div class="card shadow-sm">
-                <div class="card-body text-center">
-                    <h6 class="card-title">Average Age</h6>
-                    <h3 class="mb-0" th:text="${#numbers.formatDecimal(avgAge, 1, 1)}">0</h3>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="card shadow-sm">
-                <div class="card-body text-center">
-                    <h6 class="card-title">Average Purchase Frequency</h6>
-                    <h3 class="mb-0" th:text="${#numbers.formatDecimal(avgPurchase, 1, 1)}">0</h3>
+                <div class="card-body">
+                    <h5 class="card-title mb-4">Cluster Statistics</h5>
+                    <div class="row">
+                        <div class="col-md-3">
+                            <div class="card shadow-sm">
+                                <div class="card-body text-center">
+                                    <h6 class="card-title">Average Age</h6>
+                                    <h3 class="mb-0" th:text="${#numbers.formatDecimal(avgAge, 1, 1)}">0</h3>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card shadow-sm">
+                                <div class="card-body text-center">
+                                    <h6 class="card-title">Last Login Days</h6>
+                                    <h3 class="mb-0" th:text="${#numbers.formatDecimal(avgLastLoginDays, 1, 1)}">0</h3>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card shadow-sm">
+                                <div class="card-body text-center">
+                                    <h6 class="card-title">Purchase Frequency</h6>
+                                    <h3 class="mb-0" th:text="${#numbers.formatDecimal(avgPurchase, 1, 1)}">0</h3>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card shadow-sm">
+                                <div class="card-body text-center">
+                                    <h6 class="card-title">Average Order Value</h6>
+                                    <h3 class="mb-0" th:text="${'$' + #numbers.formatDecimal(avgOrderValue, 1, 0)}">0</h3>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card shadow-sm">
+                                <div class="card-body text-center">
+                                    <h6 class="card-title">Total Spending</h6>
+                                    <h3 class="mb-0" th:text="${'$' + #numbers.formatDecimal(avgTotalSpending, 1, 0)}">0</h3>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -45,22 +78,15 @@
                 </div>
             </div>
         </div>
-        <div class="col-md-6 mb-4">
-            <div class="card shadow-sm">
-                <div class="card-body">
-                    <h5 class="card-title">Location Distribution</h5>
-                    <canvas id="locationChart"></canvas>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-6 mb-4">
-            <div class="card shadow-sm">
-                <div class="card-body">
-                    <h5 class="card-title">Age Distribution</h5>
-                    <canvas id="ageChart"></canvas>
-                </div>
-            </div>
-        </div>
+<!--        <div class="col-md-6 mb-4">-->
+<!--            <div class="card shadow-sm">-->
+<!--                <div class="card-body">-->
+<!--                    <h5 class="card-title">Location Distribution</h5>-->
+<!--                    <canvas id="locationChart"></canvas>-->
+<!--                </div>-->
+<!--            </div>-->
+<!--        </div>-->
+
         <div class="col-md-6 mb-4">
             <div class="card shadow-sm">
                 <div class="card-body">
@@ -85,6 +111,46 @@
                 </div>
             </div>
         </div>
+        <div class="col-md-6 mb-4">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">Age Distribution</h5>
+                    <canvas id="ageChart"></canvas>
+                </div>
+            </div>
+        </div>
+<!--        <div class="col-md-6 mb-4">-->
+<!--            <div class="card shadow-sm">-->
+<!--                <div class="card-body">-->
+<!--                    <h5 class="card-title">Last Login Days Distribution</h5>-->
+<!--                    <canvas id="loginDaysChart"></canvas>-->
+<!--                </div>-->
+<!--            </div>-->
+<!--        </div>-->
+<!--        <div class="col-md-6 mb-4">-->
+<!--            <div class="card shadow-sm">-->
+<!--                <div class="card-body">-->
+<!--                    <h5 class="card-title">Purchase Frequency Distribution</h5>-->
+<!--                    <canvas id="purchaseFreqChart"></canvas>-->
+<!--                </div>-->
+<!--            </div>-->
+<!--        </div>-->
+<!--        <div class="col-md-6 mb-4">-->
+<!--            <div class="card shadow-sm">-->
+<!--                <div class="card-body">-->
+<!--                    <h5 class="card-title">Order Value Distribution</h5>-->
+<!--                    <canvas id="orderValueChart"></canvas>-->
+<!--                </div>-->
+<!--            </div>-->
+<!--        </div>-->
+<!--        <div class="col-md-6 mb-4">-->
+<!--            <div class="card shadow-sm">-->
+<!--                <div class="card-body">-->
+<!--                    <h5 class="card-title">Total Spending Distribution</h5>-->
+<!--                    <canvas id="spendingChart"></canvas>-->
+<!--                </div>-->
+<!--            </div>-->
+<!--        </div>-->
     </div>
 
     <div class="row">
@@ -97,14 +163,14 @@
                                 <tr>
                                     <th>Age</th>
                                     <th>Gender</th>
-                                    <th>Location</th>
-                                    <th>Income</th>
+<!--                                    <th>Location</th>-->
+<!--                                    <th>Income</th>-->
                                     <th>Last Login Days</th>
                                     <th>Purchase Frequency</th>
                                     <th>Average Order Value</th>
                                     <th>Total Spending</th>
-                                    <th>Time Spent (min)</th>
-                                    <th>Pages Viewed</th>
+<!--                                    <th>Time Spent (min)</th>-->
+<!--                                    <th>Pages Viewed</th>-->
                                     <th>Newsletter</th>
                                     <th>Interests</th>
                                     <th>Category Preference</th>
@@ -114,14 +180,14 @@
                                 <tr th:each="member : ${members}">
                                     <td th:text="${member.age}"></td>
                                     <td th:text="${member.gender}"></td>
-                                    <td th:text="${member.location}"></td>
-                                    <td th:text="${#numbers.formatCurrency(member.income)}"></td>
+<!--                                    <td th:text="${member.location}"></td>-->
+<!--                                    <td th:text="${#numbers.formatCurrency(member.income)}"></td>-->
                                     <td th:text="${member.lastLoginDays}"></td>
                                     <td th:text="${member.purchaseFrequency}"></td>
-                                    <td th:text="${#numbers.formatCurrency(member.averageOrderValue)}"></td>
-                                    <td th:text="${#numbers.formatCurrency(member.totalSpending)}"></td>
-                                    <td th:text="${member.timeSpentOnSiteMinutes}"></td>
-                                    <td th:text="${member.pagesViewed}"></td>
+                                    <td th:text="${'$' + #numbers.formatDecimal(member.averageOrderValue, 1, 0)}"></td>
+                                    <td th:text="${'$' + #numbers.formatDecimal(member.totalSpending, 1, 0)}"></td>
+<!--                                    <td th:text="${member.timeSpentOnSiteMinutes}"></td>-->
+<!--                                    <td th:text="${member.pagesViewed}"></td>-->
                                     <td th:text="${member.newsletterSubscription == 1 ? 'Yes' : 'No'}"></td>
                                     <td th:text="${member.interests}"></td>
                                     <td th:text="${member.productCategoryPreference}"></td>
@@ -327,6 +393,121 @@
                     }
                 }
             }
+        });
+
+        // Last Login Days 분포 차트
+        const loginData = {
+            labels: ['0-7', '8-14', '15-30', '31-60', '60+'],
+            datasets: [{
+                label: 'Number of Members',
+                data: [
+                    members.filter(m => m.lastLoginDays >= 0 && m.lastLoginDays <= 7).length,
+                    members.filter(m => m.lastLoginDays > 7 && m.lastLoginDays <= 14).length,
+                    members.filter(m => m.lastLoginDays > 14 && m.lastLoginDays <= 30).length,
+                    members.filter(m => m.lastLoginDays > 30 && m.lastLoginDays <= 60).length,
+                    members.filter(m => m.lastLoginDays > 60).length
+                ],
+                backgroundColor: 'rgba(54, 162, 235, 0.5)',
+                borderColor: 'rgba(54, 162, 235, 1)',
+                borderWidth: 1
+            }]
+        };
+
+        // Purchase Frequency 분포 차트
+        const purchaseData = {
+            labels: ['0-2', '3-5', '6-10', '11-20', '20+'],
+            datasets: [{
+                label: 'Number of Members',
+                data: [
+                    members.filter(m => m.purchaseFrequency >= 0 && m.purchaseFrequency <= 2).length,
+                    members.filter(m => m.purchaseFrequency > 2 && m.purchaseFrequency <= 5).length,
+                    members.filter(m => m.purchaseFrequency > 5 && m.purchaseFrequency <= 10).length,
+                    members.filter(m => m.purchaseFrequency > 10 && m.purchaseFrequency <= 20).length,
+                    members.filter(m => m.purchaseFrequency > 20).length
+                ],
+                backgroundColor: 'rgba(75, 192, 192, 0.5)',
+                borderColor: 'rgba(75, 192, 192, 1)',
+                borderWidth: 1
+            }]
+        };
+
+        // Order Value 분포 차트
+        const orderValueData = {
+            labels: ['$0-50', '$51-100', '$101-200', '$201-500', '$500+'],
+            datasets: [{
+                label: 'Number of Members',
+                data: [
+                    members.filter(m => m.averageOrderValue >= 0 && m.averageOrderValue <= 50).length,
+                    members.filter(m => m.averageOrderValue > 50 && m.averageOrderValue <= 100).length,
+                    members.filter(m => m.averageOrderValue > 100 && m.averageOrderValue <= 200).length,
+                    members.filter(m => m.averageOrderValue > 200 && m.averageOrderValue <= 500).length,
+                    members.filter(m => m.averageOrderValue > 500).length
+                ],
+                backgroundColor: 'rgba(255, 99, 132, 0.5)',
+                borderColor: 'rgba(255, 99, 132, 1)',
+                borderWidth: 1
+            }]
+        };
+
+        // Total Spending 분포 차트
+        const spendingData = {
+            labels: ['$0-100', '$101-500', '$501-1000', '$1001-2000', '$2000+'],
+            datasets: [{
+                label: 'Number of Members',
+                data: [
+                    members.filter(m => m.totalSpending >= 0 && m.totalSpending <= 100).length,
+                    members.filter(m => m.totalSpending > 100 && m.totalSpending <= 500).length,
+                    members.filter(m => m.totalSpending > 500 && m.totalSpending <= 1000).length,
+                    members.filter(m => m.totalSpending > 1000 && m.totalSpending <= 2000).length,
+                    members.filter(m => m.totalSpending > 2000).length
+                ],
+                backgroundColor: 'rgba(153, 102, 255, 0.5)',
+                borderColor: 'rgba(153, 102, 255, 1)',
+                borderWidth: 1
+            }]
+        };
+
+        // 차트 생성
+        const chartOptions = {
+            responsive: true,
+            plugins: {
+                legend: {
+                    display: false
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: 'Number of Members'
+                    }
+                }
+            }
+        };
+
+        new Chart(document.getElementById('loginDaysChart'), {
+            type: 'bar',
+            data: loginData,
+            options: chartOptions
+        });
+
+        new Chart(document.getElementById('purchaseFreqChart'), {
+            type: 'bar',
+            data: purchaseData,
+            options: chartOptions
+        });
+
+        new Chart(document.getElementById('orderValueChart'), {
+            type: 'bar',
+            data: orderValueData,
+            options: chartOptions
+        });
+
+        new Chart(document.getElementById('spendingChart'), {
+            type: 'bar',
+            data: spendingData,
+            options: chartOptions
         });
     </script>
 </div>

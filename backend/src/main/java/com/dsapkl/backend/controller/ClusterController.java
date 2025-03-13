@@ -96,10 +96,30 @@ public class ClusterController {
             .average()
             .orElse(0);
 
+        // 새로운 통계 데이터 추가
+        double avgLastLoginDays = members.stream()
+            .mapToInt(MemberInfo::getLastLoginDays)
+            .average()
+            .orElse(0);
+
+        double avgOrderValue = members.stream()
+            .mapToInt(MemberInfo::getAverageOrderValue)
+            .average()
+            .orElse(0);
+
+        double avgTotalSpending = members.stream()
+            .mapToInt(MemberInfo::getTotalSpending)
+            .average()
+            .orElse(0);
+
         model.addAttribute("clusterId", clusterId);
         model.addAttribute("members", members);
         model.addAttribute("avgAge", avgAge);
         model.addAttribute("avgPurchase", avgPurchase);
+        // 새로운 모델 속성 추가
+        model.addAttribute("avgLastLoginDays", avgLastLoginDays);
+        model.addAttribute("avgOrderValue", avgOrderValue);
+        model.addAttribute("avgTotalSpending", avgTotalSpending);
         
         return "clusters/clusterMembers";
     }

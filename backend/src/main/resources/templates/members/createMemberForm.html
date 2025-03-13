@@ -136,18 +136,10 @@
                                 </div>
                             </div>
                         </div>
-                        <br>
                         &nbsp
 
-
-
-
-                        <select name="role" id="role" class="formcontrol">
-                            <option value="">Seller/Buyer Registration</option>
-                            <option th:each="roleCode : ${roleCodes}"
-                                    th:value="${roleCode.code}"
-                                    th:text="${roleCode.displayName}" />
-                        </select>
+                        <!-- role 선택 부분을 hidden input으로 변경 -->
+                        <input type="hidden" name="role" id="role" value="USER">
                         <hr class="my-4">
                         <div class="row mt-4">
                             <div class="col">
